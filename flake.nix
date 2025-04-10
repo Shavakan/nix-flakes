@@ -2,23 +2,28 @@
   description = "Nix flake with nix-darwin and standalone home-manager";
 
   inputs = {
-    # Package sources
+    # Package sources - use nixpkgs-unstable for compatibility
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     
-    # nix-darwin
+    # nix-darwin - use master for unstable
     darwin = {
-      url = "github:LnL7/nix-darwin";
+      url = "github:LnL7/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     
-    # home-manager, as a standalone component
+    # home-manager - use master to match nixpkgs-unstable
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    
+    # Additional package sources (uncomment and modify as needed)
+    # nur = {
+    #   url = "github:nix-community/NUR";
+    # };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager }:
+  outputs = { self, nixpkgs, darwin, home-manager, ... }@ inputs:
   let
     # Current system (assuming ARM macOS, change if needed)
     darwinSystem = "aarch64-darwin";
@@ -27,6 +32,15 @@
     pkgs = import nixpkgs {
       system = darwinSystem;
       config.allowUnfree = true;
+      # Add unstable channel
+      overlays = [
+        (final: prev: {
+          unstable = import nixpkgs {
+            system = darwinSystem;
+            config.allowUnfree = true;
+          };
+        })
+      ];
     };
     
     # Username
@@ -56,10 +70,18 @@
             # Allow unfree packages
             nixpkgs.config.allowUnfree = true;
             
+            # Configure keyboard for language switching with Caps Lock
+            system.keyboard = {
+              enableKeyMapping = true;
+              remapCapsLockToControl = false;
+              remapCapsLockToEscape = false;
+              # Don't remap Caps Lock in nix-darwin
+            };
+            
             # Add a helpful message about home-manager
             system.activationScripts.postActivation.text = ''
               echo "nix-darwin successfully activated!"
-              echo "To activate home-manager, run: 'home-manager switch --flake .'"
+              echo "To activate home-manager, run: 'LANG=en_US.UTF-8 home-manager switch --flake .'"
             '';
           }
         ];
@@ -76,9 +98,11 @@
       # Specify your home configuration modules
       modules = [ ./home.nix ];
       
-      # Pass arguments to home.nix
+      # Extra special args to pass to home.nix
       extraSpecialArgs = {
         inherit username;
+        # Uncomment to use NUR
+        # nur = inputs.nur;
       };
     };
   };

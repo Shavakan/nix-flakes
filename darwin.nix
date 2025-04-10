@@ -1,32 +1,29 @@
 { pkgs, ... }:
 
 {
-  # Allow unfree packages (for vscode, slack, chrome, etc.)
+  # Allow unfree packages for vscode, etc.
   nixpkgs.config.allowUnfree = true;
 
-  # System packages available to all users - combined all packages here
+  # System packages available to all users
   environment.systemPackages = with pkgs; [
-    # Core system utilities
-    neovim
+    # System-level tools
     coreutils
-    curl
-    wget
-    gnupg
     openssh
     
-    # Applications (GUI)
-    podman
-    iterm2
+    # GUI applications
     vscode
-    slack
+    iterm2
     google-chrome
     
-    # Database and system services (these run globally)
-    redis
+    # Container tools
+    podman
+    docker
   ];
 
   # Replace system vim with neovim as editor 
-  environment.variables.EDITOR = "nvim";
+  environment.variables = {
+    EDITOR = "nvim";
+  };
   
   # Enable nix-command and flakes support
   nix.settings = {
@@ -39,10 +36,10 @@
     ];
   };
 
-  # Configure keyboard
+  # Do NOT remap Caps Lock to Escape - we want to use it for language switching
   system.keyboard = {
     enableKeyMapping = true;
-    remapCapsLockToEscape = true;
+    remapCapsLockToEscape = false;
   };
 
   # Enable related services
@@ -55,6 +52,7 @@
   # Extra settings for Nix
   nix.package = pkgs.nix;
 
+  # System defaults for macOS
   system.defaults = {
     # Dock settings
     dock = {
@@ -62,6 +60,8 @@
       orientation = "bottom";
       showhidden = true;
       mineffect = "scale";
+      mru-spaces = false;
+      show-recents = false;
     };
     
     # Finder settings
@@ -69,6 +69,8 @@
       AppleShowAllExtensions = true;
       QuitMenuItem = true;
       FXEnableExtensionChangeWarning = false;
+      ShowPathbar = true;
+      ShowStatusBar = true;
     };
     
     # General settings
@@ -81,8 +83,30 @@
       NSAutomaticQuoteSubstitutionEnabled = false;
       NSAutomaticSpellingCorrectionEnabled = false;
       _HIHideMenuBar = false;
+      
+      # Key repeat
+      InitialKeyRepeat = 15;
+      KeyRepeat = 2;
+    };
+    
+    # Trackpad 
+    trackpad = {
+      Clicking = true;
+      TrackpadRightClick = true;
+    };
+    
+    # Hot corners
+    CustomUserPreferences = {
+      # Hot corners
+      "com.apple.dock" = {
+        "wvous-tl-corner" = 1;  # Top left: Disabled
+        "wvous-tr-corner" = 1;  # Top right: Disabled  
+        "wvous-bl-corner" = 1;  # Bottom left: Disabled
+        "wvous-br-corner" = 1;  # Bottom right: Disabled
+      };
     };
   };
 
+  # System state version
   system.stateVersion = 4;
 }
