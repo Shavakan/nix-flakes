@@ -21,7 +21,6 @@
       # Development languages and tools
       terraform
 
-
       # Cloud tools
       kubectl
       awscli2
@@ -29,7 +28,6 @@
 
       # GPG
       gnupg
-      pinentry_mac
 
       # Misc
       direnv
@@ -38,6 +36,19 @@
     # This value determines the Home Manager release compatibility
     stateVersion = "24.11";
   };
+
+  # Configure GPG to use terminal for passphrase entry
+  home.file.".gnupg/gpg-agent.conf".text = ''
+    pinentry-program ${pkgs.gnupg}/bin/pinentry
+    allow-loopback-pinentry
+    no-grab
+  '';
+
+  # Configure GPG to use loopback
+  home.file.".gnupg/gpg.conf".text = ''
+    use-agent
+    pinentry-mode loopback
+  '';
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
