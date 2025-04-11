@@ -1,6 +1,11 @@
 { config, pkgs, lib, ... }@args:
 
 {
+  # Import MCP server configuration
+  imports = [
+    ./mcp-servers.nix
+  ];
+
   # Home Manager needs a bit of information about you and the paths it should manage
   home = {
     username = "shavakan";

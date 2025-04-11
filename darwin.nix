@@ -50,9 +50,24 @@
   # Ensure binaries are linked properly
   environment.pathsToLink = [ "/bin" ];
 
-  # Replace system vim with neovim as editor 
+  # System environment variables
   environment.variables = {
     EDITOR = "nvim";
+  };
+  
+  # LaunchAgents to set environment variables for GUI applications
+  launchd.user.agents = {
+    set-env = {
+      serviceConfig = {
+        ProgramArguments = [
+          "/bin/sh"
+          "-c"
+          "launchctl setenv CLAUDE_MCP_CONFIG /Users/shavakan/.claude-mcp-config.json"
+        ];
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
+    };
   };
   
   # Enable nix-command and flakes support
@@ -78,7 +93,7 @@
   # Shell configuration
   programs.zsh.enable = true;
   programs.bash.enable = true;
-  
+
   # Extra settings for Nix
   nix.package = pkgs.nix;
 
