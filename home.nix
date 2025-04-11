@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }@args:
 
 {
-  # Import MCP server configuration
+  # Import configurations
   imports = [
     ./mcp-servers.nix
   ];
@@ -29,6 +29,9 @@
       # GPG
       gnupg
 
+      # Secrets management
+      agenix
+
       # Misc
       direnv
     ];
@@ -37,11 +40,12 @@
     stateVersion = "24.11";
   };
 
-  # Configure GPG to use terminal for passphrase entry
+  # Configure GPG to use terminal for passphrase entry and enable SSH support
   home.file.".gnupg/gpg-agent.conf".text = ''
     pinentry-program ${pkgs.gnupg}/bin/pinentry
     allow-loopback-pinentry
     no-grab
+    enable-ssh-support
   '';
 
   # Configure GPG to use loopback
@@ -213,6 +217,8 @@
 
       # GPG configuration
       export GPG_TTY=$(tty)
+      export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
+      gpgconf --launch gpg-agent
 
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"

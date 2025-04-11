@@ -17,13 +17,19 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     
+    # agenix for secrets management
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Additional package sources (uncomment and modify as needed)
     # nur = {
     #   url = "github:nix-community/NUR";
     # };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, ... }@ inputs:
   let
     # Current system (assuming ARM macOS, change if needed)
     darwinSystem = "aarch64-darwin";
@@ -32,13 +38,18 @@
     pkgs = import nixpkgs {
       system = darwinSystem;
       config.allowUnfree = true;
-      # Add unstable channel
+      # Add overlays
       overlays = [
+        # Add unstable channel
         (final: prev: {
           unstable = import nixpkgs {
             system = darwinSystem;
             config.allowUnfree = true;
           };
+        })
+        # Add agenix to pkgs
+        (final: prev: {
+          agenix = agenix.packages.${darwinSystem}.default;
         })
       ];
     };
@@ -96,11 +107,14 @@
       inherit pkgs;
       
       # Specify your home configuration modules
-      modules = [ ./home.nix ];
+      modules = [
+        ./home.nix
+        agenix.homeManagerModules.default
+      ];
       
       # Extra special args to pass to home.nix
       extraSpecialArgs = {
-        inherit username;
+        inherit username agenix;
       };
     };
   };
