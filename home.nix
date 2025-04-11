@@ -13,42 +13,14 @@
 
     # Packages to install to the user profile
     packages = with pkgs; [
-      # Core utilities
-      # neovim is removed from here to avoid collision
-      git
-      curl
-      wget
-
-      # Development tools
-      ripgrep
-      fd
-      jq
-      fzf
-      tree
-
-      # CLI utilities
-      tmux
-      htop
-      bat
-      mtr
-
       # Development languages and tools
-      python3
-      nodejs
-      go
-      rustup
       terraform
 
-      # Python tools
-      uv    # Modern Python package installer and resolver
 
       # Cloud tools
       kubectl
       awscli2
       google-cloud-sdk
-
-      # Container tools
-      podman
 
       # GPG
       gnupg
@@ -59,7 +31,7 @@
     ];
 
     # This value determines the Home Manager release compatibility
-    stateVersion = "23.11";
+    stateVersion = "24.11";
   };
 
   # Allow unfree packages
@@ -206,7 +178,7 @@
       setopt HIST_IGNORE_SPACE
 
       # Path additions
-      export PATH="$HOME/.local/bin:$PATH"
+      export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
 
       # Go configuration
       export GOPATH=$HOME/workspace/go
@@ -246,7 +218,7 @@
       # Python uv configuration
       export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
 
-      # Initialize uv completions using the official method
+      # Initialize uv for faster Python package management
       if command -v uv > /dev/null; then
         eval "$(uv generate-shell-completion zsh)"
       fi

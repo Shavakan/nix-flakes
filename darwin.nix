@@ -6,19 +6,49 @@
 
   # System packages available to all users
   environment.systemPackages = with pkgs; [
+    # Development tools
+    git
+    neovim
+    python3
+    nodejs
+    go
+    rustup
+    cargo
+
+    # Package managers
+    uv
+
     # System-level tools
     coreutils
     openssh
+    curl
+    wget
+    ripgrep
+    jq
+
+    # CLI utilities
+    tmux
+    htop
+    bat
+    mtr
+    ripgrep
+    fd
+    jq
+    fzf
+    tree
     
     # GUI applications
     vscode
+    slack
     iterm2
     google-chrome
     
     # Container tools
     podman
-    docker
   ];
+
+  # Ensure binaries are linked properly
+  environment.pathsToLink = [ "/bin" ];
 
   # Replace system vim with neovim as editor 
   environment.variables = {
@@ -108,5 +138,5 @@
   };
 
   # System state version
-  system.stateVersion = 4;
+  system.stateVersion = 5;
 }

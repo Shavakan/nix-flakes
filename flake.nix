@@ -101,8 +101,6 @@
       # Extra special args to pass to home.nix
       extraSpecialArgs = {
         inherit username;
-        # Uncomment to use NUR
-        # nur = inputs.nur;
       };
     };
   };
