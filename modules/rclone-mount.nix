@@ -28,9 +28,6 @@ let
     ${pkgs.coreutils}/bin/mkdir -p "$MOUNTPOINT"
     
     # Prepare to mount the remote filesystem
-    # Generate a random port for remote control to avoid conflicts
-    RC_PORT=$((5573 + RANDOM % 100))
-    
     # Try to unmount first if resource busy error tends to happen
     diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
     
@@ -46,13 +43,10 @@ let
       --vfs-write-back 5s \
       --buffer-size 64M \
       --transfers 4 \
-      --rc \
-      --rc-addr=127.0.0.1:$RC_PORT \
-      --rc-no-auth \
       --allow-non-empty \
       --cache-dir="$HOME/.cache/rclone" \
       --log-level=ERROR \
-      --log-file="/tmp/rclone-mount-$RC_PORT.log" \
+      --log-file="/tmp/rclone-mount.log" \
       --attr-timeout=1s \
       --dir-perms=0700 \
       --file-perms=0600 \
