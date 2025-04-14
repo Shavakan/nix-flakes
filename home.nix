@@ -185,6 +185,10 @@
 
     # Extra config
     initExtra = ''
+      # Initialize LS_COLORS to distinguish between files and directories
+      export CLICOLOR=1
+      export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
+
       # Custom zsh settings
       setopt AUTO_CD
       setopt HIST_IGNORE_SPACE
@@ -218,6 +222,35 @@
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"
 
+      # Load devsisters script from rclone mounted storage
+      load_devsisters_script() {
+        local script_path="$HOME/mnt/rclone/private/changwonlee/devsisters.sh"
+        local link_path="$HOME/.devsisters.sh"
+
+        # Check if mount is available
+        if [ -f "$script_path" ]; then
+          # Update symlink if needed
+          if [ ! -h "$link_path" ] || [ "$(readlink $link_path)" != "$script_path" ]; then
+            ln -sf "$script_path" "$link_path"
+            echo "Link updated: $link_path -> $script_path"
+          fi
+
+          # Source the script
+          if ! source "$link_path" 2>/dev/null; then
+            echo "Error sourcing devsisters script"
+            return 1
+          fi
+          return 0
+        else
+          echo "Devsisters script not found at $script_path"
+          echo "Ensure rclone mount is active"
+          return 1
+        fi
+      }
+
+      # Try to load the devsisters script after ZSH is initialized
+      load_devsisters_script
+
       # oh-my-zsh plugins and theme (if installed)
       if [ -d "$HOME/.oh-my-zsh" ]; then
         export ZSH="$HOME/.oh-my-zsh"
@@ -228,6 +261,7 @@
         # p10k
         [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
       fi
+
 
       # Optional: Load fzf if installed
       [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
