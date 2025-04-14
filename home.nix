@@ -34,6 +34,7 @@
 
       # Secrets management
       agenix
+      vault
 
       # System utilities
       watch
@@ -224,7 +225,7 @@
 
       # Load devsisters script from rclone mounted storage
       load_devsisters_script() {
-        local script_path="$HOME/mnt/rclone/private/changwonlee/devsisters.sh"
+        local script_path="$HOME/mnt/rclone/devsisters.sh"
         local link_path="$HOME/.devsisters.sh"
 
         # Check if mount is available
