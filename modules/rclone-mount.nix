@@ -109,9 +109,16 @@ let
     echo "Unmounted $MOUNTPOINT"
   '';
   
+  # Create a simple status script that shows mount info without being verbose
   statusScript = pkgs.writeShellScriptBin "rclone-status" ''
-    # Show only mount paths without headers
-    /sbin/mount | ${pkgs.gnugrep}/bin/grep -i rclone
+    # Show only mount paths
+    MOUNTS=$(/sbin/mount | ${pkgs.gnugrep}/bin/grep -i rclone)
+    
+    if [ -z "$MOUNTS" ]; then
+      echo "No rclone mounts found"
+    else
+      echo "$MOUNTS"
+    fi
   '';
   
   listRemotesScript = pkgs.writeShellScriptBin "rclone-list-remotes" ''

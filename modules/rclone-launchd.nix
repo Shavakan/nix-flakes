@@ -106,9 +106,15 @@ in {
     
     # Create an activation script to mount the remotes during home-manager switch
     home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter ["decryptRcloneConfig"] ''
-      # Execute the mount script
-      if [ -f "$HOME/.config/rclone/rclone.conf" ]; then
+      # Check if config file exists first
+      CONFIG_FILE="$HOME/.config/rclone/rclone.conf"
+      
+      # Only run the mount script if config file exists
+      if [ -f "$CONFIG_FILE" ]; then
+        echo "Checking mounts after config update"
         $DRY_RUN_CMD ${launchdScript}
+      else
+        echo "Skipping rclone mount check - no config file"
       fi
     '';
   };
