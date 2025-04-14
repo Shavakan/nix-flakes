@@ -17,25 +17,21 @@ let
       exit 1
     fi
     
-    # Function to check if a path is mounted
-    is_mounted() {
+    # Function to check if a path is mounted silently
+    is_mounted_path() {
       /sbin/mount | ${pkgs.gnugrep}/bin/grep -q "$1"
       return $?
     }
     
     # Path to the rclone-mount command from the profile
     RCLONE_MOUNT_CMD="${config.home.profileDirectory}/bin/rclone-mount"
-    RCLONE_STATUS_CMD="${config.home.profileDirectory}/bin/rclone-status"
     
-    # Log startup
-    ${pkgs.coreutils}/bin/echo "Starting rclone mounts at $(${pkgs.coreutils}/bin/date)"
-    
-    # Check for existing mounts first
-    $RCLONE_STATUS_CMD
+    # Log startup - minimal output
+    ${pkgs.coreutils}/bin/echo "Checking rclone mounts..."
     
     # Use the rclone-mount command for each mount point
     ${concatMapStringsSep "\n" (mount: ''
-      if ! is_mounted "${mount.mountPoint}"; then
+      if ! is_mounted_path "${mount.mountPoint}"; then
         ${pkgs.coreutils}/bin/echo "Mounting ${mount.remote} to ${mount.mountPoint}..."
         
         # Ensure mount point exists and is empty
@@ -45,25 +41,25 @@ let
         diskutil unmount force "${mount.mountPoint}" 2>/dev/null || true
         
         # Use more robust mount options
-        "$RCLONE_MOUNT_CMD" "${mount.remote}" "${mount.mountPoint}" --daemon
+        "$RCLONE_MOUNT_CMD" "${mount.remote}" "${mount.mountPoint}"
         
         # Give mount time to initialize
         ${pkgs.coreutils}/bin/sleep 3
         
         # Verify mount
-        if is_mounted "${mount.mountPoint}"; then
-          ${pkgs.coreutils}/bin/echo "✅ Successfully mounted ${mount.remote}"
+        if is_mounted_path "${mount.mountPoint}"; then
+          ${pkgs.coreutils}/bin/echo "Successfully mounted ${mount.remote}"
         else
-          ${pkgs.coreutils}/bin/echo "⚠️  Warning: Mount may have failed for ${mount.remote}"
+          ${pkgs.coreutils}/bin/echo "Warning: Mount may have failed for ${mount.remote}"
         fi
       else
-        ${pkgs.coreutils}/bin/echo "${mount.mountPoint} is already mounted"
+        # Mount already exists - no output needed
+        :  # No-op
       fi
     '') mountService.mounts}
     
-    # Verify mounts were successful
-    ${pkgs.coreutils}/bin/echo "\nVerifying mounts:"
-    $RCLONE_STATUS_CMD
+    # Done mounting all remotes
+    ${pkgs.coreutils}/bin/echo "Done mounting rclone remotes"
   '';
   
 in {

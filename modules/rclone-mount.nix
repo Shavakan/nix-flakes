@@ -28,28 +28,36 @@ let
     ${pkgs.coreutils}/bin/mkdir -p "$MOUNTPOINT"
     
     # Prepare to mount the remote filesystem
-    # Mount the remote filesystem with improved options for confidential files
-    nohup ${pkgs.rclone}/bin/rclone mount "$REMOTE" "$MOUNTPOINT" \
-      --vfs-cache-mode full \
+    # Generate a random port for remote control to avoid conflicts
+    RC_PORT=$((5573 + RANDOM % 100))
+    
+    # Try to unmount first if resource busy error tends to happen
+    diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
+    
+    # Ensure mount point exists and is empty
+    ${pkgs.coreutils}/bin/mkdir -p "$MOUNTPOINT"
+    
+    # Mount the remote filesystem with improved options
+    # Using daemon mode with allow-non-empty to handle existing directories
+    ${pkgs.rclone}/bin/rclone mount "$REMOTE" "$MOUNTPOINT" \
+      --vfs-cache-mode writes \
       --dir-cache-time 24h \
       --vfs-cache-max-size 2G \
       --vfs-write-back 5s \
-      --vfs-read-ahead 128M \
       --buffer-size 64M \
       --transfers 4 \
       --rc \
-      --rc-addr=127.0.0.1:5572 \
+      --rc-addr=127.0.0.1:$RC_PORT \
       --rc-no-auth \
       --allow-non-empty \
       --cache-dir="$HOME/.cache/rclone" \
-      --log-level=INFO \
-      --log-file="/tmp/rclone-mount.log" \
-      --umask=077 \
+      --log-level=ERROR \
+      --log-file="/tmp/rclone-mount-$RC_PORT.log" \
       --attr-timeout=1s \
       --dir-perms=0700 \
       --file-perms=0600 \
       --config="$HOME/.config/rclone/rclone.conf" \
-      > /dev/null 2>&1 &
+      --daemon
       
     # Wait a moment for mount to initialize
     ${pkgs.coreutils}/bin/sleep 2
@@ -58,8 +66,7 @@ let
     if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q "$MOUNTPOINT"; then
       echo "Mounted $REMOTE at $MOUNTPOINT"
     else
-      echo "WARNING: Mount command completed but $MOUNTPOINT doesn't appear to be mounted"
-      echo "Check /tmp/rclone-mount.log for errors"
+      echo "Mount failed: $MOUNTPOINT"
     fi
   '';
   
@@ -103,13 +110,8 @@ let
   '';
   
   statusScript = pkgs.writeShellScriptBin "rclone-status" ''
-    # Show status of rclone mounts
-    echo "Current rclone mounts:"
+    # Show only mount paths without headers
     /sbin/mount | ${pkgs.gnugrep}/bin/grep -i rclone
-    
-    # Show active rclone processes
-    echo -e "\nActive rclone processes:"
-    ${pkgs.procps}/bin/ps aux | ${pkgs.gnugrep}/bin/grep -i rclone | ${pkgs.gnugrep}/bin/grep -v grep
   '';
   
   listRemotesScript = pkgs.writeShellScriptBin "rclone-list-remotes" ''
@@ -120,14 +122,25 @@ let
   
   syncScript = pkgs.writeShellScriptBin "rclone-sync" ''
     # Force sync of rclone mounts
-    if nc -z 127.0.0.1 5572 2>/dev/null; then
-      echo "Forcing sync of all rclone mounts..."
-      ${pkgs.rclone}/bin/rclone rc --rc-addr=127.0.0.1:5572 vfs/refresh
-      echo "Sync complete"
-    else
-      echo "Remote control server is not running. Mount may not be active."
+    # Use simple approach to find RC ports
+    RC_PORTS=""
+    
+    if [ -x "$(command -v ps)" ]; then
+      RC_PORTS=$(${pkgs.procps}/bin/ps aux | ${pkgs.gnugrep}/bin/grep rclone | ${pkgs.gnugrep}/bin/grep -o "rc-addr=127.0.0.1:[0-9]*" | ${pkgs.gnused}/bin/sed 's/rc-addr=127.0.0.1://')
+    fi
+    
+    if [ -z "$RC_PORTS" ]; then
+      echo "No active rclone mounts with remote control ports found."
       exit 1
     fi
+    
+    for PORT in $RC_PORTS; do
+      if nc -z 127.0.0.1 $PORT 2>/dev/null; then
+        echo "Forcing sync of rclone mount using port $PORT..."
+        ${pkgs.rclone}/bin/rclone rc --rc-addr=127.0.0.1:$PORT vfs/refresh
+        echo "Sync complete for port $PORT"
+      fi
+    done
   '';
   
   # Add a script for secure copy of confidential files
@@ -299,22 +312,27 @@ let
     
     echo "\n=== Process Status ==="
     if [ -x "$(command -v ps)" ]; then
-      ps aux | ${pkgs.gnugrep}/bin/grep -i "rclone.*$MOUNTPOINT" | ${pkgs.gnugrep}/bin/grep -v grep || echo "No rclone process found"
+      ${pkgs.procps}/bin/ps aux | ${pkgs.gnugrep}/bin/grep -i "rclone.*$MOUNTPOINT" | ${pkgs.gnugrep}/bin/grep -v grep || echo "No rclone process found for $MOUNTPOINT"
     else
-      echo "ps command not found"
+      echo "ps command not available - cannot show process details"
     fi
     
-    echo "\n=== Recent Mount Log (last 20 lines) ==="
-    if [ -f "/tmp/rclone-mount.log" ]; then
-      tail -n 20 /tmp/rclone-mount.log
+    echo "\n=== Recent Mount Logs (all instances) ==="
+    LOG_FILES=$(ls -t /tmp/rclone-mount*.log 2>/dev/null)
+    if [ -n "$LOG_FILES" ]; then
+      for LOG_FILE in $LOG_FILES; do
+        echo "From $LOG_FILE:"
+        tail -n 10 "$LOG_FILE"
+        echo "-----------------------------------------"
+      done
     else
-      echo "No log file found at /tmp/rclone-mount.log"
+      echo "No log files found in /tmp/rclone-mount*.log"
     fi
     
     # Try to get the remote from command line or ps output
     REMOTE=""
     if [ -x "$(command -v ps)" ]; then
-      REMOTE=$(ps aux | ${pkgs.gnugrep}/bin/grep -i "rclone.*$MOUNTPOINT" | ${pkgs.gnugrep}/bin/grep -v grep | ${pkgs.gnused}/bin/sed -n 's/.*mount \([^ ]*\) .*/\1/p')
+      REMOTE=$(${pkgs.procps}/bin/ps aux | ${pkgs.gnugrep}/bin/grep -i "rclone.*$MOUNTPOINT" | ${pkgs.gnugrep}/bin/grep -v grep | ${pkgs.gnused}/bin/sed -n 's/.*mount \([^ ]*\) .*/\1/p' | head -1)
     fi
     
     if [ -n "$REMOTE" ]; then
@@ -340,11 +358,24 @@ let
     fi
     
     echo "\n=== RC Status ==="
-    if nc -z 127.0.0.1 5572 2>/dev/null; then
-      echo "Remote control is running"
-      ${pkgs.rclone}/bin/rclone rc --rc-addr=127.0.0.1:5572 core/stats || echo "Failed to get stats from RC server"
+    RC_PORTS=""
+    
+    if [ -x "$(command -v ps)" ]; then
+      RC_PORTS=$(${pkgs.procps}/bin/ps aux | ${pkgs.gnugrep}/bin/grep rclone | ${pkgs.gnugrep}/bin/grep -o "rc-addr=127.0.0.1:[0-9]*" | ${pkgs.gnused}/bin/sed 's/rc-addr=127.0.0.1://')
+    fi
+    
+    if [ -n "$RC_PORTS" ]; then
+      echo "Found active remote control port(s): $RC_PORTS"
+      for PORT in $RC_PORTS; do
+        if nc -z 127.0.0.1 $PORT 2>/dev/null; then
+          echo "Remote control is running on port $PORT"
+          ${pkgs.rclone}/bin/rclone rc --rc-addr=127.0.0.1:$PORT core/stats || echo "Failed to get stats from RC server on port $PORT"
+        else
+          echo "Port $PORT is configured but not responding"
+        fi
+      done
     else
-      echo "Remote control server is not running"
+      echo "No remote control servers found running"
     fi
     
     echo "\n===== DEBUGGING COMPLETE ====="
@@ -393,11 +424,11 @@ in {
       debugScript
       pkgs.rclone
       pkgs.netcat
-      pkgs.procps  # For ps command
-      pkgs.gnugrep # For grep command
-      pkgs.gnupg   # Required for encryption/decryption
+      pkgs.procps   # For ps and pgrep commands
+      pkgs.gnugrep  # For grep command
+      pkgs.gnupg    # Required for encryption/decryption
       pkgs.coreutils # Basic utilities (mkdir, sleep, echo, date)
-      pkgs.gnused # For sed used in debug script
+      pkgs.gnused   # For sed used in debug script
     ];
   };
 }
