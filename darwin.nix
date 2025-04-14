@@ -46,6 +46,19 @@
     # Container tools
     podman
   ];
+  
+  # Enable Homebrew management through nix-darwin
+  homebrew = {
+    enable = true;
+    onActivation = {
+      autoUpdate = true;  # Auto-update Homebrew on activation
+      cleanup = "zap";   # Uninstall packages not in the spec
+      upgrade = true;    # Upgrade outdated packages
+    };
+    casks = [
+      "macfuse"  # Install macFUSE as a cask
+    ];
+  };
 
   # Ensure binaries are linked properly
   environment.pathsToLink = [ "/bin" ];

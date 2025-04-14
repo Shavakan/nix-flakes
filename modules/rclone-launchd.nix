@@ -37,8 +37,25 @@ let
     ${concatMapStringsSep "\n" (mount: ''
       if ! is_mounted "${mount.mountPoint}"; then
         ${pkgs.coreutils}/bin/echo "Mounting ${mount.remote} to ${mount.mountPoint}..."
-        "$RCLONE_MOUNT_CMD" "${mount.remote}" "${mount.mountPoint}"
-        ${pkgs.coreutils}/bin/sleep 2 # Give mount time to initialize
+        
+        # Ensure mount point exists and is empty
+        ${pkgs.coreutils}/bin/mkdir -p "${mount.mountPoint}"
+        
+        # Try to unmount if it's showing as busy
+        diskutil unmount force "${mount.mountPoint}" 2>/dev/null || true
+        
+        # Use more robust mount options
+        "$RCLONE_MOUNT_CMD" "${mount.remote}" "${mount.mountPoint}" --daemon
+        
+        # Give mount time to initialize
+        ${pkgs.coreutils}/bin/sleep 3
+        
+        # Verify mount
+        if is_mounted "${mount.mountPoint}"; then
+          ${pkgs.coreutils}/bin/echo "✅ Successfully mounted ${mount.remote}"
+        else
+          ${pkgs.coreutils}/bin/echo "⚠️  Warning: Mount may have failed for ${mount.remote}"
+        fi
       else
         ${pkgs.coreutils}/bin/echo "${mount.mountPoint} is already mounted"
       fi
@@ -84,7 +101,9 @@ in {
         StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/rclone-mount.error.log";
         EnvironmentVariables = {
           # Ensure PATH includes the user profile
-          PATH = "${config.home.profileDirectory}/bin:$PATH";
+          PATH = "${config.home.profileDirectory}/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+          # Include HOME to ensure rclone finds its config
+          HOME = "${config.home.homeDirectory}";
         };
       };
     };

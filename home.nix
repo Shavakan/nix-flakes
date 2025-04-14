@@ -379,12 +379,11 @@
   services.rclone-mount = {
     enable = true;
     mounts = [
-      # Example mount - uncomment and modify as needed
-      # {
-      #   remote = "gdrive:backup";
-      #   mountPoint = "${config.home.homeDirectory}/mnt/gdrive";
-      #   allowOther = false;
-      # }
+      {
+        remote = "aws-shavakan:shavakan-rclone";
+        mountPoint = "${config.home.homeDirectory}/mnt/rclone";
+        allowOther = false;
+      }
     ];
   };
   
