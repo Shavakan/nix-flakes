@@ -5,6 +5,8 @@
   imports = [
     ./mcp-servers.nix
     ./modules/rclone.nix
+    ./modules/rclone-mount.nix
+    ./modules/rclone-launchd.nix
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -32,6 +34,9 @@
 
       # Secrets management
       agenix
+
+      # System utilities
+      watch
 
       # Misc
       direnv
@@ -369,7 +374,25 @@
     enable = true;
     configFile = ./secrets/rclone.conf.age;
   };
-
+  
+  # Configure rclone mounting service
+  services.rclone-mount = {
+    enable = true;
+    mounts = [
+      # Example mount - uncomment and modify as needed
+      # {
+      #   remote = "gdrive:backup";
+      #   mountPoint = "${config.home.homeDirectory}/mnt/gdrive";
+      #   allowOther = false;
+      # }
+    ];
+  };
+  
+  # Enable the rclone-launchd service to automatically mount at login
+  services.rclone-launchd = {
+    enable = true;
+  };
+  
   # Enhanced GPG configuration
   programs.gpg = {
     enable = true;

@@ -8,6 +8,7 @@ let
     "/Users/shavakan/workspace/svn2git"
     "/Users/shavakan/dotfiles"
     "/Users/shavakan/nix-flakes"
+    "/tmp"
   ];
 
   # Create wrapper scripts for MCP servers
