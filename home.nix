@@ -41,20 +41,6 @@
     stateVersion = "24.11";
   };
 
-  # Configure GPG to use terminal for passphrase entry and enable SSH support
-  home.file.".gnupg/gpg-agent.conf".text = ''
-    pinentry-program ${pkgs.gnupg}/bin/pinentry
-    allow-loopback-pinentry
-    no-grab
-    enable-ssh-support
-  '';
-
-  # Configure GPG to use loopback
-  home.file.".gnupg/gpg.conf".text = ''
-    use-agent
-    pinentry-mode loopback
-  '';
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -218,8 +204,11 @@
 
       # GPG configuration
       export GPG_TTY=$(tty)
-      export SSH_AUTH_SOCK=$(gpgconf --list-dirs agent-ssh-socket)
-      gpgconf --launch gpg-agent
+      
+      # Use Apple's SSH agent instead of GPG for SSH authentication on macOS
+      # This provides better integration with macOS keychain
+      unset SSH_AUTH_SOCK
+      unset SSH_AGENT_PID
 
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"
@@ -379,5 +368,58 @@
   services.rclone = {
     enable = true;
     configFile = ./secrets/rclone.conf.age;
+  };
+
+  # Enhanced GPG configuration
+  programs.gpg = {
+    enable = true;
+    settings = {
+      # Enable more compatibility options
+      no-symkey-cache = true;
+      # Use agent and pinentry loopback modes
+      use-agent = true;
+      pinentry-mode = "loopback";
+    };
+  };
+  
+  # Configure GPG agent (without SSH support since we're using macOS SSH agent)
+  services.gpg-agent = {
+    enable = true;
+    enableSshSupport = false; # Disable SSH support to avoid conflicts with macOS SSH agent
+    enableExtraSocket = true;
+    # Increased cache timeout to avoid frequent prompts
+    defaultCacheTtl = 3600;
+    maxCacheTtl = 86400;
+    # Use pinentry for passphrase prompting
+    pinentryPackage = pkgs.pinentry_mac;
+    extraConfig = ''
+      allow-loopback-pinentry
+      allow-emacs-pinentry
+      allow-preset-passphrase
+    '';
+  };
+
+  # Configure SSH with proper agent setup
+  programs.ssh = {
+    enable = true;
+    
+    # Add your existing SSH config
+    matchBlocks = {
+      "github.com" = {
+        hostname = "ssh.github.com";
+        port = 443;
+        user = "git";
+      };
+    };
+    
+    # Use proper SSH agent settings tailored for macOS
+    extraConfig = ''
+      # Use SSH agent for authentication and macOS keychain integration
+      AddKeysToAgent yes
+      UseKeychain yes
+      
+      # Add identities with confirmation
+      IdentitiesOnly yes
+    '';
   };
 }

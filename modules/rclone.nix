@@ -40,10 +40,15 @@ in
       # Change to the nix-flakes directory
       cd "$FLAKES_DIR" || exit 1
       
-      # Decrypt the file
+      # Decrypt the file - don't use environment vars to avoid passphrase prompt
       if [ -f "secrets/rclone.conf.age" ]; then
+        # Try to decrypt using SSH key directly
         $DRY_RUN_CMD ${pkgs.agenix}/bin/agenix -d "secrets/rclone.conf.age" -i "$SSH_KEY" > "${cfg.targetDirectory}/rclone.conf"
-        $DRY_RUN_CMD chmod 600 "${cfg.targetDirectory}/rclone.conf"
+        
+        # Set proper permissions
+        if [ -f "${cfg.targetDirectory}/rclone.conf" ]; then
+          $DRY_RUN_CMD chmod 600 "${cfg.targetDirectory}/rclone.conf"
+        fi
       fi
     '';
     
