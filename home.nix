@@ -4,9 +4,10 @@
   # Import configurations
   imports = [
     ./mcp-servers.nix
-    ./modules/rclone.nix
-    ./modules/rclone-mount.nix
-    ./modules/rclone-launchd.nix
+    ./modules/rclone/rclone.nix
+    ./modules/rclone/rclone-mount.nix
+    ./modules/rclone/rclone-launchd.nix
+    ./modules/awsctx.nix
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -27,6 +28,7 @@
       # Cloud tools
       kubectl
       awscli2
+      saml2aws
       google-cloud-sdk
 
       # GPG
@@ -407,7 +409,7 @@
   # Configure rclone with agenix
   services.rclone = {
     enable = true;
-    configFile = ./secrets/rclone.conf.age;
+    configFile = ./modules/agenix/rclone.conf.age;
   };
   
   # Configure rclone mounting service
@@ -455,6 +457,15 @@
       allow-preset-passphrase
     '';
   };
+  
+  # Enable awsctx service with fish and tide support
+  services.awsctx = {
+    enable = true;
+    includeFishSupport = true;
+    includeBashSupport = true;
+    # Enable if you use tide prompt
+    includeTidePrompt = true;
+  };
 
   # Configure SSH with proper agent setup
   programs.ssh = {
@@ -473,7 +484,7 @@
     extraConfig = ''
       # Use SSH agent for authentication and macOS keychain integration
       AddKeysToAgent yes
-      UseKeychain yes
+      # UseKeychain yes
       
       # Add identities with confirmation
       IdentitiesOnly yes

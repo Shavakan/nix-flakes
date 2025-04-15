@@ -36,7 +36,7 @@ in
       # Get paths
       SSH_KEY="$HOME/.ssh/id_ed25519"
       FLAKES_DIR="$HOME/nix-flakes"
-      SECRET_FILE="secrets/rclone.conf.age"
+      SECRET_FILE="modules/agenix/rclone.conf.age"
       TARGET_FILE="${cfg.targetDirectory}/rclone.conf"
       SECRET_HASH_FILE="${cfg.targetDirectory}/.rclone.conf.age.hash"
       

@@ -6,6 +6,7 @@ let
     "/Users/shavakan/Desktop"
     "/Users/shavakan/Downloads"
     "/Users/shavakan/workspace/svn2git"
+    "/Users/shavakan/workspace/awsctx"
     "/Users/shavakan/dotfiles"
     "/Users/shavakan/nix-flakes"
     "/tmp"
