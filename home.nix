@@ -41,6 +41,13 @@
       # System utilities
       watch
 
+      # JetBrains IDEs
+      jetbrains.rider           # .NET IDE
+      jetbrains.goland          # Go IDE
+      jetbrains.pycharm-professional  # Python IDE
+      jetbrains.idea-ultimate   # Java/Kotlin IDE
+      jetbrains.datagrip        # Database IDE
+
       # Misc
       direnv
     ];
@@ -49,7 +56,7 @@
     stateVersion = "24.11";
   };
 
-  # Allow unfree packages
+  # Allow unfree packages (required for JetBrains IDEs)
   nixpkgs.config.allowUnfree = true;
 
   # Disable showing news on update
