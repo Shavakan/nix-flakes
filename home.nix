@@ -24,6 +24,7 @@
     packages = with pkgs; [
       # Development languages and tools
       terraform
+      dotnet-sdk              # .NET SDK (current version)
 
       # Cloud tools
       kubectl
@@ -205,6 +206,9 @@
 
       # Path additions
       export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
+
+      # .NET Core SDK tools
+      export PATH="$PATH:$HOME/.dotnet/tools"
 
       # Go configuration
       export GOPATH=$HOME/workspace/go
