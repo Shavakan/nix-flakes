@@ -27,9 +27,27 @@ let
     # Ensure the mount point exists
     ${pkgs.coreutils}/bin/mkdir -p "$MOUNTPOINT"
     
+    # Verify config file exists
+    if [ ! -f "$HOME/.config/rclone/rclone.conf" ]; then
+      echo "Error: rclone config file not found at $HOME/.config/rclone/rclone.conf"
+      echo "Please ensure your rclone configuration is properly set up"
+      exit 1
+    fi
+    
+    # Check if remote exists in config
+    if ! ${pkgs.rclone}/bin/rclone listremotes 2>/dev/null | grep -q "^$(echo $REMOTE | cut -d: -f1):"; then
+      echo "Error: Remote '$(echo $REMOTE | cut -d: -f1)' not found in rclone config"
+      echo "Available remotes: $(${pkgs.rclone}/bin/rclone listremotes)"
+      exit 1
+    fi
+    
     # Prepare to mount the remote filesystem
     # Try to unmount first if resource busy error tends to happen
-    diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
+    if command -v diskutil >/dev/null 2>&1; then
+      diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
+    else
+      umount -f "$MOUNTPOINT" 2>/dev/null || true
+    fi
     
     # Ensure mount point exists and is empty
     ${pkgs.coreutils}/bin/mkdir -p "$MOUNTPOINT"
@@ -51,7 +69,9 @@ let
       --dir-perms=0700 \
       --file-perms=0600 \
       --config="$HOME/.config/rclone/rclone.conf" \
-      --daemon
+      --daemon \
+      --rc \
+      --rc-addr=127.0.0.1:0
       
     # Wait a moment for mount to initialize
     ${pkgs.coreutils}/bin/sleep 2
@@ -61,6 +81,21 @@ let
       echo "Mounted $REMOTE at $MOUNTPOINT"
     else
       echo "Mount failed: $MOUNTPOINT"
+      echo "Checking for rclone errors in log file..."
+      if [ -f "/tmp/rclone-mount.log" ]; then
+        tail -n 20 "/tmp/rclone-mount.log"
+      else
+        echo "No log file found at /tmp/rclone-mount.log"
+      fi
+      
+      echo "Checking if rclone process is running..."
+      ps aux | grep -v grep | grep "rclone.*$MOUNTPOINT" || echo "No rclone process found for this mount"
+      
+      echo "Testing access to remote..."
+      ${pkgs.rclone}/bin/rclone lsf "$REMOTE" --max-depth 1 --quiet || {
+        echo "Failed to list remote contents. Testing connection..."
+        ${pkgs.rclone}/bin/rclone about "$REMOTE" --json || echo "Cannot connect to remote $REMOTE"
+      }
     fi
   '';
   
@@ -97,8 +132,13 @@ let
     fi
     ${pkgs.coreutils}/bin/sleep 1
     
-    # Unmount the filesystem
-    diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
+    # Unmount the filesystem (platform-specific)
+    if command -v diskutil >/dev/null 2>&1; then
+      diskutil unmount force "$MOUNTPOINT" 2>/dev/null || true
+    else
+      umount -f "$MOUNTPOINT" 2>/dev/null || true
+      fusermount -u "$MOUNTPOINT" 2>/dev/null || true
+    fi
     
     echo "Unmounted $MOUNTPOINT"
   '';

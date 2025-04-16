@@ -12,9 +12,37 @@ let
   launchdScript = pkgs.writeShellScript "rclone-launchd-script" ''
     #!${pkgs.bash}/bin/bash
     # Exit if rclone conf doesn't exist
-    if [ ! -f "$HOME/.config/rclone/rclone.conf" ]; then
-      ${pkgs.coreutils}/bin/echo "No rclone configuration found. Exiting."
-      exit 1
+    RCLONE_CONF="$HOME/.config/rclone/rclone.conf"
+    if [ ! -f "$RCLONE_CONF" ]; then
+      ${pkgs.coreutils}/bin/echo "No rclone configuration found at $RCLONE_CONF"
+      ${pkgs.coreutils}/bin/echo "Checking if we need to decrypt the config..."
+      
+      # Try to trigger agenix decryption
+      FLAKES_DIR="$HOME/nix-flakes"
+      SECRET_FILE="$FLAKES_DIR/modules/agenix/rclone.conf.age"
+      
+      if [ -f "$SECRET_FILE" ]; then
+        ${pkgs.coreutils}/bin/echo "Found encrypted config at $SECRET_FILE. Attempting to decrypt..."
+        SSH_KEY="$HOME/.ssh/id_ed25519"
+        
+        if [ -f "$SSH_KEY" ]; then
+          ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$RCLONE_CONF" 2>/tmp/agenix-launch-error.log
+        else
+          ${pkgs.coreutils}/bin/echo "SSH key not found at $SSH_KEY, trying with default keys..."
+          ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$RCLONE_CONF" 2>/tmp/agenix-launch-error.log
+        fi
+        
+        if [ -f "$RCLONE_CONF" ] && [ -s "$RCLONE_CONF" ]; then
+          ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
+          ${pkgs.coreutils}/bin/echo "Successfully decrypted rclone config"
+        else
+          ${pkgs.coreutils}/bin/echo "Failed to decrypt rclone config. See /tmp/agenix-launch-error.log for details."
+          exit 1
+        fi
+      else
+        ${pkgs.coreutils}/bin/echo "No encrypted config found at $SECRET_FILE. Exiting."
+        exit 1
+      fi
     fi
     
     # Function to check if a path is mounted silently
@@ -34,11 +62,16 @@ let
       if ! is_mounted_path "${mount.mountPoint}"; then
         ${pkgs.coreutils}/bin/echo "Mounting ${mount.remote} to ${mount.mountPoint}..."
         
-        # Ensure mount point exists and is empty
+        # Ensure mount point exists and has proper permissions
         ${pkgs.coreutils}/bin/mkdir -p "${mount.mountPoint}"
+        ${pkgs.coreutils}/bin/chmod 755 "${mount.mountPoint}"
         
         # Try to unmount if it's showing as busy
-        diskutil unmount force "${mount.mountPoint}" 2>/dev/null || true
+        if command -v diskutil >/dev/null 2>&1; then
+          diskutil unmount force "${mount.mountPoint}" 2>/dev/null || true
+        else
+          umount -f "${mount.mountPoint}" 2>/dev/null || true
+        fi
         
         # Use more robust mount options
         "$RCLONE_MOUNT_CMD" "${mount.remote}" "${mount.mountPoint}"
@@ -50,7 +83,20 @@ let
         if is_mounted_path "${mount.mountPoint}"; then
           ${pkgs.coreutils}/bin/echo "Successfully mounted ${mount.remote}"
         else
-          ${pkgs.coreutils}/bin/echo "Warning: Mount may have failed for ${mount.remote}"
+          ${pkgs.coreutils}/bin/echo "Warning: Mount failed for ${mount.remote}"
+          ${pkgs.coreutils}/bin/echo "Checking logs for errors..."
+          
+          # Check if log file exists
+          if [ -f "/tmp/rclone-mount.log" ]; then
+            ${pkgs.coreutils}/bin/tail -n 20 "/tmp/rclone-mount.log"
+          fi
+          
+          # Test connection to remote
+          ${pkgs.coreutils}/bin/echo "Testing connection to remote ${mount.remote}..."
+          ${pkgs.rclone}/bin/rclone lsf "${mount.remote}" --max-depth 1 --quiet || {
+            ${pkgs.coreutils}/bin/echo "Failed to list remote contents. Testing connection..."
+            ${pkgs.rclone}/bin/rclone about "${mount.remote}" --json || ${pkgs.coreutils}/bin/echo "Cannot connect to remote ${mount.remote}"
+          }
         fi
       else
         # Mount already exists - no output needed

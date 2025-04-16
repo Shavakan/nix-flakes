@@ -61,14 +61,50 @@ in
         # Only decrypt if needed
         if [ $NEED_DECRYPT -eq 1 ]; then
           echo "Decrypting rclone config (hash changed or first run)"
-          # Try to decrypt using SSH key directly
-          $DRY_RUN_CMD ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$TARGET_FILE"
           
-          # Set proper permissions
-          if [ -f "$TARGET_FILE" ]; then
+          # Check if the secret file exists
+          if [ ! -f "$SECRET_FILE" ]; then
+            echo "ERROR: Secret file not found at $SECRET_FILE"
+            echo "Please ensure the encrypted rclone.conf.age file exists"
+            return 1
+          fi
+          
+          # Check if SSH key exists
+          if [ ! -f "$SSH_KEY" ]; then
+            echo "WARNING: SSH key not found at $SSH_KEY"
+            echo "Will attempt to use agent or default keys instead"
+          fi
+          
+          # Create temporary file for decryption output
+          TEMP_FILE=$(mktemp)
+          
+          # Try to decrypt using SSH key directly
+          if [ -f "$SSH_KEY" ]; then
+            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$TEMP_FILE" 2>/tmp/agenix-error.log
+          else
+            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log
+          fi
+          
+          # Check if decryption was successful
+          if [ $? -eq 0 ] && [ -s "$TEMP_FILE" ]; then
+            # Decryption successful, move the file to the target
+            $DRY_RUN_CMD mv "$TEMP_FILE" "$TARGET_FILE"
+            
+            # Set proper permissions
             $DRY_RUN_CMD chmod 600 "$TARGET_FILE"
+            
             # Store the hash for future comparisons
             echo "$CURRENT_HASH" > "$SECRET_HASH_FILE"
+            
+            echo "Successfully decrypted rclone config to $TARGET_FILE"
+          else
+            echo "ERROR: Failed to decrypt rclone config"
+            if [ -f "/tmp/agenix-error.log" ]; then
+              echo "Decryption error output:"
+              cat "/tmp/agenix-error.log"
+            fi
+            rm -f "$TEMP_FILE"
+            return 1
           fi
         fi
       fi
