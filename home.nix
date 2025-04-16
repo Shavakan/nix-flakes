@@ -239,34 +239,10 @@
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"
 
-      # Load devsisters script from rclone mounted storage
-      load_devsisters_script() {
-        local script_path="$HOME/mnt/rclone/devsisters.sh"
-        local link_path="$HOME/.devsisters.sh"
-
-        # Check if mount is available
-        if [ -f "$script_path" ]; then
-          # Update symlink if needed
-          if [ ! -h "$link_path" ] || [ "$(readlink $link_path)" != "$script_path" ]; then
-            ln -sf "$script_path" "$link_path"
-            echo "Link updated: $link_path -> $script_path"
-          fi
-
-          # Source the script
-          if ! source "$link_path" 2>/dev/null; then
-            echo "Error sourcing devsisters script"
-            return 1
-          fi
-          return 0
-        else
-          echo "Devsisters script not found at $script_path"
-          echo "Ensure rclone mount is active"
-          return 1
-        fi
-      }
-
-      # Try to load the devsisters script after ZSH is initialized
-      load_devsisters_script
+      # Source the shared Devsisters script loader 
+      if [ -f "$HOME/.devsisters.sh" ]; then
+        source "$HOME/.devsisters.sh"
+      fi
 
       # oh-my-zsh plugins and theme (if installed)
       if [ -d "$HOME/.oh-my-zsh" ]; then
@@ -504,4 +480,29 @@
       IdentitiesOnly yes
     '';
   };
+  
+  # Create an activation script that loads the Devsisters script after mount
+  home.activation.loadAndSourceDevsistersScript = lib.hm.dag.entryAfter ["mountRcloneRemotes"] ''
+    SCRIPT_PATH="$HOME/mnt/rclone/devsisters.sh"
+    LINK_PATH="$HOME/.devsisters.sh"
+    
+    # Check if mount is available and script exists
+    if [ -f "$SCRIPT_PATH" ]; then
+      # Update symlink if needed
+      $DRY_RUN_CMD ln -sf "$SCRIPT_PATH" "$LINK_PATH"
+      
+      # Try to source it immediately for this session
+      if [ -f "$LINK_PATH" ]; then
+        # Create a temporary wrapper script that sources the Devsisters script
+        TEMP_SCRIPT=$(mktemp)
+        echo "#!/bin/bash" > "$TEMP_SCRIPT"
+        echo "source \"$LINK_PATH\"" >> "$TEMP_SCRIPT"
+        chmod +x "$TEMP_SCRIPT"
+        
+        # Execute the temporary script
+        $DRY_RUN_CMD "$TEMP_SCRIPT" > /dev/null 2>&1 || true
+        rm -f "$TEMP_SCRIPT"
+      fi
+    fi
+  '';
 }
