@@ -42,6 +42,9 @@
       # System utilities
       watch
 
+      # Communication
+      slack                   # Slack desktop client
+
       # JetBrains IDEs
       jetbrains.rider           # .NET IDE
       jetbrains.goland          # Go IDE
