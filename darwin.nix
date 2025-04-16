@@ -45,6 +45,7 @@
     
     # Container tools
     podman
+    podman-compose
   ];
   
   # Enable Homebrew management through nix-darwin

@@ -92,7 +92,7 @@
             # Add a helpful message about home-manager
             system.activationScripts.postActivation.text = ''
               echo "nix-darwin successfully activated!"
-              echo "To activate home-manager, run: 'LANG=en_US.UTF-8 home-manager switch --flake .'"
+              echo "To activate home-manager, run: 'LANG=en_US.UTF-8 home-manager switch --flake . --impure'"
             '';
           }
         ];
