@@ -65,11 +65,34 @@ This repository contains my Nix flakes configuration for setting up a consistent
    cd ~/nix-flakes
    
    # First, apply the darwin system configuration
-   darwin-rebuild switch --flake .
+   # For MacBook:
+   darwin-rebuild switch --flake .#MacBook-changwonlee
+   
+   # For Mac Studio:
+   darwin-rebuild switch --flake .#macstudio-changwonlee
    
    # Then apply the Home Manager configuration
-   home-manager switch --flake .
+   LANG=en_US.UTF-8 home-manager switch --flake . --impure
    ```
+
+## File Structure
+
+```
+.
+├── flake.nix            # Main configuration entry point
+├── flake.lock           # Locked dependencies
+├── home.nix             # Home-manager user configuration
+├── darwin.nix           # Main macOS system configuration shared by all machines
+├── mcp-servers.nix       # Claude MCP server configuration
+├── modules/
+│   ├── agenix/           # Age-encrypted secrets
+│   ├── awsctx/           # AWS context switcher
+│   ├── darwin/           # Machine-specific configurations
+│   └── rclone/           # Remote mounting configuration
+└── README.md            # This file
+```
+
+This structure uses a shared darwin.nix for common settings, with machine-specific configurations in separate files.
 
 ## Key Features
 
@@ -116,9 +139,12 @@ agenix -e secrets/rclone.conf.age -i ~/.ssh/id_ed25519.pub
 
 To customize this configuration for your own use:
 
-1. Edit `home.nix` to adjust packages and settings
-2. Modify `darwin.nix` for macOS-specific settings
-3. Update `modules/rclone*.nix` for custom remote mounts
+1. Edit `darwin.nix` for main system settings shared by all machines
+2. Edit `modules/darwin/macbook.nix` or `modules/darwin/macstudio.nix` for machine-specific settings
+3. Edit `home.nix` to adjust user packages and settings
+4. Update `modules/rclone/*.nix` for custom remote mounts
+5. Modify `modules/awsctx/awsctx.nix` for AWS integration settings
+6. Update encrypted files using agenix in `modules/agenix/`
 
 ## Troubleshooting
 

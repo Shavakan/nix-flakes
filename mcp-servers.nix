@@ -7,6 +7,8 @@ let
     "/Users/shavakan/Downloads"
     "/Users/shavakan/workspace/svn2git"
     "/Users/shavakan/workspace/awsctx"
+    "/Users/shavakan/workspace/cos-server"
+    "/Users/shavakan/workspace/helm-charts-cos"
     "/Users/shavakan/dotfiles"
     "/Users/shavakan/nix-flakes"
     "/tmp"

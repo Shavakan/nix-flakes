@@ -59,46 +59,29 @@
   in {
     # nix-darwin configuration
     darwinConfigurations = {
-      # Configuration for your hostname
+      # Configuration for MacBook
       "MacBook-changwonlee" = darwin.lib.darwinSystem {
         system = darwinSystem;
-        
         modules = [
-          # Import your darwin.nix file
+          # Main darwin configuration
           ./darwin.nix
-          
-          # Basic system configuration
-          {
-            # Enable nix
-            nix.enable = true;
-            
-            # Set a system hostname
-            networking.hostName = "MacBook-changwonlee";
-            
-            # Fix for nixbld group ID mismatch
-            ids.gids.nixbld = 350;
-            
-            # Allow unfree packages
-            nixpkgs.config.allowUnfree = true;
-            
-            # Configure keyboard for language switching with Caps Lock
-            system.keyboard = {
-              enableKeyMapping = true;
-              remapCapsLockToControl = false;
-              remapCapsLockToEscape = false;
-              # Don't remap Caps Lock in nix-darwin
-            };
-            
-            # Add a helpful message about home-manager
-            system.activationScripts.postActivation.text = ''
-              echo "nix-darwin successfully activated!"
-              echo "To activate home-manager, run: 'LANG=en_US.UTF-8 home-manager switch --flake . --impure'"
-            '';
-          }
+          # Machine-specific settings
+          ./modules/darwin/macbook.nix
         ];
       };
       
-      # Keep default configuration as an alias
+      # Configuration for Mac Studio (new machine)
+      "macstudio-changwonlee" = darwin.lib.darwinSystem {
+        system = darwinSystem;
+        modules = [
+          # Main darwin configuration
+          ./darwin.nix
+          # Machine-specific settings
+          ./modules/darwin/macstudio.nix
+        ];
+      };
+      
+      # Default to MacBook configuration
       default = self.darwinConfigurations."MacBook-changwonlee";
     };
     

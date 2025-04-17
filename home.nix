@@ -7,7 +7,7 @@
     ./modules/rclone/rclone.nix
     ./modules/rclone/rclone-mount.nix
     ./modules/rclone/rclone-launchd.nix
-    ./modules/awsctx.nix
+    ./modules/awsctx/awsctx.nix
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
