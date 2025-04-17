@@ -51,15 +51,25 @@ This repository contains my Nix flakes configuration for setting up a consistent
    chmod 644 ~/.ssh/id_ed25519.pub
    ```
 
-5. Install nix-darwin:
+5. Add and install nix-darwin:
    ```bash
-   # Bootstrap nix-darwin installation
-   nix-build https://github.com/LnL7/nix-darwin/archive/master.tar.gz -A installer
+   # Add the nix-darwin channel
+   sudo nix-channel --add https://github.com/nix-darwin/nix-darwin/archive/master.tar.gz darwin
+   sudo nix-channel --update
+   
+   # Install nix-darwin (system configuration manager for macOS)
+   # The installer will ask if you want to create a default configuration
+   # and will take care of the initial setup
+   nix-build '<darwin>' -A installer
    ./result/bin/darwin-installer
    
-   # After installation, remove the build artifacts
-   rm -rf result
+   # After the initial installation completes, you can run darwin-rebuild directly
+   # and you may need to restart your shell
+   source /etc/static/bashrc
    ```
+   
+   Note: You don't need to customize the initial `/etc/nix-darwin/configuration.nix` file since
+   you'll be using your flake-based configuration instead.
 
 6. Apply the system and home configurations:
    ```bash
@@ -79,11 +89,11 @@ This repository contains my Nix flakes configuration for setting up a consistent
    # Or for Mac Studio:
    ./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee
    
-   # Log out and log back in, then activate home-manager
+   # Log out and log back in, or source your shell configuration
    source /etc/static/zshrc
    
    # Apply the home-manager configuration
-   LANG=en_US.UTF-8 nix run home-manager/master -- switch --flake . --impure
+   nix run home-manager/master -- switch --flake . --impure
    ```
 
 7. Install oh-my-zsh for shell customization (optional):
@@ -170,6 +180,15 @@ To customize this configuration for your own use:
 ### New Machine Setup Issues
 
 - **Flake attribute error**: If you get an error like `flake does not provide attribute 'apps.aarch64-darwin.macstudio-changwonlee'`, make sure you're using the correct syntax. Use `nix build ./\#darwinConfigurations.macstudio-changwonlee.system` followed by `./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee`.
+
+- **nix-darwin installation errors**: If the channel method doesn't work, you can try installing manually:
+  ```bash
+  git clone https://github.com/LnL7/nix-darwin
+  cd nix-darwin
+  nix-build release.nix -A installer
+  ./result/bin/darwin-installer
+  cd ..
+  ```
 
 - **Home Manager not found**: If `home-manager` command is not found, use `nix run home-manager/master -- switch --flake . --impure` instead.
 
