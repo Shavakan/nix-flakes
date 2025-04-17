@@ -128,9 +128,21 @@ in {
     };
     
     # Setup Tide prompt integration if enabled
-    home.file = mkIf (cfg.includeFishSupport && cfg.includeTidePrompt) {
-      ".config/fish/conf.d/tide_awsctx.fish".source = "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish";
-      ".config/fish/functions/_tide_item_awsctx.fish".source = "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish";
-    };
+    # We'll create these files during activation instead of using home.file
+    # to avoid errors when the repository hasn't been cloned yet
+    home.activation.setupTidePrompt = mkIf (cfg.includeFishSupport && cfg.includeTidePrompt) (
+      lib.hm.dag.entryAfter ["setupAwsctx"] ''
+        # Now that the repository is cloned, we can copy the tide prompt files
+        if [ -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" ]; then
+          $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/conf.d"
+          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" "$HOME/.config/fish/conf.d/tide_awsctx.fish"
+        fi
+        
+        if [ -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" ]; then
+          $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/functions"
+          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" "$HOME/.config/fish/functions/_tide_item_awsctx.fish"
+        fi
+      ''
+    );
   };
 }
