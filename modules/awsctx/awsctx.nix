@@ -8,15 +8,35 @@ let
   # Source path to your workspace awsctx
   sourcePath = "/Users/shavakan/workspace/awsctx";
   
+  # Repository URL
+  repoUrl = "https://github.com/devsisters/awsctx.git";
+  
   # Helper function to create directories
   createDirs = pkgs.writeShellScript "create-awsctx-dirs" ''
     mkdir -p "$HOME/Library/Application Support/awsctx"
     mkdir -p "$HOME/Library/Caches/awsctx"
+    mkdir -p "$HOME/workspace"
+  '';
+  
+  # Clone the repository if it doesn't exist
+  cloneRepo = pkgs.writeShellScript "clone-awsctx-repo" ''
+    ${createDirs}
+    
+    # Check if the repository already exists
+    if [ ! -d "${sourcePath}" ]; then
+      echo "Cloning awsctx repository to ${sourcePath}..."
+      mkdir -p "$(dirname "${sourcePath}")"
+      ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}"
+      echo "Repository cloned successfully!"
+    else
+      echo "awsctx repository already exists at ${sourcePath}"
+    fi
   '';
   
   # Copy the profiles to the config directory
   setupProfiles = pkgs.writeShellScript "setup-awsctx-profiles" ''
-    ${createDirs}
+    # First ensure the repository is cloned
+    ${cloneRepo}
     
     # Source path to profiles
     PROFILES_SRC="${sourcePath}/profiles"
@@ -71,12 +91,13 @@ in {
       saml2aws
       coreutils
       findutils
+      git  # Ensure git is available for cloning
     ];
     
     # Add awsctx to the path 
     home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
     
-    # Create directories and setup profiles
+    # Create directories, clone repository, and setup profiles
     home.activation.setupAwsctx = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD ${setupProfiles}
     '';
