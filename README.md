@@ -23,13 +23,24 @@ This repository contains my Nix flakes configuration for setting up a consistent
 
 ## Setup on a New Machine
 
-1. Clone this repository:
+1. Install Nix package manager:
    ```bash
-   git clone https://github.com/yourusername/nix-flakes.git ~/nix-flakes
+   sh <(curl -L https://nixos.org/nix/install) --daemon
+   ```
+
+2. Enable Nix flakes (if not already enabled):
+   ```bash
+   mkdir -p ~/.config/nix
+   echo 'experimental-features = nix-command flakes' >> ~/.config/nix/nix.conf
+   ```
+
+3. Clone this repository:
+   ```bash
+   git clone <your-repo-url> ~/nix-flakes
    cd ~/nix-flakes
    ```
 
-2. Copy your SSH key to the new machine (required for agenix decryption):
+4. Copy your SSH key to the new machine (required for agenix decryption):
    ```bash
    # On your old machine
    scp ~/.ssh/id_ed25519 newmachine:~/.ssh/
@@ -40,39 +51,47 @@ This repository contains my Nix flakes configuration for setting up a consistent
    chmod 644 ~/.ssh/id_ed25519.pub
    ```
 
-3. Install nix-darwin for macOS system configuration:
+5. Install nix-darwin:
    ```bash
-   # Clone the nix-darwin repository
+   # Bootstrap nix-darwin installation
    nix-build https://github.com/LnL7/nix-darwin/archive/master.tar.gz -A installer
    ./result/bin/darwin-installer
    
    # After installation, remove the build artifacts
    rm -rf result
    ```
-   
-   This will automatically install system dependencies like macFUSE through the Homebrew integration in your darwin.nix configuration.
 
-4. Install oh-my-zsh for shell customization:
+6. Apply the system and home configurations:
+   ```bash
+   cd ~/nix-flakes
+   
+   # First build the system configuration
+   # For MacBook:
+   nix build ./\#darwinConfigurations.MacBook-changwonlee.system
+   
+   # Or for Mac Studio:
+   nix build ./\#darwinConfigurations.macstudio-changwonlee.system
+   
+   # Then switch to the new configuration
+   # For MacBook:
+   ./result/sw/bin/darwin-rebuild switch --flake .#MacBook-changwonlee
+   
+   # Or for Mac Studio:
+   ./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee
+   
+   # Log out and log back in, then activate home-manager
+   source /etc/static/zshrc
+   
+   # Apply the home-manager configuration
+   LANG=en_US.UTF-8 nix run home-manager/master -- switch --flake . --impure
+   ```
+
+7. Install oh-my-zsh for shell customization (optional):
    ```bash
    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
    
    # Install powerlevel10k theme
    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
-   ```
-
-5. Apply the system and home configurations:
-   ```bash
-   cd ~/nix-flakes
-   
-   # First, apply the darwin system configuration
-   # For MacBook:
-   darwin-rebuild switch --flake .#MacBook-changwonlee
-   
-   # For Mac Studio:
-   darwin-rebuild switch --flake .#macstudio-changwonlee
-   
-   # Then apply the Home Manager configuration
-   LANG=en_US.UTF-8 home-manager switch --flake . --impure
    ```
 
 ## File Structure
@@ -148,6 +167,18 @@ To customize this configuration for your own use:
 
 ## Troubleshooting
 
+### New Machine Setup Issues
+
+- **Flake attribute error**: If you get an error like `flake does not provide attribute 'apps.aarch64-darwin.macstudio-changwonlee'`, make sure you're using the correct syntax. Use `nix build ./\#darwinConfigurations.macstudio-changwonlee.system` followed by `./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee`.
+
+- **Home Manager not found**: If `home-manager` command is not found, use `nix run home-manager/master -- switch --flake . --impure` instead.
+
+- **Shell environment not updated**: After initial installation, you may need to restart your terminal or run `source /etc/static/zshrc`.
+
+- **Nix channel errors**: If you see errors about nix channels, you may need to run `nix-channel --update` before proceeding.
+
 - **SSH key issues**: Ensure your SSH key is properly set up at `~/.ssh/id_ed25519`
-- **Mount errors**: Check `~/Library/Logs/rclone-mount.log` for details
-- **Configuration errors**: Use `home-manager --debug switch --flake .` for verbose output
+
+- **Mount errors**: Check `~/Library/Logs/rclone-mount.log` for details on rclone mounting issues.
+
+- **Package installation failures**: Some packages might fail to install. Try running `nix-collect-garbage -d` to clean up the Nix store, then retry the installation.
