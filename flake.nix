@@ -64,7 +64,7 @@
         system = darwinSystem;
         modules = [
           # Main darwin configuration
-          ./darwin.nix
+          ./modules/darwin/common.nix
           # Machine-specific settings
           ./modules/darwin/macbook.nix
         ];
@@ -75,7 +75,7 @@
         system = darwinSystem;
         modules = [
           # Main darwin configuration
-          ./darwin.nix
+          ./modules/darwin/common.nix
           # Machine-specific settings
           ./modules/darwin/macstudio.nix
         ];

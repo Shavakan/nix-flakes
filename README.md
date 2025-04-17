@@ -1,4 +1,10 @@
-# My Nix Development Environment
+### Other Issues
+
+- **SSH key issues**: Ensure your SSH key is properly set up at `~/.ssh/id_ed25519`
+
+- **Mount errors**: Check `~/Library/Logs/rclone-mount.log` for details on rclone mounting issues.
+
+- **Package installation failures**: Some packages might fail to install. Try running `nix-collect-garbage -d` to clean up the Nix store, then retry the installation.# My Nix Development Environment
 
 This repository contains my Nix flakes configuration for setting up a consistent development environment across machines.
 
@@ -51,52 +57,45 @@ This repository contains my Nix flakes configuration for setting up a consistent
    chmod 644 ~/.ssh/id_ed25519.pub
    ```
 
-5. Add and install nix-darwin:
+5. Install Homebrew (required for nix-darwin's Homebrew module):
+   ```bash
+   # Install Homebrew manually - nix-darwin can only manage an existing Homebrew installation
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+   
+   # Follow the instructions to add Homebrew to your PATH if prompted
+   ```
+
+6. Add the nix-darwin channel and install the basic framework:
    ```bash
    # Add the nix-darwin channel
    sudo nix-channel --add https://github.com/nix-darwin/nix-darwin/archive/master.tar.gz darwin
    sudo nix-channel --update
    
-   # Install nix-darwin (system configuration manager for macOS)
-   # The installer will ask if you want to create a default configuration
-   # and will take care of the initial setup
-   nix-build '<darwin>' -A installer
-   ./result/bin/darwin-installer
-   
-   # After the initial installation completes, you can run darwin-rebuild directly
-   # and you may need to restart your shell
-   source /etc/static/bashrc
-   ```
-   
-   Note: You don't need to customize the initial `/etc/nix-darwin/configuration.nix` file since
-   you'll be using your flake-based configuration instead.
+   # First install the darwin-rebuild command
+   nix-build '<darwin>' -A darwin-rebuild
 
-6. Apply the system and home configurations:
+   cd ~/nix-flakes
+
+   # Now apply your flake-based darwin configuration
+   # For MacBook:
+   ./result/bin/darwin-rebuild switch --flake .#MacBook-changwonlee
+   
+   # Or for Mac Studio:
+   ./result/bin/darwin-rebuild switch --flake .#macstudio-changwonlee
+   
+   # Source the updated shell configuration
+   source /etc/static/zshrc
+   ```
+
+7. Apply your flake-based configuration:
    ```bash
    cd ~/nix-flakes
    
-   # First build the system configuration
-   # For MacBook:
-   nix build ./\#darwinConfigurations.MacBook-changwonlee.system
-   
-   # Or for Mac Studio:
-   nix build ./\#darwinConfigurations.macstudio-changwonlee.system
-   
-   # Then switch to the new configuration
-   # For MacBook:
-   ./result/sw/bin/darwin-rebuild switch --flake .#MacBook-changwonlee
-   
-   # Or for Mac Studio:
-   ./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee
-   
-   # Log out and log back in, or source your shell configuration
-   source /etc/static/zshrc
-   
-   # Apply the home-manager configuration
+   # Apply your home-manager configuration
    nix run home-manager/master -- switch --flake . --impure
    ```
 
-7. Install oh-my-zsh for shell customization (optional):
+8. Install oh-my-zsh for shell customization (optional):
    ```bash
    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
    
@@ -177,27 +176,16 @@ To customize this configuration for your own use:
 
 ## Troubleshooting
 
-### New Machine Setup Issues
+### Homebrew Issues
 
-- **Flake attribute error**: If you get an error like `flake does not provide attribute 'apps.aarch64-darwin.macstudio-changwonlee'`, make sure you're using the correct syntax. Use `nix build ./\#darwinConfigurations.macstudio-changwonlee.system` followed by `./result/sw/bin/darwin-rebuild switch --flake .#macstudio-changwonlee`.
+- **Homebrew module error**: If you get `error: using the homebrew module requires homebrew installed`, you need to install Homebrew manually first using the command in step 5, then run nix-darwin again.
 
-- **nix-darwin installation errors**: If the channel method doesn't work, you can try installing manually:
-  ```bash
-  git clone https://github.com/LnL7/nix-darwin
-  cd nix-darwin
-  nix-build release.nix -A installer
-  ./result/bin/darwin-installer
-  cd ..
-  ```
+- **Homebrew path issues**: If Homebrew is installed but nix-darwin can't find it, make sure it's in your PATH. For Apple Silicon Macs, Homebrew is typically installed in `/opt/homebrew/bin/brew`.
+
+### General Setup Issues
 
 - **Home Manager not found**: If `home-manager` command is not found, use `nix run home-manager/master -- switch --flake . --impure` instead.
 
 - **Shell environment not updated**: After initial installation, you may need to restart your terminal or run `source /etc/static/zshrc`.
 
 - **Nix channel errors**: If you see errors about nix channels, you may need to run `nix-channel --update` before proceeding.
-
-- **SSH key issues**: Ensure your SSH key is properly set up at `~/.ssh/id_ed25519`
-
-- **Mount errors**: Check `~/Library/Logs/rclone-mount.log` for details on rclone mounting issues.
-
-- **Package installation failures**: Some packages might fail to install. Try running `nix-collect-garbage -d` to clean up the Nix store, then retry the installation.

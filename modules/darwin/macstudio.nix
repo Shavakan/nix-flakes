@@ -6,10 +6,5 @@
   networking.hostName = "macstudio-changwonlee";
   
   # Mac Studio-specific system packages
-  environment.systemPackages = with pkgs; [
-    # Add any Mac Studio-specific packages here
-    # For example, additional development tools
-    jetbrains.clion
-    jetbrains.datagrip
-  ];
+  environment.systemPackages = with pkgs; [ ];
 }
