@@ -28,6 +28,7 @@
 
       # Cloud tools
       kubectl
+      k9s             # Terminal UI for Kubernetes
       awscli2
       saml2aws
       google-cloud-sdk
