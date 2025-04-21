@@ -11,5 +11,5 @@ let
 in
 {
   # rclone configuration file
-  "secrets/rclone.conf.age".publicKeys = allKeys;
+  "modules/agenix/rclone.conf.age".publicKeys = allKeys;
 }
