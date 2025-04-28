@@ -43,6 +43,10 @@
       # System utilities
       watch
 
+      # Tools
+      alacritty
+      obsidian
+
       # Communication
       slack                   # Slack desktop client
 
