@@ -8,8 +8,8 @@ let
   # Source path to your workspace awsctx
   sourcePath = "/Users/shavakan/workspace/awsctx";
   
-  # Repository URL
-  repoUrl = "https://github.com/devsisters/awsctx.git";
+  # Repository URL - Use SSH instead of HTTPS
+  repoUrl = "git@github.com:devsisters/awsctx.git";
   
   # Helper function to create directories
   createDirs = pkgs.writeShellScript "create-awsctx-dirs" ''
@@ -26,10 +26,34 @@ let
     if [ ! -d "${sourcePath}" ]; then
       echo "Cloning awsctx repository to ${sourcePath}..."
       mkdir -p "$(dirname "${sourcePath}")"
+      
+      # Check if SSH key exists and has proper permissions
+      SSH_KEY="$HOME/.ssh/id_ed25519"
+      if [ -f "$SSH_KEY" ]; then
+        # Ensure proper permissions
+        chmod 600 "$SSH_KEY" 2>/dev/null || true
+      fi
+      
+      # Clone with appropriate settings
+      GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
       ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}"
-      echo "Repository cloned successfully!"
+      
+      if [ $? -eq 0 ]; then
+        echo "Repository cloned successfully!"
+      else
+        echo "Error cloning repository. Trying alternative URL..."
+        # Fallback to HTTPS if SSH fails
+        ${pkgs.git}/bin/git clone https://github.com/devsisters/awsctx.git "${sourcePath}"
+      fi
     else
       echo "awsctx repository already exists at ${sourcePath}"
+      
+      # Make sure the repository uses the right remote URL
+      CURRENT_URL=$(cd "${sourcePath}" && ${pkgs.git}/bin/git remote get-url origin 2>/dev/null)
+      if [ "$CURRENT_URL" = "https://github.com/devsisters/awsctx.git" ]; then
+        echo "Updating remote URL to use SSH..."
+        (cd "${sourcePath}" && ${pkgs.git}/bin/git remote set-url origin ${repoUrl})
+      fi
     fi
   '';
   
@@ -98,8 +122,18 @@ in {
     home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
     
     # Create directories, clone repository, and setup profiles
-    home.activation.setupAwsctx = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      $DRY_RUN_CMD ${setupProfiles}
+    # Run after git config to ensure SSH is preferred over HTTPS
+    home.activation.setupAwsctx = lib.hm.dag.entryAfter ["setupGitConfig"] ''
+      # Ensure git configuration is properly set
+      if [ -f "$HOME/.gitconfig" ]; then
+        # Explicitly set GIT_SSH_COMMAND to ensure SSH is used with proper settings
+        export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
+        echo "Running awsctx setup with configured git..."
+        $DRY_RUN_CMD ${setupProfiles}
+      else
+        echo "Warning: Git configuration not found. Using default clone settings."
+        $DRY_RUN_CMD ${setupProfiles}
+      fi
     '';
     
     # Configure shell integrations
