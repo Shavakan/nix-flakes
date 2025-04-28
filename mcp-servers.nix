@@ -56,9 +56,4 @@ in
   home.sessionVariables = {
     CLAUDE_MCP_CONFIG = "${config.home.homeDirectory}/.claude-mcp-config.json";
   };
-  
-  # Also add a shell alias for convenience
-  programs.zsh.shellAliases = {
-    claude = "open -a 'Claude'";
-  };
 }

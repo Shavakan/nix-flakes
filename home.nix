@@ -3,7 +3,7 @@
 {
   # Import configurations
   imports = [
-    ./mcp-servers.nix
+    # ./mcp-servers.nix
     ./modules/rclone/rclone.nix
     ./modules/rclone/rclone-mount.nix
     ./modules/rclone/rclone-launchd.nix
