@@ -19,6 +19,12 @@ in
       default = "${config.home.homeDirectory}/.config/rclone";
       description = "Directory where the rclone configuration should be placed";
     };
+    
+    verbose = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Show verbose output during decryption";
+    };
   };
   
   config = mkIf cfg.enable {
@@ -28,87 +34,86 @@ in
       agenix 
     ];
     
-    # Add an activation script to decrypt the secret (only when needed)
+    # Add an activation script to decrypt the secret
     home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      # Create the directory if it doesn't exist
-      $DRY_RUN_CMD mkdir -p "${cfg.targetDirectory}"
+      # Ensure the directory exists
+      mkdir -p "${cfg.targetDirectory}"
       
       # Get paths
       SSH_KEY="$HOME/.ssh/id_ed25519"
-      FLAKES_DIR="$HOME/nix-flakes"
-      SECRET_FILE="modules/agenix/rclone.conf.age"
+      RULES_FILE="$HOME/nix-flakes/modules/agenix/ssh.nix"
+      SECRET_FILE="$HOME/nix-flakes/modules/agenix/rclone.conf.age"
       TARGET_FILE="${cfg.targetDirectory}/rclone.conf"
-      SECRET_HASH_FILE="${cfg.targetDirectory}/.rclone.conf.age.hash"
+      TEMP_FILE="${cfg.targetDirectory}/rclone.conf.tmp"
       
-      # Change to the nix-flakes directory
-      cd "$FLAKES_DIR" || exit 1
+      # Define log function based on verbose setting
+      log() {
+        if [ "${toString cfg.verbose}" = "true" ]; then
+          echo "$1"
+        fi
+      }
+      
+      log "Processing rclone config"
       
       # Check if the secret exists
       if [ -f "$SECRET_FILE" ]; then
-        # Check if we need to decrypt by comparing hashes
-        CURRENT_HASH=$(${pkgs.coreutils}/bin/sha256sum "$SECRET_FILE" | cut -d' ' -f1)
-        NEED_DECRYPT=1
+        log "Secret file found"
         
-        # If hash file exists and matches, we can skip decryption
-        if [ -f "$SECRET_HASH_FILE" ] && [ -f "$TARGET_FILE" ]; then
-          STORED_HASH=$(cat "$SECRET_HASH_FILE")
-          if [ "$CURRENT_HASH" = "$STORED_HASH" ]; then
-            echo "Rclone config unchanged - using existing decrypted file"
-            NEED_DECRYPT=0
-          fi
+        # Calculate and check hash of the secret file to detect changes
+        HASH_FILE="${cfg.targetDirectory}/.rclone.conf.age.hash"
+        CURRENT_HASH=$(${pkgs.coreutils}/bin/sha256sum "$SECRET_FILE" | cut -d' ' -f1)
+        STORED_HASH=""
+        
+        if [ -f "$HASH_FILE" ]; then
+          STORED_HASH=$(cat "$HASH_FILE")
         fi
         
-        # Only decrypt if needed
-        if [ $NEED_DECRYPT -eq 1 ]; then
-          echo "Decrypting rclone config (hash changed or first run)"
+        # If hash has changed or hash file doesn't exist, decrypt again
+        if [ "$CURRENT_HASH" != "$STORED_HASH" ] || [ ! -f "$TARGET_FILE" ]; then
+          log "Changes detected in secret file or target doesn't exist"
           
-          # Check if the secret file exists
-          if [ ! -f "$SECRET_FILE" ]; then
-            echo "ERROR: Secret file not found at $SECRET_FILE"
-            echo "Please ensure the encrypted rclone.conf.age file exists"
-            return 1
-          fi
-          
-          # Check if SSH key exists
-          if [ ! -f "$SSH_KEY" ]; then
-            echo "WARNING: SSH key not found at $SSH_KEY"
-            echo "Will attempt to use agent or default keys instead"
-          fi
-          
-          # Create temporary file for decryption output
-          TEMP_FILE=$(mktemp)
-          
-          # Try to decrypt using SSH key directly
+          # Try with SSH key if available
           if [ -f "$SSH_KEY" ]; then
-            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$TEMP_FILE" 2>/tmp/agenix-error.log
+            log "Using SSH key"
+            rm -f "$TEMP_FILE"
+            ${pkgs.coreutils}/bin/timeout 10s ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" -r "$RULES_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log || true
           else
-            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log
+            log "Using SSH agent"
+            rm -f "$TEMP_FILE"
+            ${pkgs.coreutils}/bin/timeout 10s ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -r "$RULES_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log || true
           fi
           
-          # Check if decryption was successful
-          if [ $? -eq 0 ] && [ -s "$TEMP_FILE" ]; then
-            # Decryption successful, move the file to the target
-            $DRY_RUN_CMD mv "$TEMP_FILE" "$TARGET_FILE"
+          # Check if the temp file was created and has content
+          if [ -f "$TEMP_FILE" ] && [ -s "$TEMP_FILE" ]; then
+            log "Decryption successful"
             
-            # Set proper permissions
-            $DRY_RUN_CMD chmod 600 "$TARGET_FILE"
+            # Update the target file
+            mv "$TEMP_FILE" "$TARGET_FILE"
+            chmod 600 "$TARGET_FILE"
             
-            # Store the hash for future comparisons
-            echo "$CURRENT_HASH" > "$SECRET_HASH_FILE"
+            # Create backup of working config
+            cp "$TARGET_FILE" "${cfg.targetDirectory}/rclone.conf.backup" 2>/dev/null || true
             
-            echo "Successfully decrypted rclone config to $TARGET_FILE"
+            # Update the hash file with new hash
+            echo "$CURRENT_HASH" > "$HASH_FILE"
+            echo "Rclone config updated with new content"
           else
-            echo "ERROR: Failed to decrypt rclone config"
-            if [ -f "/tmp/agenix-error.log" ]; then
-              echo "Decryption error output:"
-              cat "/tmp/agenix-error.log"
+            # If decryption failed but we have a valid config, just keep using it
+            if [ ! -f "$TARGET_FILE" ] || [ ! -s "$TARGET_FILE" ]; then
+              if [ "${toString cfg.verbose}" = "true" ] && [ -f "/tmp/agenix-error.log" ]; then
+                echo "Decryption failed with errors:"
+                cat "/tmp/agenix-error.log"
+              fi
+              echo "No valid rclone config available"
+            else
+              log "Decryption failed, using existing config"
             fi
-            rm -f "$TEMP_FILE"
-            return 1
           fi
+        else
+          log "No changes detected in secret file, using existing config"
         fi
       fi
     '';
-    
   };
 }
+

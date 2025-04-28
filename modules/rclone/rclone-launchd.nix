@@ -13,36 +13,99 @@ let
     #!${pkgs.bash}/bin/bash
     # Exit if rclone conf doesn't exist
     RCLONE_CONF="$HOME/.config/rclone/rclone.conf"
-    if [ ! -f "$RCLONE_CONF" ]; then
-      ${pkgs.coreutils}/bin/echo "No rclone configuration found at $RCLONE_CONF"
-      ${pkgs.coreutils}/bin/echo "Checking if we need to decrypt the config..."
-      
-      # Try to trigger agenix decryption
-      FLAKES_DIR="$HOME/nix-flakes"
-      SECRET_FILE="$FLAKES_DIR/modules/agenix/rclone.conf.age"
-      
-      if [ -f "$SECRET_FILE" ]; then
-        ${pkgs.coreutils}/bin/echo "Found encrypted config at $SECRET_FILE. Attempting to decrypt..."
-        SSH_KEY="$HOME/.ssh/id_ed25519"
-        
-        if [ -f "$SSH_KEY" ]; then
-          ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$RCLONE_CONF" 2>/tmp/agenix-launch-error.log
-        else
-          ${pkgs.coreutils}/bin/echo "SSH key not found at $SSH_KEY, trying with default keys..."
-          ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$RCLONE_CONF" 2>/tmp/agenix-launch-error.log
+    if [ ! -f "$RCLONE_CONF" ] || [ ! -s "$RCLONE_CONF" ]; then
+    ${pkgs.coreutils}/bin/echo "No valid rclone configuration found at $RCLONE_CONF"
+    ${pkgs.coreutils}/bin/echo "Checking if we need to decrypt the config..."
+    
+    # Try to trigger agenix decryption
+    FLAKES_DIR="$HOME/nix-flakes"
+    SECRET_FILE="$FLAKES_DIR/modules/agenix/rclone.conf.age"
+    
+    if [ -f "$SECRET_FILE" ]; then
+    ${pkgs.coreutils}/bin/echo "Found encrypted config at $SECRET_FILE. Attempting to decrypt..."
+    SSH_KEY="$HOME/.ssh/id_ed25519"
+    
+    # Create directory if it doesn't exist
+    ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$RCLONE_CONF")"
+    
+    # Verbose environment checks
+    ${pkgs.coreutils}/bin/echo "Checking decryption environment:"
+    ${pkgs.coreutils}/bin/echo "- Secret file exists: $([ -f "$SECRET_FILE" ] && echo "Yes" || echo "No")"
+    ${pkgs.coreutils}/bin/echo "- SSH key exists: $([ -f "$SSH_KEY" ] && echo "Yes" || echo "No")"
+    ${pkgs.coreutils}/bin/echo "- SSH agent running: $(ssh-add -l 2>/dev/null >/dev/null && echo "Yes" || echo "No")"
+    
+    # First try with SSH agent and the correct rules file
+    ${pkgs.coreutils}/bin/echo "Trying to decrypt with SSH agent..."
+    ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -r "$FLAKES_DIR/modules/agenix/ssh.nix" > "$RCLONE_CONF.tmp" 2>/tmp/agenix-launch-error.log
+    DECRYPT_STATUS=$?
+    
+      # If that fails, try with explicit key
+    if [ $DECRYPT_STATUS -ne 0 ] && [ -f "$SSH_KEY" ]; then
+      ${pkgs.coreutils}/bin/echo "Agent decryption failed, trying with explicit SSH key..."
+        ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" -r "$FLAKES_DIR/modules/agenix/ssh.nix" > "$RCLONE_CONF.tmp" 2>/tmp/agenix-launch-error.log
+          DECRYPT_STATUS=$?
         fi
         
-        if [ -f "$RCLONE_CONF" ] && [ -s "$RCLONE_CONF" ]; then
+        # Check decryption results
+        if [ $DECRYPT_STATUS -eq 0 ] && [ -s "$RCLONE_CONF.tmp" ]; then
+          # Success - move the temporary file to the final location
+          ${pkgs.coreutils}/bin/mv "$RCLONE_CONF.tmp" "$RCLONE_CONF"
           ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
           ${pkgs.coreutils}/bin/echo "Successfully decrypted rclone config"
         else
-          ${pkgs.coreutils}/bin/echo "Failed to decrypt rclone config. See /tmp/agenix-launch-error.log for details."
-          exit 1
+          ${pkgs.coreutils}/bin/echo "Failed to decrypt rclone config (status: $DECRYPT_STATUS)"
+          if [ -f "/tmp/agenix-launch-error.log" ]; then
+            ${pkgs.coreutils}/bin/echo "Decryption error output:"
+            ${pkgs.coreutils}/bin/cat "/tmp/agenix-launch-error.log"
+          fi
+          
+          # Check if we have a backup config somewhere
+          BACKUP_CONF="$HOME/.config/rclone/rclone.conf.backup"
+          if [ -f "$BACKUP_CONF" ] && [ -s "$BACKUP_CONF" ]; then
+            ${pkgs.coreutils}/bin/echo "Using backup config from $BACKUP_CONF"
+            ${pkgs.coreutils}/bin/cp "$BACKUP_CONF" "$RCLONE_CONF"
+            ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
+          else
+            ${pkgs.coreutils}/bin/echo "No backup config found. Mounts will likely fail."
+            ${pkgs.coreutils}/bin/rm -f "$RCLONE_CONF.tmp"
+            # We'll continue anyway to see if there's another way to recover
+          fi
         fi
       else
-        ${pkgs.coreutils}/bin/echo "No encrypted config found at $SECRET_FILE. Exiting."
-        exit 1
+        ${pkgs.coreutils}/bin/echo "No encrypted config found at $SECRET_FILE."
+        
+        # Try to find any valid rclone config anywhere
+        ${pkgs.coreutils}/bin/echo "Looking for alternative configs..."
+        
+        # Try backup config first
+        BACKUP_CONF="$HOME/.config/rclone/rclone.conf.backup"
+        if [ -f "$BACKUP_CONF" ] && [ -s "$BACKUP_CONF" ]; then
+          ${pkgs.coreutils}/bin/echo "Found alternative config at $BACKUP_CONF. Using it as fallback."
+          ${pkgs.coreutils}/bin/cp "$BACKUP_CONF" "$RCLONE_CONF"
+          ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
+        # Try Application Support location
+        elif [ -f "$HOME/Library/Application Support/rclone/rclone.conf" ] && \
+             [ -s "$HOME/Library/Application Support/rclone/rclone.conf" ]; then
+          ${pkgs.coreutils}/bin/echo "Found alternative config in Application Support. Using it as fallback."
+          ${pkgs.coreutils}/bin/cp "$HOME/Library/Application Support/rclone/rclone.conf" "$RCLONE_CONF"
+          ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
+        # Try legacy location
+        elif [ -f "$HOME/.rclone.conf" ] && [ -s "$HOME/.rclone.conf" ]; then
+          ${pkgs.coreutils}/bin/echo "Found legacy config at ~/.rclone.conf. Using it as fallback."
+          ${pkgs.coreutils}/bin/cp "$HOME/.rclone.conf" "$RCLONE_CONF"
+          ${pkgs.coreutils}/bin/chmod 600 "$RCLONE_CONF"
+        fi
+        
+        if [ ! -f "$RCLONE_CONF" ] || [ ! -s "$RCLONE_CONF" ]; then
+          ${pkgs.coreutils}/bin/echo "No valid rclone config found anywhere. Mounts will fail."
+          # Continue anyway - the mount script will report specific errors
+        fi
       fi
+    else
+      ${pkgs.coreutils}/bin/echo "Found existing rclone config at $RCLONE_CONF"
+      # Make a backup of the working config
+      BACKUP_DIR="$(${pkgs.coreutils}/bin/dirname "$RCLONE_CONF")"
+      ${pkgs.coreutils}/bin/cp "$RCLONE_CONF" "$BACKUP_DIR/rclone.conf.backup" 2>/dev/null || true
     fi
     
     # Function to check if a path is mounted silently
