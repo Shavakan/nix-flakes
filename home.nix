@@ -11,6 +11,7 @@
     ./modules/git # Git configuration
     ./modules/neovim # Neovim configuration
     ./modules/zsh # Zsh configuration
+    ./modules/claude # Claude configuration (includes both desktop and code)
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage

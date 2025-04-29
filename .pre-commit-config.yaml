@@ -11,7 +11,7 @@ repos:
     verbose: false
     # Suppress "no files to check" message
     always_run: false
-    stages: [commit]
+    stages: [pre-commit]
   
   - id: statix-fix
     name: statix fix
@@ -22,4 +22,4 @@ repos:
     verbose: false
     # Suppress "no files to check" message
     always_run: false
-    stages: [commit]
+    stages: [pre-commit]

@@ -87,21 +87,6 @@
     EDITOR = "nvim";
   };
 
-  # LaunchAgents to set environment variables for GUI applications
-  launchd.user.agents = {
-    set-env = {
-      serviceConfig = {
-        ProgramArguments = [
-          "/bin/sh"
-          "-c"
-          "launchctl setenv CLAUDE_MCP_CONFIG /Users/shavakan/.claude-mcp-config.json"
-        ];
-        RunAtLoad = true;
-        KeepAlive = false;
-      };
-    };
-  };
-
   # Enable nix-command and flakes support
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
