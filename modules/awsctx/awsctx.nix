@@ -50,59 +50,47 @@ let
     fi
   '';
   
-  # Copy the profiles to the config directory
+  # Link the profiles directory to awsctx config instead of copying individual files
   setupProfiles = pkgs.writeShellScript "setup-awsctx-profiles" ''
     # First ensure the repository is cloned
     ${cloneRepo}
     
-    # Source path to profiles
+    # Source path to profiles directory
     PROFILES_SRC="${sourcePath}/profiles"
     
     # Destination for configs
     CONFIG_DIR="$HOME/Library/Application Support/awsctx"
+    PROFILES_LINK="$CONFIG_DIR/profiles"
     
-    # Copy all config files (except shell scripts)
-    for config_file in "$PROFILES_SRC"/*.config; do
-      if [ -f "$config_file" ]; then
-        base_name=$(basename "$config_file")
-        cp -f "$config_file" "$CONFIG_DIR/$base_name" >/dev/null 2>&1
+    # Create symlink for the entire profiles directory
+    if [ -d "$PROFILES_SRC" ]; then
+      # Remove old symlink if it exists
+      if [ -L "$PROFILES_LINK" ]; then
+        rm -f "$PROFILES_LINK"
+      # Remove old directory if it exists
+      elif [ -d "$PROFILES_LINK" ]; then
+        rm -rf "$PROFILES_LINK"
       fi
-    done
-  '';
-  
-  # Create activation script for the AWS login all command
-  aws_login_all = pkgs.writeShellScriptBin "aws-login-all" ''
-    #!/bin/bash
-    source "${sourcePath}/bin/aws-login-all"
+      
+      # Create a new symlink
+      ln -sf "$PROFILES_SRC" "$PROFILES_LINK"
+    fi
   '';
   
 in {
   options.services.awsctx = {
     enable = mkEnableOption "awsctx AWS profile context switcher";
     
-    includeFishSupport = mkOption {
+    includeZshSupport = mkOption {
       type = types.bool;
       default = true;
-      description = "Include Fish shell support";
-    };
-    
-    includeBashSupport = mkOption {
-      type = types.bool;
-      default = true;
-      description = "Include Bash shell support";
-    };
-    
-    includeTidePrompt = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Include Tide prompt integration for Fish shell";
+      description = "Include Zsh shell support";
     };
   };
   
   config = mkIf cfg.enable {
     # Ensure required packages are installed
     home.packages = with pkgs; [ 
-      aws_login_all
       saml2aws
       coreutils
       findutils
@@ -120,47 +108,14 @@ in {
       $DRY_RUN_CMD ${setupProfiles} >/dev/null 2>&1
     '';
     
-    # Configure shell integrations
-    programs.bash = mkIf cfg.includeBashSupport {
+    # Configure zsh integration
+    programs.zsh = mkIf cfg.includeZshSupport {
       initExtra = ''
-        # Source awsctx for bash
-        source "${sourcePath}/shells/bash/awsctx.sh"
+        # Source awsctx for zsh
+        if [ -f "${sourcePath}/shells/zsh/awsctx.zsh" ]; then
+          source "${sourcePath}/shells/zsh/awsctx.zsh"
+        fi
       '';
     };
-    
-    programs.fish = mkIf cfg.includeFishSupport {
-      interactiveShellInit = ''
-        # Configure awsctx for fish
-        if not functions -q awsctx
-          source "${sourcePath}/shells/fish/functions/awsctx.fish"
-        end
-      '';
-
-      # Add completions for fish shell
-      shellInit = ''
-        # Add awsctx completions
-        if test -d "${sourcePath}/shells/fish/completions"
-          set -p fish_complete_path "${sourcePath}/shells/fish/completions"
-        end
-      '';
-    };
-    
-    # Setup Tide prompt integration if enabled
-    # We'll create these files during activation instead of using home.file
-    # to avoid errors when the repository hasn't been cloned yet
-    home.activation.setupTidePrompt = mkIf (cfg.includeFishSupport && cfg.includeTidePrompt) (
-      lib.hm.dag.entryAfter ["setupAwsctx"] ''
-        # Now that the repository is cloned, we can copy the tide prompt files
-        if [ -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" ]; then
-          $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/conf.d"
-          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" "$HOME/.config/fish/conf.d/tide_awsctx.fish" >/dev/null 2>&1
-        fi
-        
-        if [ -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" ]; then
-          $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/functions"
-          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" "$HOME/.config/fish/functions/_tide_item_awsctx.fish" >/dev/null 2>&1
-        fi
-      ''
-    );
   };
 }

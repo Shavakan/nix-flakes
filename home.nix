@@ -454,13 +454,10 @@
     '';
   };
   
-  # Enable awsctx service with fish and tide support
+  # Enable awsctx service with zsh support
   services.awsctx = {
     enable = true;
-    includeFishSupport = true;
-    includeBashSupport = true;
-    # Enable if you use tide prompt
-    includeTidePrompt = true;
+    includeZshSupport = true;
   };
 
   # Configure SSH with proper agent setup
