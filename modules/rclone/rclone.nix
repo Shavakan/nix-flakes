@@ -42,7 +42,7 @@ in
       # Get paths
       SSH_KEY="$HOME/.ssh/id_ed25519"
       RULES_FILE="$HOME/nix-flakes/modules/agenix/ssh.nix"
-      SECRET_FILE="$HOME/nix-flakes/modules/agenix/rclone.conf.age"
+      SECRET_FILE="${toString cfg.configFile}"
       TARGET_FILE="${cfg.targetDirectory}/rclone.conf"
       TEMP_FILE="${cfg.targetDirectory}/rclone.conf.tmp"
       
@@ -72,48 +72,56 @@ in
         if [ "$CURRENT_HASH" != "$STORED_HASH" ] || [ ! -f "$TARGET_FILE" ]; then
           log "Changes detected in secret file or target doesn't exist"
           
-          # Try with SSH key if available
+          # Try to decrypt with SSH key first
           if [ -f "$SSH_KEY" ]; then
-            log "Using SSH key"
-            rm -f "$TEMP_FILE"
-            ${pkgs.coreutils}/bin/timeout 10s ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" -r "$RULES_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log || true
+            log "Using SSH key for decryption"
+            # Run agenix with explicit key
+            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$TEMP_FILE" 2>/dev/null
+            DECRYPT_STATUS=$?
           else
-            log "Using SSH agent"
-            rm -f "$TEMP_FILE"
-            ${pkgs.coreutils}/bin/timeout 10s ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -r "$RULES_FILE" > "$TEMP_FILE" 2>/tmp/agenix-error.log || true
+            # If key not found, try with agent
+            log "SSH key not found, trying with SSH agent"
+            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$TEMP_FILE" 2>/dev/null
+            DECRYPT_STATUS=$?
           fi
           
-          # Check if the temp file was created and has content
-          if [ -f "$TEMP_FILE" ] && [ -s "$TEMP_FILE" ]; then
+          # Check if decryption succeeded
+          if [ $DECRYPT_STATUS -eq 0 ] && [ -s "$TEMP_FILE" ]; then
             log "Decryption successful"
             
-            # Update the target file
-            mv "$TEMP_FILE" "$TARGET_FILE"
-            chmod 600 "$TARGET_FILE"
-            
-            # Create backup of working config
-            cp "$TARGET_FILE" "${cfg.targetDirectory}/rclone.conf.backup" 2>/dev/null || true
-            
-            # Update the hash file with new hash
-            echo "$CURRENT_HASH" > "$HASH_FILE"
-            echo "Rclone config updated with new content"
-          else
-            # If decryption failed but we have a valid config, just keep using it
-            if [ ! -f "$TARGET_FILE" ] || [ ! -s "$TARGET_FILE" ]; then
-              if [ "${toString cfg.verbose}" = "true" ] && [ -f "/tmp/agenix-error.log" ]; then
-                echo "Decryption failed with errors:"
-                cat "/tmp/agenix-error.log"
-              fi
-              echo "No valid rclone config available"
+            # Validate decrypted content (should start with [ for rclone config)
+            if grep -q '^\[' "$TEMP_FILE"; then
+              # Update the target file
+              mv "$TEMP_FILE" "$TARGET_FILE"
+              chmod 600 "$TARGET_FILE"
+              
+              # Create backup of working config
+              cp "$TARGET_FILE" "${cfg.targetDirectory}/rclone.conf.backup" 2>/dev/null || true
+              
+              # Update the hash file with new hash
+              echo "$CURRENT_HASH" > "$HASH_FILE"
+              echo "Rclone config updated with new content"
             else
-              log "Decryption failed, using existing config"
+              echo "Error: Decryption succeeded but output is not a valid rclone config"
+              cat "$TEMP_FILE" | head -5
+              rm -f "$TEMP_FILE"
+            fi
+          else
+            echo "Error: Failed to decrypt rclone config (status: $DECRYPT_STATUS)"
+            rm -f "$TEMP_FILE"
+            
+            # If we have a working backup, use that
+            if [ -f "${cfg.targetDirectory}/rclone.conf.backup" ]; then
+              echo "Using backup rclone config"
+              cp "${cfg.targetDirectory}/rclone.conf.backup" "$TARGET_FILE"
             fi
           fi
         else
           log "No changes detected in secret file, using existing config"
         fi
+      else
+        echo "Warning: Secret file not found at $SECRET_FILE"
       fi
     '';
   };
 }
-

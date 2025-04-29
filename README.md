@@ -76,12 +76,8 @@ This repository contains my Nix flakes configuration for setting up a consistent
 
    cd ~/nix-flakes
 
-   # Now apply your flake-based darwin configuration
-   # For MacBook:
-   ./result/bin/darwin-rebuild switch --flake .#MacBook-changwonlee
-   
-   # Or for Mac Studio:
-   ./result/bin/darwin-rebuild switch --flake .#macstudio-changwonlee
+   # Build and apply the configuration using your hostname
+   ./result/bin/darwin-rebuild switch --flake .#$(hostname)
    
    # Source the updated shell configuration
    source /etc/static/zshrc
@@ -110,17 +106,32 @@ This repository contains my Nix flakes configuration for setting up a consistent
 ├── flake.nix            # Main configuration entry point
 ├── flake.lock           # Locked dependencies
 ├── home.nix             # Home-manager user configuration
-├── darwin.nix           # Main macOS system configuration shared by all machines
-├── mcp-servers.nix       # Claude MCP server configuration
 ├── modules/
-│   ├── agenix/           # Age-encrypted secrets
-│   ├── awsctx/           # AWS context switcher
-│   ├── darwin/           # Machine-specific configurations
-│   └── rclone/           # Remote mounting configuration
+│   ├── agenix/          # Age-encrypted secrets
+│   ├── awsctx/          # AWS context switcher
+│   ├── darwin/          # Machine-specific configurations
+│   │   ├── common.nix   # Shared darwin configuration
+│   │   ├── macbook.nix  # MacBook configuration
+│   │   └── macstudio.nix # Mac Studio configuration
+│   ├── host-config/     # Machine type detection and settings
+│   └── rclone/          # Remote mounting configuration
 └── README.md            # This file
 ```
 
 This structure uses a shared darwin.nix for common settings, with machine-specific configurations in separate files.
+
+## Host-specific Configuration
+
+This setup uses per-machine configurations based on hostname:
+
+1. Apply your configuration using:
+   ```bash
+   darwin-rebuild switch --flake .#$(hostname)
+   ```
+
+2. To add a new machine:
+   - Add an entry to `flake.nix` with your hostname
+   - Update machine type detection in `modules/host-config/git.nix`
 
 ## Key Features
 
@@ -131,6 +142,7 @@ This configuration includes:
 - **Cloud Tools**: AWS CLI, Google Cloud SDK, kubectl, Vault
 - **Custom Mounts**: rclone with automatic mounting of remote filesystems
 - **Security**: GPG and SSH configuration with macOS keychain integration
+- **Machine-specific Configuration**: Automatic detection and configuration for different machines through the `.hostname` file
 - **System Configuration**: macOS settings and Homebrew package management via nix-darwin
 
 ## Automatic Mounts
@@ -167,12 +179,13 @@ agenix -e secrets/rclone.conf.age -i ~/.ssh/id_ed25519.pub
 
 To customize this configuration for your own use:
 
-1. Edit `darwin.nix` for main system settings shared by all machines
-2. Edit `modules/darwin/macbook.nix` or `modules/darwin/macstudio.nix` for machine-specific settings
+1. Edit `modules/darwin/common.nix` for main system settings shared by all machines
+2. Edit `modules/darwin/macbook.nix` or `modules/darwin/macstudio.nix` for machine-type settings
 3. Edit `home.nix` to adjust user packages and settings
-4. Update `modules/rclone/*.nix` for custom remote mounts
-5. Modify `modules/awsctx/awsctx.nix` for AWS integration settings
-6. Update encrypted files using agenix in `modules/agenix/`
+4. Modify `modules/host-config/default.nix` to add machine types
+5. Update `modules/rclone/*.nix` for custom remote mounts
+6. Modify `modules/awsctx/awsctx.nix` for AWS integration settings
+7. Update encrypted files using agenix in `modules/agenix/`
 
 ## Troubleshooting
 
@@ -181,6 +194,11 @@ To customize this configuration for your own use:
 - **Homebrew module error**: If you get `error: using the homebrew module requires homebrew installed`, you need to install Homebrew manually first using the command in step 5, then run nix-darwin again.
 
 - **Homebrew path issues**: If Homebrew is installed but nix-darwin can't find it, make sure it's in your PATH. For Apple Silicon Macs, Homebrew is typically installed in `/opt/homebrew/bin/brew`.
+
+### Host Configuration
+
+- **Git signing**: For commit signing, add `gitSigningKey` and `enableGitSigning = true` to your machine type config
+- **New machine type**: Choose the closest configuration when running `darwin-rebuild`
 
 ### General Setup Issues
 

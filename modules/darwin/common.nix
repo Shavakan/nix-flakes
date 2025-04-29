@@ -53,6 +53,7 @@
     vscode
     slack
     iterm2
+    alacritty
     google-chrome
     
     # Container tools

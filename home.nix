@@ -1,4 +1,4 @@
-{ config, pkgs, lib, ... }@args:
+{ config, pkgs, lib, hostname, ... }@args:
 
 {
   # Import configurations
@@ -8,6 +8,7 @@
     ./modules/rclone/rclone-mount.nix
     ./modules/rclone/rclone-launchd.nix
     ./modules/awsctx/awsctx.nix
+    # Host-specific config is imported in flake.nix
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -44,7 +45,6 @@
       watch
 
       # Tools
-      alacritty
       obsidian
 
       # Communication
@@ -71,7 +71,7 @@
   # Disable showing news on update
   news.display = "silent";
 
-  # Enable and configure Git - placed early in config to be available for other services
+  # Enable Git - core configuration now comes from host-config/git.nix
   programs.git = {
     enable = true;
     userName = "ChangWon Lee";
@@ -82,7 +82,6 @@
         editor = "nvim";
         excludesfile = "~/.gitignore_global";
       };
-      user.signingkey = "1193AD54623C8450";
       merge = {
         tool = "vimdiff";
       };
@@ -96,12 +95,7 @@
         process = "git-lfs filter-process";
         required = true;
       };
-      commit.gpgsign = true;
-      gpg.program = "gpg";
-      push = {
-        autoSetupRemote = true;
-        default = "current";
-      };
+      # Machine-specific settings now come from host-config/git.nix
       alias = {
         lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
       };
@@ -115,43 +109,7 @@
     };
   };
   
-  # Create an activation script to ensure git config is applied early
-  home.activation.setupGitConfig = lib.hm.dag.entryBefore ["writeBoundary"] ''
-    echo "Ensuring git configuration is available early in the process..."
-    $DRY_RUN_CMD mkdir -p "$HOME/.config/git"
-    
-    # Create a temporary git config with essential settings
-    TMP_GIT_CONFIG=$(mktemp)
-    cat > "$TMP_GIT_CONFIG" << EOF
-[user]
-    name = ChangWon Lee
-    email = cs.changwon.lee@gmail.com
-    signingkey = 1193AD54623C8450
-[core]
-    editor = nvim
-[url "git@github.com:"]
-    insteadOf = https://github.com/
-[url "git@gitlab.com:"]
-    insteadOf = https://gitlab.com/
-[url "https://"]
-    insteadOf = git://
-[gpg]
-    program = gpg
-[commit]
-    gpgsign = true
-[push]
-    autoSetupRemote = true
-    default = current
-EOF
-    
-    # Only copy if different or if no git config exists
-    if [ ! -f "$HOME/.gitconfig" ] || ! cmp -s "$TMP_GIT_CONFIG" "$HOME/.gitconfig"; then
-      $DRY_RUN_CMD cp "$TMP_GIT_CONFIG" "$HOME/.gitconfig"
-      echo "Git configuration set up early in the activation process"
-    fi
-    
-    rm -f "$TMP_GIT_CONFIG"
-  '';
+  # Git config activation is now handled by the host-config module
 
   # Create global gitignore file
   home.file.".gitignore_global".text = ''

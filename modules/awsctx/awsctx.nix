@@ -122,8 +122,8 @@ in {
     home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
     
     # Create directories, clone repository, and setup profiles
-    # Run after git config to ensure SSH is preferred over HTTPS
-    home.activation.setupAwsctx = lib.hm.dag.entryAfter ["setupGitConfig"] ''
+    # Run after git config is established
+    home.activation.setupAwsctx = lib.hm.dag.entryAfter ["verifyHostname"] ''
       # Ensure git configuration is properly set
       if [ -f "$HOME/.gitconfig" ]; then
         # Explicitly set GIT_SSH_COMMAND to ensure SSH is used with proper settings

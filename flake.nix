@@ -57,27 +57,31 @@
     # Username
     username = "shavakan";
   in {
-    # nix-darwin configuration
+    # nix-darwin configuration for different machine types
     darwinConfigurations = {
-      # Configuration for MacBook
+      # MacBook configuration
       "MacBook-changwonlee" = darwin.lib.darwinSystem {
         system = darwinSystem;
         modules = [
           # Main darwin configuration
           ./modules/darwin/common.nix
-          # Machine-specific settings
+          # MacBook-specific settings
           ./modules/darwin/macbook.nix
+          # Set hostname explicitly
+          { networking.hostName = "MacBook-changwonlee"; }
         ];
       };
       
-      # Configuration for Mac Studio (new machine)
+      # Mac Studio configuration
       "macstudio-changwonlee" = darwin.lib.darwinSystem {
         system = darwinSystem;
         modules = [
           # Main darwin configuration
           ./modules/darwin/common.nix
-          # Machine-specific settings
+          # Mac Studio-specific settings
           ./modules/darwin/macstudio.nix
+          # Set hostname explicitly
+          { networking.hostName = "macstudio-changwonlee"; }
         ];
       };
       
@@ -93,6 +97,10 @@
       modules = [
         ./home.nix
         agenix.homeManagerModules.default
+        
+        # Add hostname-aware modules
+        ./modules/host-config
+        ./modules/host-config/git.nix
       ];
       
       # Extra special args to pass to home.nix
