@@ -27,10 +27,22 @@ with lib;
         conflictstyle = "diff3";
       };
       
+      # Diff configuration
+      diff = {
+        tool = "vimdiff";
+      };
+      
+      # Tool configuration for both diff and merge
+      difftool = {
+        prompt = false;
+        trustExitCode = true;
+      };
+      
       mergetool = {
         vimdiff.cmd = "nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c '$wincmd J'";
         keepBackup = false;
         prompt = false;
+        trustExitCode = true;
       };
       
       # Pull configuration
@@ -88,16 +100,9 @@ with lib;
       };
     };
     
-    # Delta for better diffs
+    # Delta disabled - using standard git diff
     delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        light = false;
-        side-by-side = true;
-        line-numbers = true;
-        syntax-theme = "Nord";
-      };
+      enable = false;
     };
   };
   

@@ -9,6 +9,7 @@
     ./modules/rclone/rclone-launchd.nix
     ./modules/awsctx/awsctx.nix
     ./modules/git         # Git configuration
+    ./modules/neovim      # Neovim configuration
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -209,7 +210,7 @@
     '';
   };
 
-  # Configure tmux
+  # Tmux configuration
   programs.tmux = {
     enable = true;
     shortcut = "a";
@@ -218,108 +219,23 @@
     escapeTime = 0;
     historyLimit = 10000;
 
+    mouse = true;
+    keyMode = "vi";
+    customPaneNavigationAndResize = true;
+    aggressiveResize = true;
+    clock24 = true;
+    newSession = true; 
+
     extraConfig = ''
       # Additional tmux configuration
-      set -g mouse on
       set -g status-style "bg=black,fg=white"
 
-      # Pane navigation like vim
-      bind h select-pane -L
-      bind j select-pane -D
-      bind k select-pane -U
-      bind l select-pane -R
-
       # Synchronize panes
-      bind-key sp set-window-option synchronize-panes\; display-message "synchromize-panes is now #{?pane_synchronized,on,off}"
+      bind-key sp set-window-option synchronize-panes\; display-message "synchronize-panes is now #{?pane_synchronized,on,off}"
     '';
   };
 
-  # Configure neovim - using only the home-manager module to avoid conflicts
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
-
-    extraConfig = ''
-      "" Shavakan's .vimrc file 
-      "" Adapted for neovim configuration
-
-      scripte utf-8
-
-      syn enable
-      syn sync fromstart
-      filetype plugin indent on
-
-      " AUTOCMD
-      autocmd BufRead,BufNewFile *.capnp set filetype=capnp
-      autocmd BufRead,BufNewFile *.tf set filetype=terraform
-      autocmd FileType gitcommit DiffGitCached | wincmd L | wincmd p
-
-      if has("autocmd")
-        aug vimrc
-        au!
-
-        " filetype-specific configurations
-        au FileType python setl ts=8 sw=4 sts=4 et
-        au FileType yaml setl ts=8 sw=2 sts=2 et
-        au FileType sh setl ts=2 sw=4 sts=4 et
-        au FileType c setl ts=8 sw=4 sts=4 et
-        au FileType html setl ts=8 sw=2 sts=2 et
-        au FileType css setl ts=8 sw=4 sts=4 et
-        au FileType javascript setl ts=2 sw=2 sts=2 et
-        au FileType terraform setl ts=8 sw=2 sts=2 et
-        au FileType cpp setl ts=8 sw=4 sts=4 et
-        au FileType java setl ts=4 sw=4 sts=0 noet
-        au FileType php setl ts=8 sw=4 sts=4 et
-        au FileType asp setl ts=8 sw=4 sts=4 et
-        au FileType jsp setl ts=8 sw=4 sts=4 et
-        au FileType ruby setl ts=8 sw=4 sts=4 et
-        au FileType capnp setl ts=2 sw=2 sts=2 et
-        au FileType jsx sync fromstart ts=2 sw=2 sts=2 et
-        au FileType vue syntax sync fromstart ts=2 sw=2 sts=2 et
-        au FileType text setl tw=80
-
-        " restore cursor position when the file has been read
-        au BufReadPost *
-                \ if line("'\"") > 0 && line("'\"") <= line("$") |
-                \   exe "norm g`\"" |
-                \ endif
-        aug END
-      endif
-
-      " Editor settings
-      set mouse=a                             " -- mouse cursor on
-      set noet bs=2 ts=4 sw=8 sts=0           " -- tabstop
-      set noai nosi hls is ic cf ws scs magic " -- search
-      set nu ru sc wrap ls=2 lz               " -- appearance
-      set expandtab                           " -- tab as spaces
-      set clipboard=unnamed                   " -- clipboard usage on macOS
-
-      " encoding and file format
-      set fenc=utf-8 ff=unix ffs=unix,dos,mac
-      set fencs=utf-8,cp949,cp932,euc-jp,shift-jis,big5,latin2,ucs2-le
-
-      " Configuration Variables
-      let g:javascript_plugin_jsdoc = 1
-      let g:javascript_plugin_flow = 1
-
-      " vim-terraform
-      let g:terraform_align=1
-      let g:terraform_remap_spacebar=1
-      autocmd FileType terraform setlocal commentstring=#%s
-    '';
-
-    plugins = with pkgs.vimPlugins; [
-      vim-nix
-      vim-surround
-      vim-commentary
-      vim-fugitive
-      vim-terraform
-      fzf-vim
-      nord-vim
-    ];
-  };
+  # Neovim configuration is now in the dedicated neovim module
 
   # Configure direnv
   programs.direnv = {
