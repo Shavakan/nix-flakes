@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, ... }@args:
+{ config, pkgs, lib, hostname, zsh-powerlevel10k, zsh-autopair, ... }@args:
 
 {
   # Import configurations
@@ -10,6 +10,7 @@
     ./modules/awsctx/awsctx.nix
     ./modules/git         # Git configuration
     ./modules/neovim      # Neovim configuration
+    ./modules/zsh        # Zsh configuration
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -74,141 +75,7 @@
 
   # Git configuration is now handled by the dedicated git module
 
-  # Configure ZSH
-  programs.zsh = {
-    enable = true;
-    autosuggestion.enable = true;
-    enableCompletion = true;
-
-    # Shell aliases
-    shellAliases = {
-      # Directory navigation
-      cdw = "cd $HOME/workspace/ && ls";
-
-      # Git aliases
-      gb = "echo 'git branch' && git branch";
-      gba = "echo 'git branch -a' && git branch -a";
-      gs = "echo 'git status' && git status";
-      gsl = "echo 'git stash list' && git stash list";
-      gsp = "echo 'git stash pop' && git stash pop";
-      gd = "echo 'git diff' && git diff";
-      gds = "echo 'git diff --staged' && git diff --staged";
-      gfp = "echo 'git fetch --prune' && git fetch --prune && git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}' | xargs git branch -d";
-      gfpdr = "echo 'git fetch --prune --dry-run' && git fetch --prune --dry-run";
-      gsur = "echo 'git submodule update --recursive' && git submodule update --recursive";
-      grhh = "echo 'git reset --hard HEAD' && git reset --hard HEAD";
-      gprr = "echo 'git pull --rebase' && git pull --rebase";
-
-      # Podman aliases
-      pp = "echo 'podman ps' && podman ps";
-      psp = "echo 'podman system prune' && podman system prune";
-      pc = "podman-compose";
-
-      # Terraform
-      tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
-
-      # Kubernetes
-      k = "kubectl";
-      kg = "kubectl get";
-      kgp = "kubectl get pods";
-      kgn = "kubectl get nodes";
-      kge = "kubectl get events";
-      kd = "kubectl describe";
-      kdp = "kubectl describe pods";
-      kdn = "kubectl describe nodes";
-      kl = "kubectl logs";
-
-      # Neovim
-      vim = "nvim";
-      vi = "nvim";
-      vimdiff = "nvim -d";
-
-      # System tools
-      mtr = "sudo ${pkgs.mtr}/bin/mtr";
-
-      # Python tools - use uv instead of pip
-      pip = "uv pip";
-    };
-
-    # History settings
-    history = {
-      size = 10000;
-      path = "${config.home.homeDirectory}/.zsh_history";
-      ignoreDups = true;
-      share = true;
-    };
-
-    # Extra config
-    initExtra = ''
-      # Initialize LS_COLORS to distinguish between files and directories
-      export CLICOLOR=1
-      export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
-
-      # Custom zsh settings
-      setopt AUTO_CD
-      setopt HIST_IGNORE_SPACE
-
-      # Path additions
-      export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
-
-      # .NET Core SDK tools
-      export PATH="$PATH:$HOME/.dotnet/tools"
-
-      # Go configuration
-      export GOPATH=$HOME/workspace/go
-      export GOBIN=$GOPATH/bin
-      export PATH="$PATH:$GOPATH:$GOBIN"
-      export GO111MODULE=on
-
-      # SAML2AWS
-      export SAML2AWS_SESSION_DURATION=43200
-      export AWS_SDK_LOAD_CONFIG=1
-
-      # Kubernetes
-      export KUBECONFIG=$HOME/.kube/config
-      export KUBE_CONFIG_PATH=$KUBECONFIG
-      export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
-
-      # GPG configuration
-      export GPG_TTY=$(tty)
-      
-      # Use Apple's SSH agent instead of GPG for SSH authentication on macOS
-      # This provides better integration with macOS keychain
-      unset SSH_AUTH_SOCK
-      unset SSH_AGENT_PID
-
-      # Cargo/Rust
-      export PATH="$PATH:$HOME/.cargo/bin"
-
-      # Source the shared Devsisters script loader 
-      if [ -f "$HOME/.devsisters.sh" ]; then
-        source "$HOME/.devsisters.sh"
-      fi
-
-      # oh-my-zsh plugins and theme (if installed)
-      if [ -d "$HOME/.oh-my-zsh" ]; then
-        export ZSH="$HOME/.oh-my-zsh"
-        ZSH_THEME="powerlevel10k/powerlevel10k"
-        plugins=(git terraform)
-        source $ZSH/oh-my-zsh.sh
-
-        # p10k
-        [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-      fi
-
-
-      # Optional: Load fzf if installed
-      [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
-      # Python uv configuration
-      export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
-
-      # Initialize uv for faster Python package management
-      if command -v uv > /dev/null; then
-        eval "$(uv generate-shell-completion zsh)"
-      fi
-    '';
-  };
+  # Zsh configuration is now handled by the dedicated zsh module
 
   # Tmux configuration
   programs.tmux = {
@@ -237,17 +104,7 @@
 
   # Neovim configuration is now in the dedicated neovim module
 
-  # Configure direnv
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
-
-  # Configure fzf
-  programs.fzf = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+  # Direnv and fzf configuration is now handled by the zsh module
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;

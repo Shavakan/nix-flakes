@@ -129,7 +129,9 @@
         "agenix": "agenix",
         "darwin": "darwin_2",
         "home-manager": "home-manager_2",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "zsh-autopair": "zsh-autopair",
+        "zsh-powerlevel10k": "zsh-powerlevel10k"
       }
     },
     "systems": {
@@ -144,6 +146,40 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "zsh-autopair": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1572036110,
+        "narHash": "sha256-wd/6x2p5QOSFqWYgQ1BTYBUGNR06Pr2viGjV/JqoG8A=",
+        "owner": "hlissner",
+        "repo": "zsh-autopair",
+        "rev": "34a8bca0c18fcf3ab1561caef9790abffc1d3d49",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hlissner",
+        "repo": "zsh-autopair",
+        "rev": "34a8bca0c18fcf3ab1561caef9790abffc1d3d49",
+        "type": "github"
+      }
+    },
+    "zsh-powerlevel10k": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1687499067,
+        "narHash": "sha256-+hzjSbbrXr0w1rGHm6m2oZ6pfmD6UUDBfPd7uMg5l5c=",
+        "owner": "romkatv",
+        "repo": "powerlevel10k",
+        "rev": "017395a266aa15011c09e64e44a1c98ed91c478c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "romkatv",
+        "ref": "v1.19.0",
+        "repo": "powerlevel10k",
         "type": "github"
       }
     }

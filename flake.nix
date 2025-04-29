@@ -23,13 +23,24 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # ZSH plugins
+    zsh-powerlevel10k = {
+      url = "github:romkatv/powerlevel10k/v1.19.0";
+      flake = false;
+    };
+    
+    zsh-autopair = {
+      url = "github:hlissner/zsh-autopair/34a8bca0c18fcf3ab1561caef9790abffc1d3d49";
+      flake = false;
+    };
+
     # Additional package sources (uncomment and modify as needed)
     # nur = {
     #   url = "github:nix-community/NUR";
     # };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, ... }@ inputs:
   let
     # Current system (assuming ARM macOS, change if needed)
     darwinSystem = "aarch64-darwin";
@@ -104,8 +115,18 @@
       
       # Extra special args to pass to home.nix
       extraSpecialArgs = {
-        inherit username agenix;
+        inherit username agenix zsh-powerlevel10k zsh-autopair;
       };
+    };
+    
+    # Development shells for the project
+    devShells.${darwinSystem}.default = pkgs.mkShell {
+      buildInputs = with pkgs; [
+        nixpkgs-fmt
+        nixfmt
+        statix   # Lints and suggestions for Nix code
+        nix-linter
+      ];
     };
   };
 }
