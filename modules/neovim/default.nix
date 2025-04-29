@@ -8,29 +8,29 @@ with lib;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
-    
+
     # Enable Python support
     withPython3 = true;
-    
+
     # Additional Python packages for Neovim
     extraPython3Packages = ps: with ps; [
-      pynvim        # Python client for neovim
-      black         # Python formatter
-      flake8        # Python style checker
+      pynvim # Python client for neovim
+      black # Python formatter
+      flake8 # Python style checker
     ];
-    
+
     # Additional packages for Neovim
     extraPackages = with pkgs; [
-      ripgrep       # Required for various search plugins
-      fd            # Alternative to find, used by some plugins
-      fzf           # Required for fzf-vim plugin
+      ripgrep # Required for various search plugins
+      fd # Alternative to find, used by some plugins
+      fzf # Required for fzf-vim plugin
     ];
-    
+
     # Neovim plugins using flake inputs
     plugins = lib.mapAttrsToList
-      (name: path: { 
+      (name: path: {
         plugin = pkgs.vimUtils.buildVimPlugin {
-          name = name;
+          inherit name;
           src = path;
         };
         config = "";
@@ -38,24 +38,24 @@ with lib;
       {
         # UI Enhancements
         nord-vim = vim-nord;
-        
+
         # Editing Tools
-        vim-surround = vim-surround;
-        vim-commentary = vim-commentary;
-        vim-easy-align = vim-easy-align;
-        
+        inherit vim-surround;
+        inherit vim-commentary;
+        inherit vim-easy-align;
+
         # File Navigation
-        fzf-vim = fzf-vim;
-        
+        inherit fzf-vim;
+
         # Git Integration
-        vim-fugitive = vim-fugitive;
-        
+        inherit vim-fugitive;
+
         # Language Support
-        vim-nix = vim-nix;
-        vim-terraform = vim-terraform;
-        vim-go = vim-go;
+        inherit vim-nix;
+        inherit vim-terraform;
+        inherit vim-go;
       };
-    
+
     # Main Neovim configuration
     extraConfig = ''
       "" Shavakan's Neovim Configuration

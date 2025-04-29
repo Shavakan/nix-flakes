@@ -4,20 +4,20 @@ with lib;
 
 let
   cfg = config.services.awsctx;
-  
+
   # Source path to your workspace awsctx
   sourcePath = "/Users/shavakan/workspace/awsctx";
-  
+
   # Repository URL - Use SSH instead of HTTPS
   repoUrl = "git@github.com:devsisters/awsctx.git";
-  
+
   # Helper function to create directories
   createDirs = pkgs.writeShellScript "create-awsctx-dirs" ''
     mkdir -p "$HOME/Library/Application Support/awsctx"
     mkdir -p "$HOME/Library/Caches/awsctx"
     mkdir -p "$HOME/workspace"
   '';
-  
+
   # Clone the repository if it doesn't exist
   cloneRepo = pkgs.writeShellScript "clone-awsctx-repo" ''
     ${createDirs}
@@ -49,7 +49,7 @@ let
       fi
     fi
   '';
-  
+
   # Link the profiles directory to awsctx config instead of copying individual files
   setupProfiles = pkgs.writeShellScript "setup-awsctx-profiles" ''
     # First ensure the repository is cloned
@@ -76,38 +76,39 @@ let
       ln -sf "$PROFILES_SRC" "$PROFILES_LINK"
     fi
   '';
-  
-in {
+
+in
+{
   options.services.awsctx = {
     enable = mkEnableOption "awsctx AWS profile context switcher";
-    
+
     includeZshSupport = mkOption {
       type = types.bool;
       default = true;
       description = "Include Zsh shell support";
     };
   };
-  
+
   config = mkIf cfg.enable {
     # Ensure required packages are installed
-    home.packages = with pkgs; [ 
+    home.packages = with pkgs; [
       saml2aws
       coreutils
       findutils
-      git  # Ensure git is available for cloning
+      git # Ensure git is available for cloning
     ];
-    
+
     # Add awsctx to the path 
     home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
-    
+
     # Create directories, clone repository, and setup profiles
     # Run after git config is established
-    home.activation.setupAwsctx = lib.hm.dag.entryAfter ["verifyHostname"] ''
+    home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "verifyHostname" ] ''
       # Run setupProfiles silently
       export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
       $DRY_RUN_CMD ${setupProfiles} >/dev/null 2>&1
     '';
-    
+
     # Configure zsh integration
     programs.zsh = mkIf cfg.includeZshSupport {
       initExtra = ''

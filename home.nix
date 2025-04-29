@@ -8,9 +8,9 @@
     ./modules/rclone/rclone-mount.nix
     ./modules/rclone/rclone-launchd.nix
     ./modules/awsctx/awsctx.nix
-    ./modules/git         # Git configuration
-    ./modules/neovim      # Neovim configuration
-    ./modules/zsh        # Zsh configuration
+    ./modules/git # Git configuration
+    ./modules/neovim # Neovim configuration
+    ./modules/zsh # Zsh configuration
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -27,11 +27,11 @@
     packages = with pkgs; [
       # Development languages and tools
       terraform
-      dotnet-sdk              # .NET SDK (current version)
+      dotnet-sdk # .NET SDK (current version)
 
       # Cloud tools
       kubectl
-      k9s             # Terminal UI for Kubernetes
+      k9s # Terminal UI for Kubernetes
       awscli2
       saml2aws
       google-cloud-sdk
@@ -45,19 +45,22 @@
 
       # System utilities
       watch
+      pre-commit # Pre-commit hook framework
+      nixpkgs-fmt # Nix formatter
+      statix # Nix linter
 
       # Tools
       obsidian
 
       # Communication
-      slack                   # Slack desktop client
+      slack # Slack desktop client
 
       # JetBrains IDEs
-      jetbrains.rider           # .NET IDE
-      jetbrains.goland          # Go IDE
-      jetbrains.pycharm-professional  # Python IDE
-      jetbrains.idea-ultimate   # Java/Kotlin IDE
-      jetbrains.datagrip        # Database IDE
+      jetbrains.rider # .NET IDE
+      jetbrains.goland # Go IDE
+      jetbrains.pycharm-professional # Python IDE
+      jetbrains.idea-ultimate # Java/Kotlin IDE
+      jetbrains.datagrip # Database IDE
 
       # Misc
       direnv
@@ -91,7 +94,7 @@
     customPaneNavigationAndResize = true;
     aggressiveResize = true;
     clock24 = true;
-    newSession = true; 
+    newSession = true;
 
     extraConfig = ''
       # Additional tmux configuration
@@ -114,7 +117,7 @@
     enable = true;
     configFile = ./modules/agenix/rclone.conf.age;
   };
-  
+
   # Configure rclone mounting service
   services.rclone-mount = {
     enable = true;
@@ -126,12 +129,12 @@
       }
     ];
   };
-  
+
   # Enable the rclone-launchd service to automatically mount at login
   services.rclone-launchd = {
     enable = true;
   };
-  
+
   # Enhanced GPG configuration
   programs.gpg = {
     enable = true;
@@ -143,7 +146,7 @@
       pinentry-mode = "loopback";
     };
   };
-  
+
   # Configure GPG agent (without SSH support since we're using macOS SSH agent)
   services.gpg-agent = {
     enable = true;
@@ -160,7 +163,7 @@
       allow-preset-passphrase
     '';
   };
-  
+
   # Enable awsctx service with zsh support
   services.awsctx = {
     enable = true;
@@ -170,7 +173,7 @@
   # Configure SSH with proper agent setup
   programs.ssh = {
     enable = true;
-    
+
     # Add your existing SSH config
     matchBlocks = {
       "github.com" = {
@@ -179,7 +182,7 @@
         user = "git";
       };
     };
-    
+
     # Use proper SSH agent settings tailored for macOS
     extraConfig = ''
       # Use SSH agent for authentication and macOS keychain integration
@@ -190,9 +193,9 @@
       IdentitiesOnly yes
     '';
   };
-  
+
   # Create an activation script that loads the Devsisters script after mount
-  home.activation.loadAndSourceDevsistersScript = lib.hm.dag.entryAfter ["mountRcloneRemotes"] ''
+  home.activation.loadAndSourceDevsistersScript = lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
     SCRIPT_PATH="$HOME/mnt/rclone/devsisters.sh"
     LINK_PATH="$HOME/.devsisters.sh"
     

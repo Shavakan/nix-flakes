@@ -22,7 +22,7 @@ let
     # Execute the MCP filesystem server
     exec /run/current-system/sw/bin/npx @modelcontextprotocol/server-filesystem "$@"
   '';
-  
+
   mcp-nixos-wrapper = pkgs.writeShellScriptBin "mcp-nixos-wrapper" ''
     #!/bin/bash
     # Set up the environment
@@ -37,7 +37,7 @@ in
     mcp-filesystem-wrapper
     mcp-nixos-wrapper
   ];
-  
+
   # Create the MCP configuration file
   home.file.".claude-mcp-config.json".text = builtins.toJSON {
     mcpServers = {
@@ -47,11 +47,11 @@ in
       };
       nixos = {
         command = "${mcp-nixos-wrapper}/bin/mcp-nixos-wrapper";
-        args = [];
+        args = [ ];
       };
     };
   };
-  
+
   # Set the MCP config environment variable globally
   home.sessionVariables = {
     CLAUDE_MCP_CONFIG = "${config.home.homeDirectory}/.claude-mcp-config.json";

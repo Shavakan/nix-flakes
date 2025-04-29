@@ -1,0 +1,18 @@
+# Pre-commit hooks configuration for nix-flakes
+repos:
+- repo: local
+  hooks:
+  - id: nixpkgs-fmt
+    name: nixpkgs-fmt
+    entry: nixpkgs-fmt
+    language: system
+    files: \.nix$
+    pass_filenames: true
+  
+  - id: statix-fix
+    name: statix fix
+    # Fix only the specific file being passed by pre-commit
+    entry: bash -c 'statix fix "$1"' --
+    language: system
+    files: \.nix$
+    pass_filenames: true

@@ -5,12 +5,12 @@ with lib;
 {
   programs.zsh = {
     enable = true;
-    
+
     # Enable features
     autosuggestion.enable = true;
     enableCompletion = true;
     syntaxHighlighting.enable = true;
-    
+
     # History settings
     history = {
       size = 50000;
@@ -20,7 +20,7 @@ with lib;
       share = true;
       extended = true;
     };
-    
+
     # Oh-My-Zsh configuration
     oh-my-zsh = {
       enable = true;
@@ -33,11 +33,11 @@ with lib;
         "fzf"
         "ripgrep"
       ];
-      
+
       # Using Powerlevel10k theme if it was detected
       theme = "powerlevel10k/powerlevel10k";
     };
-    
+
     # Plugins not covered by Oh-My-Zsh
     plugins = [
       {
@@ -52,18 +52,18 @@ with lib;
         src = zsh-autopair;
       }
     ];
-    
+
     # Environment variables
     initExtraBeforeCompInit = ''
       # Check if p10k config exists
       [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
     '';
-    
+
     # Shell aliases
     shellAliases = {
       # Directory navigation
       cdw = "cd $HOME/workspace/ && ls";
-      
+
       # Git aliases
       gb = "echo 'git branch' && git branch";
       gba = "echo 'git branch -a' && git branch -a";
@@ -77,15 +77,15 @@ with lib;
       gsur = "echo 'git submodule update --recursive' && git submodule update --recursive";
       grhh = "echo 'git reset --hard HEAD' && git reset --hard HEAD";
       gprr = "echo 'git pull --rebase' && git pull --rebase";
-      
+
       # Podman aliases
       pp = "echo 'podman ps' && podman ps";
       psp = "echo 'podman system prune' && podman system prune";
       pc = "podman-compose";
-      
+
       # Terraform
       tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
-      
+
       # Kubernetes
       k = "kubectl";
       kg = "kubectl get";
@@ -96,19 +96,19 @@ with lib;
       kdp = "kubectl describe pods";
       kdn = "kubectl describe nodes";
       kl = "kubectl logs";
-      
+
       # Neovim
       vim = "nvim";
       vi = "nvim";
       vimdiff = "nvim -d";
-      
+
       # System tools
       mtr = "sudo ${pkgs.mtr}/bin/mtr";
-      
+
       # Python tools - use uv instead of pip
       pip = "uv pip";
     };
-    
+
     # Additional Zsh configuration
     initExtra = ''
       # Initialize LS_COLORS to distinguish between files and directories
@@ -184,28 +184,28 @@ with lib;
       fi
     '';
   };
-  
+
   # Enable other shell integrations
-  
+
   # fzf for fuzzy finding
   programs.fzf = {
     enable = true;
     enableZshIntegration = true;
     defaultCommand = "fd --type f --hidden --exclude .git";
-    defaultOptions = ["--height 40%" "--layout=reverse" "--border"];
+    defaultOptions = [ "--height 40%" "--layout=reverse" "--border" ];
     fileWidgetCommand = "fd --type f --hidden --exclude .git";
-    fileWidgetOptions = ["--preview 'bat --color=always --style=numbers --line-range=:500 {}'"];
+    fileWidgetOptions = [ "--preview 'bat --color=always --style=numbers --line-range=:500 {}'" ];
     changeDirWidgetCommand = "fd --type d --hidden --exclude .git";
-    changeDirWidgetOptions = ["--preview 'ls -la {}'"]; 
+    changeDirWidgetOptions = [ "--preview 'ls -la {}'" ];
   };
-  
+
   # direnv for environment management
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
     enableZshIntegration = true;
   };
-  
+
   # Skip creating p10k.zsh file since you already have one
   # home.file.".p10k.zsh" = { ... };
 

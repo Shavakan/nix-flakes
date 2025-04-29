@@ -9,13 +9,14 @@ let
       gitSigningKey = "1193AD54623C8450";
       enableGitSigning = true;
     };
-    
+
     "macstudio" = {
       gitSigningKey = "01FA3FC79AD70686";
       enableGitSigning = true;
     };
   };
-in {
+in
+{
   # Export config values for other modules
   options.host-config = {
     gitSigningKey = mkOption {
@@ -23,21 +24,21 @@ in {
       default = "";
       description = "GPG key ID to use for git commit signing on this host";
     };
-    
+
     enableGitSigning = mkOption {
       type = types.bool;
       default = false;
       description = "Whether to enable git commit signing on this host";
     };
   };
-  
+
   config = {
     # Default values for host-config options
     host-config.gitSigningKey = mkDefault "";
     host-config.enableGitSigning = mkDefault false;
-    
+
     # Add activation script to detect hostname and machine type at runtime
-    home.activation.detectMachineType = lib.hm.dag.entryBefore ["writeBoundary"] ''
+    home.activation.detectMachineType = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
       # Detect hostname and machine type silently
       if [ -x /bin/hostname ]; then
         HOSTNAME_CMD="/bin/hostname"
@@ -67,9 +68,9 @@ in {
         echo "${toString machineConfigs.macstudio.enableGitSigning}" > "$HOME/.nix-host-git-sign"
       fi
     '';
-    
+
     # Set up another activation script that will run after the git config is created
-    home.activation.setupGitSigningKey = lib.hm.dag.entryAfter ["detectMachineType"] ''
+    home.activation.setupGitSigningKey = lib.hm.dag.entryAfter [ "detectMachineType" ] ''
       # Check if the files exist
       if [ -f "$HOME/.nix-host-git-key" ] && [ -f "$HOME/.nix-host-git-sign" ]; then
         GIT_SIGNING_KEY=$(cat "$HOME/.nix-host-git-key")

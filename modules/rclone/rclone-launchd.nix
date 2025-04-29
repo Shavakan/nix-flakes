@@ -4,10 +4,10 @@ with lib;
 
 let
   cfg = config.services.rclone-launchd;
-  
+
   # This module requires the rclone-mount service
   mountService = config.services.rclone-mount;
-  
+
   # Create a script for the LaunchAgent that uses the rclone-mount script
   launchdScript = pkgs.writeShellScript "rclone-launchd-script" ''
     #!${pkgs.bash}/bin/bash
@@ -29,12 +29,13 @@ let
       fi
     '') mountService.mounts}
   '';
-  
-in {
+
+in
+{
   options.services.rclone-launchd = {
     enable = mkEnableOption "rclone mount launchd service";
   };
-  
+
   config = mkIf (cfg.enable && mountService.enable) {
     # Add a LaunchAgent to automatically mount at login
     launchd.agents.rclone-mount = {

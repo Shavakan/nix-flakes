@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.rclone-mount;
-  
+
   # Create a simple script for each mount operation
   mountScript = pkgs.writeShellScriptBin "rclone-mount" ''
     #!/usr/bin/env bash
@@ -66,7 +66,7 @@ let
     # Wait a moment for mount to initialize
     ${pkgs.coreutils}/bin/sleep 1 >/dev/null 2>&1
   '';
-  
+
   unmountScript = pkgs.writeShellScriptBin "rclone-unmount" ''
     # Unmount helper script for rclone
     MOUNTPOINT="$1"
@@ -104,7 +104,7 @@ let
       fusermount -u "$MOUNTPOINT" >/dev/null 2>&1 || true
     fi
   '';
-  
+
   # Create a simple status script that shows mount info
   statusScript = pkgs.writeShellScriptBin "rclone-status" ''
     # Show mount paths
@@ -116,13 +116,13 @@ let
       echo "$MOUNTS"
     fi
   '';
-  
+
   listRemotesScript = pkgs.writeShellScriptBin "rclone-list-remotes" ''
     # List available rclone remotes
     echo "Available rclone remotes:"
     ${pkgs.rclone}/bin/rclone listremotes
   '';
-  
+
   syncScript = pkgs.writeShellScriptBin "rclone-sync" ''
     # Force sync of rclone mounts
     RC_PORTS=""
@@ -144,11 +144,12 @@ let
     
     echo "Sync complete"
   '';
-  
-in {
+
+in
+{
   options.services.rclone-mount = {
     enable = mkEnableOption "rclone mount service";
-    
+
     mounts = mkOption {
       type = types.listOf (types.submodule {
         options = {
@@ -157,13 +158,13 @@ in {
             description = "Remote path to mount (e.g., gdrive:backup)";
             example = "gdrive:backup";
           };
-          
+
           mountPoint = mkOption {
             type = types.str;
             description = "Local directory where the remote will be mounted";
             example = "~/mnt/gdrive";
           };
-          
+
           allowOther = mkOption {
             type = types.bool;
             default = false;
@@ -171,11 +172,11 @@ in {
           };
         };
       });
-      default = [];
+      default = [ ];
       description = "List of rclone remotes to mount";
     };
   };
-  
+
   config = mkIf cfg.enable {
     # Add the helper scripts to the user's path
     home.packages = [
@@ -191,9 +192,9 @@ in {
       pkgs.coreutils
       pkgs.gnused
     ];
-    
+
     # Create an activation script to mount remotes silently
-    home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter ["decryptRcloneConfig"] ''
+    home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter [ "decryptRcloneConfig" ] ''
       # Check if config file exists first
       CONFIG_FILE="$HOME/.config/rclone/rclone.conf"
       

@@ -8,34 +8,34 @@ in
 {
   options.services.rclone = {
     enable = mkEnableOption "rclone with secrets management";
-    
+
     configFile = mkOption {
       type = types.path;
       description = "Path to the rclone configuration file";
     };
-    
+
     targetDirectory = mkOption {
       type = types.str;
       default = "${config.home.homeDirectory}/.config/rclone";
       description = "Directory where the rclone configuration should be placed";
     };
-    
+
     verbose = mkOption {
       type = types.bool;
       default = false;
       description = "Show verbose output during decryption";
     };
   };
-  
+
   config = mkIf cfg.enable {
     # Ensure rclone is installed
-    home.packages = with pkgs; [ 
-      rclone 
-      agenix 
+    home.packages = with pkgs; [
+      rclone
+      agenix
     ];
-    
+
     # Add an activation script to decrypt the secret
-    home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       # Ensure the directory exists
       mkdir -p "${cfg.targetDirectory}" >/dev/null 2>&1
       
