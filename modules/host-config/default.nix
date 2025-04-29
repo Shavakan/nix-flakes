@@ -54,8 +54,37 @@ in {
       MACHINE_TYPE="unknown"
       if [[ "$CURRENT_HOSTNAME" == MacBook* ]]; then
         MACHINE_TYPE="macbook"
+        
+        # Set host-config values for MacBook
+        echo "${machineConfigs.macbook.gitSigningKey}" > "$HOME/.nix-host-git-key"
+        echo "${toString machineConfigs.macbook.enableGitSigning}" > "$HOME/.nix-host-git-sign"
+        
       elif [[ "$CURRENT_HOSTNAME" == macstudio* ]]; then
         MACHINE_TYPE="macstudio"
+        
+        # Set host-config values for Mac Studio
+        echo "${machineConfigs.macstudio.gitSigningKey}" > "$HOME/.nix-host-git-key"
+        echo "${toString machineConfigs.macstudio.enableGitSigning}" > "$HOME/.nix-host-git-sign"
+      fi
+    '';
+    
+    # Set up another activation script that will run after the git config is created
+    home.activation.setupGitSigningKey = lib.hm.dag.entryAfter ["detectMachineType"] ''
+      # Check if the files exist
+      if [ -f "$HOME/.nix-host-git-key" ] && [ -f "$HOME/.nix-host-git-sign" ]; then
+        GIT_SIGNING_KEY=$(cat "$HOME/.nix-host-git-key")
+        ENABLE_GIT_SIGNING=$(cat "$HOME/.nix-host-git-sign")
+        
+        # Update the git config with the signing key
+        if [ -n "$GIT_SIGNING_KEY" ] && [ "$ENABLE_GIT_SIGNING" = "true" ]; then
+          $DRY_RUN_CMD ${pkgs.git}/bin/git config --global user.signingkey "$GIT_SIGNING_KEY"
+          $DRY_RUN_CMD ${pkgs.git}/bin/git config --global commit.gpgsign "true"
+          $DRY_RUN_CMD ${pkgs.git}/bin/git config --global gpg.program "${pkgs.gnupg}/bin/gpg"
+        else
+          # Disable signing if not enabled
+          $DRY_RUN_CMD ${pkgs.git}/bin/git config --global --unset user.signingkey || true
+          $DRY_RUN_CMD ${pkgs.git}/bin/git config --global commit.gpgsign "false"
+        fi
       fi
     '';
   };

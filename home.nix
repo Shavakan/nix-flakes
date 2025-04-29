@@ -8,7 +8,7 @@
     ./modules/rclone/rclone-mount.nix
     ./modules/rclone/rclone-launchd.nix
     ./modules/awsctx/awsctx.nix
-    # Host-specific config is imported in flake.nix
+    ./modules/git         # Git configuration
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -71,73 +71,7 @@
   # Disable showing news on update
   news.display = "silent";
 
-  # Enable Git - core configuration now comes from host-config/git.nix
-  programs.git = {
-    enable = true;
-    userName = "ChangWon Lee";
-    userEmail = "cs.changwon.lee@gmail.com";
-
-    extraConfig = {
-      core = {
-        editor = "nvim";
-        excludesfile = "~/.gitignore_global";
-      };
-      merge = {
-        tool = "vimdiff";
-      };
-      mergetool = {
-        vimdiff.cmd = "nvim -d $LOCAL $REMOTE $MERGED -c '$wincmd w' -c '$wincmd J'";
-        keepBackup = false;
-      };
-      filter.lfs = {
-        clean = "git-lfs clean -- %f";
-        smudge = "git-lfs smudge -- %f";
-        process = "git-lfs filter-process";
-        required = true;
-      };
-      # Machine-specific settings now come from host-config/git.nix
-      alias = {
-        lg = "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit";
-      };
-      # Prefer SSH over HTTPS for GitHub and other services
-      url = {
-        "git@github.com:".insteadOf = "https://github.com/";
-        "git@gitlab.com:".insteadOf = "https://gitlab.com/";
-        # Keep this for compatibility with some tools that only use git://
-        "https://".insteadOf = "git://";
-      };
-    };
-  };
-  
-  # Git config activation is now handled by the host-config module
-
-  # Create global gitignore file
-  home.file.".gitignore_global".text = ''
-    # Go delve test file
-    debug.test
-
-    # Vim swap files
-    *.sw[op]
-
-    # Vim pylint plugin
-    .ropeproject/
-
-    # macOS
-    .DS_Store
-
-    # VS Code
-    .vscode/
-
-    # IntelliJ
-    .idea/
-
-    # Terraform
-    .tool-versions
-    .terraform/
-
-    # direnv
-    .envrc
-  '';
+  # Git configuration is now handled by the dedicated git module
 
   # Configure ZSH
   programs.zsh = {

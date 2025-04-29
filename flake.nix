@@ -100,7 +100,6 @@
         
         # Add hostname-aware modules
         ./modules/host-config
-        ./modules/host-config/git.nix
       ];
       
       # Extra special args to pass to home.nix
