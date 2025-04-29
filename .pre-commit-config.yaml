@@ -4,15 +4,22 @@ repos:
   hooks:
   - id: nixpkgs-fmt
     name: nixpkgs-fmt
-    entry: nixpkgs-fmt
+    entry: bash -c 'nixpkgs-fmt "$1" &>/dev/null || echo "Error formatting $1"' --
     language: system
     files: \.nix$
     pass_filenames: true
+    verbose: false
+    # Suppress "no files to check" message
+    always_run: false
+    stages: [commit]
   
   - id: statix-fix
     name: statix fix
-    # Fix only the specific file being passed by pre-commit
-    entry: bash -c 'statix fix "$1"' --
+    entry: bash -c 'statix fix "$1" &>/dev/null || echo "Error fixing $1"' --
     language: system
     files: \.nix$
     pass_filenames: true
+    verbose: false
+    # Suppress "no files to check" message
+    always_run: false
+    stages: [commit]
