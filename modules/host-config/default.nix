@@ -38,7 +38,7 @@ in {
     
     # Add activation script to detect hostname and machine type at runtime
     home.activation.detectMachineType = lib.hm.dag.entryBefore ["writeBoundary"] ''
-      # Detect hostname and machine type using full path to hostname command
+      # Detect hostname and machine type silently
       if [ -x /bin/hostname ]; then
         HOSTNAME_CMD="/bin/hostname"
       elif [ -x /usr/bin/hostname ]; then
@@ -52,7 +52,6 @@ in {
       fi
       
       MACHINE_TYPE="unknown"
-      
       if [[ "$CURRENT_HOSTNAME" == MacBook* ]]; then
         MACHINE_TYPE="macbook"
       elif [[ "$CURRENT_HOSTNAME" == macstudio* ]]; then

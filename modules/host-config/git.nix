@@ -55,7 +55,7 @@ in {
         ENABLE_GIT_SIGNING="${toString machineConfigs.macstudio.enableGitSigning}"
       fi
       
-      $DRY_RUN_CMD mkdir -p "$HOME/.config/git"
+      $DRY_RUN_CMD mkdir -p "$HOME/.config/git" >/dev/null 2>&1
       
       # Create a temporary git config with essential settings
       TMP_GIT_CONFIG=$(mktemp)

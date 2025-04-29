@@ -24,7 +24,6 @@ let
     
     # Check if the repository already exists
     if [ ! -d "${sourcePath}" ]; then
-      echo "Cloning awsctx repository to ${sourcePath}..."
       mkdir -p "$(dirname "${sourcePath}")"
       
       # Check if SSH key exists and has proper permissions
@@ -36,23 +35,17 @@ let
       
       # Clone with appropriate settings
       GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
-      ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}"
+      ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1
       
-      if [ $? -eq 0 ]; then
-        echo "Repository cloned successfully!"
-      else
-        echo "Error cloning repository. Trying alternative URL..."
-        # Fallback to HTTPS if SSH fails
-        ${pkgs.git}/bin/git clone https://github.com/devsisters/awsctx.git "${sourcePath}"
+      if [ $? -ne 0 ]; then
+        # Fallback to HTTPS if SSH fails (silently)
+        ${pkgs.git}/bin/git clone https://github.com/devsisters/awsctx.git "${sourcePath}" >/dev/null 2>&1
       fi
     else
-      echo "awsctx repository already exists at ${sourcePath}"
-      
-      # Make sure the repository uses the right remote URL
+      # Make sure the repository uses the right remote URL (silently)
       CURRENT_URL=$(cd "${sourcePath}" && ${pkgs.git}/bin/git remote get-url origin 2>/dev/null)
       if [ "$CURRENT_URL" = "https://github.com/devsisters/awsctx.git" ]; then
-        echo "Updating remote URL to use SSH..."
-        (cd "${sourcePath}" && ${pkgs.git}/bin/git remote set-url origin ${repoUrl})
+        (cd "${sourcePath}" && ${pkgs.git}/bin/git remote set-url origin ${repoUrl}) >/dev/null 2>&1
       fi
     fi
   '';
@@ -72,11 +65,9 @@ let
     for config_file in "$PROFILES_SRC"/*.config; do
       if [ -f "$config_file" ]; then
         base_name=$(basename "$config_file")
-        cp -f "$config_file" "$CONFIG_DIR/$base_name"
+        cp -f "$config_file" "$CONFIG_DIR/$base_name" >/dev/null 2>&1
       fi
     done
-    
-    echo "Configured awsctx profiles in $CONFIG_DIR"
   '';
   
   # Create activation script for the AWS login all command
@@ -124,16 +115,9 @@ in {
     # Create directories, clone repository, and setup profiles
     # Run after git config is established
     home.activation.setupAwsctx = lib.hm.dag.entryAfter ["verifyHostname"] ''
-      # Ensure git configuration is properly set
-      if [ -f "$HOME/.gitconfig" ]; then
-        # Explicitly set GIT_SSH_COMMAND to ensure SSH is used with proper settings
-        export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
-        echo "Running awsctx setup with configured git..."
-        $DRY_RUN_CMD ${setupProfiles}
-      else
-        echo "Warning: Git configuration not found. Using default clone settings."
-        $DRY_RUN_CMD ${setupProfiles}
-      fi
+      # Run setupProfiles silently
+      export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
+      $DRY_RUN_CMD ${setupProfiles} >/dev/null 2>&1
     '';
     
     # Configure shell integrations
@@ -169,12 +153,12 @@ in {
         # Now that the repository is cloned, we can copy the tide prompt files
         if [ -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" ]; then
           $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/conf.d"
-          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" "$HOME/.config/fish/conf.d/tide_awsctx.fish"
+          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/conf.d/tide_awsctx.fish" "$HOME/.config/fish/conf.d/tide_awsctx.fish" >/dev/null 2>&1
         fi
         
         if [ -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" ]; then
           $DRY_RUN_CMD mkdir -p "$HOME/.config/fish/functions"
-          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" "$HOME/.config/fish/functions/_tide_item_awsctx.fish"
+          $DRY_RUN_CMD cp -f "${sourcePath}/prompts/tide/functions/_tide_item_awsctx.fish" "$HOME/.config/fish/functions/_tide_item_awsctx.fish" >/dev/null 2>&1
         fi
       ''
     );
