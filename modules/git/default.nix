@@ -100,9 +100,27 @@ with lib;
       };
     };
     
-    # Delta disabled - using standard git diff
+    # Delta for better diffs with improved color visibility
     delta = {
-      enable = false;
+      enable = true;
+      options = {
+        navigate = true;
+        light = false;
+        side-by-side = true;
+        line-numbers = true;
+        syntax-theme = "Dracula";  # Better visibility than Nord in dark mode
+        # Custom color settings for better visibility
+        plus-style = "syntax #2A5A2A";     # Brighter green for additions
+        minus-style = "syntax #5A2A2A";   # Brighter red for deletions
+        plus-emph-style = "syntax #3A6A3A";  # Even brighter green for emphasized additions
+        minus-emph-style = "syntax #6A3A3A"; # Even brighter red for emphasized deletions
+        line-numbers-plus-style = "#3A7A3A";  # Brighter green for line numbers in additions
+        line-numbers-minus-style = "#7A3A3A"; # Brighter red for line numbers in deletions
+        # High contrast theme options
+        hunk-header-style = "syntax bold";  # Make hunk headers bold
+        file-style = "yellow bold";         # Bright yellow for file names
+        file-decoration-style = "yellow ul"; # Underline file names
+      };
     };
   };
   

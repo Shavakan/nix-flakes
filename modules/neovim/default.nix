@@ -14,9 +14,7 @@ with lib;
     
     # Additional Python packages for Neovim
     extraPython3Packages = ps: with ps; [
-      jedi          # Python completion and static analysis
       pynvim        # Python client for neovim
-      pylint        # Python linter
       black         # Python formatter
       flake8        # Python style checker
     ];
@@ -27,7 +25,7 @@ with lib;
       fd            # Alternative to find, used by some plugins
     ];
     
-    # Neovim plugins - without any CoC references
+    # Neovim plugins - basic set without LSP/CoC
     plugins = with pkgs.vimPlugins; [
       # UI Enhancements
       nord-vim

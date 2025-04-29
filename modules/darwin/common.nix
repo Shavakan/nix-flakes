@@ -173,8 +173,13 @@
       "com.apple.dock" = {
         "wvous-tl-corner" = 1;  # Top left: Disabled
         "wvous-tr-corner" = 1;  # Top right: Disabled  
-        "wvous-bl-corner" = 1;  # Bottom left: Disabled
+        "wvous-bl-corner" = 10; # Bottom left: Put display to sleep
         "wvous-br-corner" = 1;  # Bottom right: Disabled
+      };
+
+      # Screen saver settings
+      "com.apple.screensaver" = {
+        "idleTime" = 300;       # Start screen saver after 5 minutes (300 seconds)
       };
     };
   };
