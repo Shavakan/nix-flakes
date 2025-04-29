@@ -33,14 +33,55 @@
       url = "github:hlissner/zsh-autopair/34a8bca0c18fcf3ab1561caef9790abffc1d3d49";
       flake = false;
     };
-
-    # Additional package sources (uncomment and modify as needed)
-    # nur = {
-    #   url = "github:nix-community/NUR";
-    # };
+    
+    # Vim plugins
+    vim-nord = {
+      url = "github:arcticicestudio/nord-vim";
+      flake = false;
+    };
+    
+    vim-surround = {
+      url = "github:tpope/vim-surround";
+      flake = false;
+    };
+    
+    vim-commentary = {
+      url = "github:tpope/vim-commentary";
+      flake = false;
+    };
+    
+    vim-easy-align = {
+      url = "github:junegunn/vim-easy-align";
+      flake = false;
+    };
+    
+    fzf-vim = {
+      url = "github:junegunn/fzf.vim";
+      flake = false;
+    };
+    
+    vim-fugitive = {
+      url = "github:tpope/vim-fugitive";
+      flake = false;
+    };
+    
+    vim-nix = {
+      url = "github:LnL7/vim-nix";
+      flake = false;
+    };
+    
+    vim-terraform = {
+      url = "github:hashivim/vim-terraform";
+      flake = false;
+    };
+    
+    vim-go = {
+      url = "github:fatih/vim-go";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, ... }@ inputs:
   let
     # Current system (assuming ARM macOS, change if needed)
     darwinSystem = "aarch64-darwin";
@@ -116,16 +157,22 @@
       # Extra special args to pass to home.nix
       extraSpecialArgs = {
         inherit username agenix zsh-powerlevel10k zsh-autopair;
+        # Pass vim plugins
+        inherit vim-nord vim-surround vim-commentary vim-easy-align fzf-vim vim-fugitive vim-nix vim-terraform vim-go;
       };
     };
     
     # Development shells for the project
     devShells.${darwinSystem}.default = pkgs.mkShell {
       buildInputs = with pkgs; [
-        nixpkgs-fmt
-        nixfmt
-        statix   # Lints and suggestions for Nix code
-        nix-linter
+        # Single formatter
+        nixpkgs-fmt    # Standard Nix formatter
+        
+        # Single linter
+        statix         # Comprehensive linter for Nix code
+        
+        # Pre-commit framework
+        pre-commit     # Git hook manager
       ];
     };
   };

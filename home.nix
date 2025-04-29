@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, zsh-powerlevel10k, zsh-autopair, ... }@args:
+{ config, pkgs, lib, hostname, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, ... }@args:
 
 {
   # Import configurations

@@ -66,6 +66,22 @@
         "type": "github"
       }
     },
+    "fzf-vim": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1744757932,
+        "narHash": "sha256-Fj0D5QHN94MxMeq+mHCb2xeD0b9Nz+1VFpFITrjeOmw=",
+        "owner": "junegunn",
+        "repo": "fzf.vim",
+        "rev": "3cb44a8ba588e1ada409af495bdc6a4d2d37d5da",
+        "type": "github"
+      },
+      "original": {
+        "owner": "junegunn",
+        "repo": "fzf.vim",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -128,8 +144,17 @@
       "inputs": {
         "agenix": "agenix",
         "darwin": "darwin_2",
+        "fzf-vim": "fzf-vim",
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs",
+        "vim-commentary": "vim-commentary",
+        "vim-easy-align": "vim-easy-align",
+        "vim-fugitive": "vim-fugitive",
+        "vim-go": "vim-go",
+        "vim-nix": "vim-nix",
+        "vim-nord": "vim-nord",
+        "vim-surround": "vim-surround",
+        "vim-terraform": "vim-terraform",
         "zsh-autopair": "zsh-autopair",
         "zsh-powerlevel10k": "zsh-powerlevel10k"
       }
@@ -146,6 +171,134 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "vim-commentary": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1729562730,
+        "narHash": "sha256-0a45pvYAbMxwN2URFX1lxIFBwWCq46LPai2GnGuL0Uo=",
+        "owner": "tpope",
+        "repo": "vim-commentary",
+        "rev": "64a654ef4a20db1727938338310209b6a63f60c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tpope",
+        "repo": "vim-commentary",
+        "type": "github"
+      }
+    },
+    "vim-easy-align": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1712978502,
+        "narHash": "sha256-9CfWi83DCzWBARNG6AA0MQllEfQ/3UtYtYPDWLdmDwk=",
+        "owner": "junegunn",
+        "repo": "vim-easy-align",
+        "rev": "9815a55dbcd817784458df7a18acacc6f82b1241",
+        "type": "github"
+      },
+      "original": {
+        "owner": "junegunn",
+        "repo": "vim-easy-align",
+        "type": "github"
+      }
+    },
+    "vim-fugitive": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1740005044,
+        "narHash": "sha256-1AteNwnc7lCHLIwM8Ejm2T9VTIDM+CeAfvAUeSQRFKE=",
+        "owner": "tpope",
+        "repo": "vim-fugitive",
+        "rev": "4a745ea72fa93bb15dd077109afbb3d1809383f2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tpope",
+        "repo": "vim-fugitive",
+        "type": "github"
+      }
+    },
+    "vim-go": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1745121873,
+        "narHash": "sha256-p/oJE/on3PiNpaT1o9vSrjCqgPqE7f1dyxs7TnwMxyY=",
+        "owner": "fatih",
+        "repo": "vim-go",
+        "rev": "59e208d5212b86c8afd69d8590f181594f859ddb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "fatih",
+        "repo": "vim-go",
+        "type": "github"
+      }
+    },
+    "vim-nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1738443453,
+        "narHash": "sha256-Hmn8EVlvMQnQF8COeb89cgl5+A83kagOjGsmvm5WNoE=",
+        "owner": "LnL7",
+        "repo": "vim-nix",
+        "rev": "7235c7ce2cea530cb6b59bc3e46d4bfe917d15c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LnL7",
+        "repo": "vim-nix",
+        "type": "github"
+      }
+    },
+    "vim-nord": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1683146605,
+        "narHash": "sha256-P4fbRNeJjXOoAQiWXXHZhm4ejgMD8W7OkdEF4TpEc7g=",
+        "owner": "arcticicestudio",
+        "repo": "nord-vim",
+        "rev": "f13f5dfbb784deddbc1d8195f34dfd9ec73e2295",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arcticicestudio",
+        "repo": "nord-vim",
+        "type": "github"
+      }
+    },
+    "vim-surround": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1666730476,
+        "narHash": "sha256-DZE5tkmnT+lAvx/RQHaDEgEJXRKsy56KJY919xiH1lE=",
+        "owner": "tpope",
+        "repo": "vim-surround",
+        "rev": "3d188ed2113431cf8dac77be61b842acb64433d9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tpope",
+        "repo": "vim-surround",
+        "type": "github"
+      }
+    },
+    "vim-terraform": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1737360319,
+        "narHash": "sha256-I2L37E2TBE3ZuK5I3xwqxmGdrwbzEMI3Keqz8k0fBdk=",
+        "owner": "hashivim",
+        "repo": "vim-terraform",
+        "rev": "8912ca1be3025a1c9fab193618f3b99517e01973",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hashivim",
+        "repo": "vim-terraform",
         "type": "github"
       }
     },

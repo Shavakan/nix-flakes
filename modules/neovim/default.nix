@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, ... }:
 
 with lib;
 
@@ -23,29 +23,38 @@ with lib;
     extraPackages = with pkgs; [
       ripgrep       # Required for various search plugins
       fd            # Alternative to find, used by some plugins
+      fzf           # Required for fzf-vim plugin
     ];
     
-    # Neovim plugins - basic set without LSP/CoC
-    plugins = with pkgs.vimPlugins; [
-      # UI Enhancements
-      nord-vim
-      
-      # Editing Tools
-      vim-surround
-      vim-commentary
-      vim-easy-align
-      
-      # File Navigation
-      fzf-vim
-      
-      # Git Integration
-      vim-fugitive
-      
-      # Language Support
-      vim-nix
-      vim-terraform
-      vim-go
-    ];
+    # Neovim plugins using flake inputs
+    plugins = lib.mapAttrsToList
+      (name: path: { 
+        plugin = pkgs.vimUtils.buildVimPlugin {
+          name = name;
+          src = path;
+        };
+        config = "";
+      })
+      {
+        # UI Enhancements
+        nord-vim = vim-nord;
+        
+        # Editing Tools
+        vim-surround = vim-surround;
+        vim-commentary = vim-commentary;
+        vim-easy-align = vim-easy-align;
+        
+        # File Navigation
+        fzf-vim = fzf-vim;
+        
+        # Git Integration
+        vim-fugitive = vim-fugitive;
+        
+        # Language Support
+        vim-nix = vim-nix;
+        vim-terraform = vim-terraform;
+        vim-go = vim-go;
+      };
     
     # Main Neovim configuration
     extraConfig = ''
