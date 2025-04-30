@@ -92,10 +92,19 @@ with lib;
       kgp = "kubectl get pods";
       kgn = "kubectl get nodes";
       kge = "kubectl get events";
+      kgs = "kubectl get services";
+      kgd = "kubectl get deployments";
+      ka = "kubectl apply -f";
       kd = "kubectl describe";
       kdp = "kubectl describe pods";
       kdn = "kubectl describe nodes";
+      krm = "kubectl delete";
       kl = "kubectl logs";
+      klf = "kubectl logs -f";
+      ke = "kubectl exec -it";
+      kc = "kubectl config current-context";
+      kcc = "kubectl config get-contexts";
+      ksc = "kubectl config use-context";
 
       # Neovim
       vim = "nvim";
@@ -181,6 +190,91 @@ with lib;
       # Better kubectl completion
       if command -v kubectl >/dev/null; then
         source <(kubectl completion zsh)
+        
+        # Kubernetes helper functions
+        kgpn() {
+          kubectl get pods | grep "$1"
+        }
+        
+        kdpn() {
+          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+          if [ -n "$POD" ]; then
+            kubectl describe pod "$POD"
+          else
+            echo "No pod found matching '$1'"
+          fi
+        }
+        
+        kln() {
+          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+          if [ -n "$POD" ]; then
+            shift
+            kubectl logs -f "$POD" "$@"
+          else
+            echo "No pod found matching '$1'"
+          fi
+        }
+        
+        ken() {
+          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+          if [ -n "$POD" ]; then
+            shift
+            kubectl exec -it "$POD" "$@" -- /bin/sh
+          else
+            echo "No pod found matching '$1'"
+          fi
+        }
+        
+        kpfn() {
+          if [ $# -lt 2 ]; then
+            echo "Usage: kpfn <pod-name> <local-port>:<remote-port>"
+            return 1
+          fi
+          
+          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+          if [ -n "$POD" ]; then
+            shift
+            kubectl port-forward "$POD" "$@"
+          else
+            echo "No pod found matching '$1'"
+          fi
+        }
+        
+        kresources() {
+          kubectl top pod "$@"
+        }
+        
+        knode-resources() {
+          kubectl top node "$@"
+        }
+        
+        krestart() {
+          kubectl rollout restart deployment "$1"
+        }
+        
+        kwatch() {
+          watch kubectl get pods "$@"
+        }
+        
+        kapply() {
+          kubectl apply -f "$1" && kubectl get pods -w
+        }
+        
+        kenv() {
+          if [ $# -eq 2 ]; then
+            kubectl config use-context "$1" && kubectl config set-context --current --namespace="$2"
+            echo "Switched to context '$1' and namespace '$2'"
+          elif [ $# -eq 1 ]; then
+            kubectl config use-context "$1"
+            echo "Switched to context '$1'"
+          else
+            echo "Current context: $(kubectl config current-context)"
+            echo "Current namespace: $(kubectl config view --minify --output 'jsonpath={..namespace}')"
+            echo ""
+            echo "Available contexts:"
+            kubectl config get-contexts
+          fi
+        }
       fi
     '';
   };

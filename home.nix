@@ -6,10 +6,10 @@
     # ./mcp-servers.nix
     ./modules/rclone
     ./modules/awsctx/awsctx.nix
-    ./modules/git # Git configuration
-    ./modules/neovim # Neovim configuration
-    ./modules/zsh # Zsh configuration
-    ./modules/claude # Claude configuration (includes both desktop and code)
+    ./modules/git
+    ./modules/neovim
+    ./modules/zsh
+    ./modules/claude
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -30,7 +30,9 @@
 
       # Cloud tools
       kubectl
-      k9s # Terminal UI for Kubernetes
+      kubectx
+      k9s
+      kubernetes-helm # Explicitly use kubernetes-helm, not the audio synthesizer
       awscli2
       saml2aws
       google-cloud-sdk
@@ -117,7 +119,7 @@
     configFile = ./modules/agenix/rclone.conf.age;
   };
 
-  # Configure rclone mounting service
+  # Configure rclone mounting service with integrated kubeconfig support
   services.rclone-mount = {
     enable = true;
     mounts = [
@@ -127,6 +129,9 @@
         allowOther = false;
       }
     ];
+
+    # Kubeconfig path within rclone mount
+    kubeConfigPath = "kubeconfig";
   };
 
   # Enable cd-rclone for easier navigation to rclone mount directories
@@ -137,7 +142,7 @@
       # Add more shortcuts as needed for other directories
     };
   };
-  
+
   # Enable the rclone-launchd service last to avoid circular dependencies
   services.rclone-launchd = {
     enable = true;
@@ -177,6 +182,8 @@
     enable = true;
     includeZshSupport = true;
   };
+
+  # Kubernetes config is now managed directly by the rclone-mount service
 
   # Configure SSH with proper agent setup
   programs.ssh = {

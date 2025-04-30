@@ -150,6 +150,25 @@ in
   options.services.rclone-mount = {
     enable = mkEnableOption "rclone mount service";
 
+    # Kubernetes config symlink settings
+    kubeConfigPath = mkOption {
+      type = types.str;
+      default = "kubeconfig";
+      description = "Path relative to the first mount where the kubeconfig file is stored";
+    };
+    
+    kubeConfigDir = mkOption {
+      type = types.str;
+      default = "${config.home.homeDirectory}/.kube";
+      description = "Directory where kubeconfig symlink is created";
+    };
+    
+    kubeConfigName = mkOption {
+      type = types.str;
+      default = "config";
+      description = "Name of the kubeconfig file to create in the kubeConfigDir";
+    };
+
     mounts = mkOption {
       type = types.listOf (types.submodule {
         options = {
@@ -206,5 +225,47 @@ in
         '') cfg.mounts}
       fi
     '';
+    
+    # Create an activation script to set up the kubeconfig symlink
+    home.activation.linkKubeConfig = (
+      let 
+        # Use the first mount point by default
+        firstMount = if (length cfg.mounts) > 0 then (elemAt cfg.mounts 0) else null;
+        mountPoint = if firstMount != null then firstMount.mountPoint else "";
+      in
+      lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
+        if [ "${mountPoint}" != "" ]; then
+          SOURCE_PATH="${mountPoint}/${cfg.kubeConfigPath}"
+          TARGET_DIR="${cfg.kubeConfigDir}"
+          TARGET_FILE="$TARGET_DIR/${cfg.kubeConfigName}"
+          
+          if [ -e "$SOURCE_PATH" ]; then
+            # Make sure target directory exists
+            $DRY_RUN_CMD mkdir -p "$TARGET_DIR"
+            
+            # If target exists and is not a symlink, back it up
+            if [ -f "$TARGET_FILE" ] && [ ! -L "$TARGET_FILE" ]; then
+              echo "Backing up existing kubeconfig to $TARGET_FILE.backup"
+              $DRY_RUN_CMD cp "$TARGET_FILE" "$TARGET_FILE.backup"
+            fi
+            
+            # Create or update the symlink
+            $DRY_RUN_CMD ln -sf "$SOURCE_PATH" "$TARGET_FILE"
+            $DRY_RUN_CMD chmod 600 "$TARGET_FILE"
+            echo "Created kubeconfig symlink: $TARGET_FILE -> $SOURCE_PATH"
+          else
+            echo "Warning: Source path $SOURCE_PATH not found or rclone not mounted."
+            echo "Will try again on next activation."
+          fi
+        else
+          echo "Error: No mount point configured for kubeconfig symlink."
+        fi
+      ''
+    );
+    
+    # Set environment variable for KUBECONFIG
+    home.sessionVariables = {
+      KUBECONFIG = "${cfg.kubeConfigDir}/${cfg.kubeConfigName}";
+    };
   };
 }
