@@ -117,7 +117,7 @@
           system = darwinSystem;
           modules = [
             # Main darwin configuration
-            ./modules/darwin/common.nix
+            ./modules/darwin
             # MacBook-specific settings
             ./modules/darwin/macbook.nix
             # Set hostname explicitly
@@ -130,7 +130,7 @@
           system = darwinSystem;
           modules = [
             # Main darwin configuration
-            ./modules/darwin/common.nix
+            ./modules/darwin
             # Mac Studio-specific settings
             ./modules/darwin/macstudio.nix
             # Set hostname explicitly

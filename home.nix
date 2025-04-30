@@ -5,7 +5,7 @@
   imports = [
     # ./mcp-servers.nix
     ./modules/rclone
-    ./modules/awsctx/awsctx.nix
+    ./modules/awsctx
     ./modules/git
     ./modules/neovim
     ./modules/zsh
@@ -77,10 +77,6 @@
   # Disable showing news on update
   news.display = "silent";
 
-  # Git configuration is now handled by the dedicated git module
-
-  # Zsh configuration is now handled by the dedicated zsh module
-
   # Tmux configuration
   programs.tmux = {
     enable = true;
@@ -105,10 +101,6 @@
       bind-key sp set-window-option synchronize-panes\; display-message "synchronize-panes is now #{?pane_synchronized,on,off}"
     '';
   };
-
-  # Neovim configuration is now in the dedicated neovim module
-
-  # Direnv and fzf configuration is now handled by the zsh module
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;
@@ -182,8 +174,6 @@
     enable = true;
     includeZshSupport = true;
   };
-
-  # Kubernetes config is now managed directly by the rclone-mount service
 
   # Configure SSH with proper agent setup
   programs.ssh = {

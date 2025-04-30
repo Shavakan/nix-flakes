@@ -1,6 +1,33 @@
 # My Nix Development Environment
 
-This repository contains my Nix flakes configuration for setting up a consistent development environment across machines.
+This repository contains my Nix flakes configuration for setting up a consistent development environment across machines using nix-darwin and home-manager.
+
+## Setup
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/nix-flakes.git ~/nix-flakes
+cd ~/nix-flakes
+
+# Apply system configuration
+darwin-rebuild switch --flake .
+
+# Apply user configuration
+home-manager switch --flake . --impure
+```
+
+### Updating
+
+```bash
+# Update flake inputs
+nix flake update
+
+# Apply changes
+darwin-rebuild switch --flake .
+home-manager switch --flake . --impure
+```
 
 ## Prerequisites
 
@@ -90,6 +117,23 @@ This repository contains my Nix flakes configuration for setting up a consistent
    
    When you first launch your terminal after installation, the powerlevel10k configuration wizard will run automatically. Follow the prompts to set up your preferred terminal appearance.
 
+## Keyboard Shortcuts
+
+### Stage Manager Toggle
+
+**Command (⌘) + Option (⌥) + S**: Toggle Stage Manager on/off  
+**Option (⌥) + Shift (⇧) + D**: Alternative shortcut to toggle Stage Manager
+
+This allows you to quickly enable or disable Stage Manager when you need to view multiple windows at once or focus on a single app.
+
+An executable script is also placed on your Desktop ("Toggle Stage Manager.command") that you can double-click to toggle Stage Manager manually.
+
+> **Note**: For the keyboard shortcuts to work:
+>
+> 1. You'll need to grant skhd permission in System Settings → Privacy & Security → Accessibility
+> 2. If the shortcuts stop working, disable Secure Keyboard Entry in Terminal/iTerm2
+> 3. All logs are stored in `~/.config/skhd/logs/` for troubleshooting
+
 ## File Structure
 
 ```
@@ -101,9 +145,12 @@ This repository contains my Nix flakes configuration for setting up a consistent
 │   ├── agenix/          # Age-encrypted secrets
 │   ├── awsctx/          # AWS context switcher
 │   ├── darwin/          # Machine-specific configurations
-│   │   ├── common.nix   # Shared darwin configuration
+│   │   ├── default.nix  # Shared darwin configuration (main module)
 │   │   ├── macbook.nix  # MacBook configuration
-│   │   └── macstudio.nix # Mac Studio configuration
+│   │   ├── macstudio.nix # Mac Studio configuration
+│   │   └── services/    # Services modules
+│   │       ├── default.nix      # Services configuration
+│   │       └── stage-manager.nix # Stage Manager module
 │   ├── host-config/     # Machine type detection and settings
 │   ├── pre-commit/      # Pre-commit hooks configuration
 │   └── rclone/          # Remote mounting configuration
@@ -122,31 +169,6 @@ This setup uses per-machine configurations based on hostname:
 2. To add a new machine:
    - Add an entry to `flake.nix` with your hostname
    - Update machine type detection in `modules/host-config/git.nix`
-
-## Key Features
-
-This configuration includes:
-
-- **Shell Environment**: ZSH with oh-my-zsh and powerlevel10k theme (configured in modules/zsh/default.nix)
-- **Development Tools**: Git, Neovim, Terraform, various programming languages
-- **Cloud Tools**: AWS CLI, Google Cloud SDK, kubectl, Vault
-- **Custom Mounts**: rclone with automatic mounting of remote filesystems
-- **Security**: GPG and SSH configuration with macOS keychain integration
-- **Machine-specific Configuration**: Automatic detection and configuration for different machines
-- **System Configuration**: macOS settings and Homebrew package management via nix-darwin
-- **Code Quality**: Pre-commit hooks with nixpkgs-fmt and statix for consistent Nix code
-
-## Automatic Mounts
-
-The configuration includes automatic mounting of rclone filesystems. Ensure your rclone.conf is properly configured:
-
-```bash
-# Check mount status
-rclone-status
-
-# Mount manually if needed
-rclone-mount aws-shavakan:shavakan-rclone ~/mnt/rclone
-```
 
 ## Secrets Management
 
@@ -250,51 +272,6 @@ Never copy private SSH keys between machines. Always generate unique keys for ea
    LANG=en_US.UTF-8 home-manager switch --flake . --impure
    ```
 
-3. Test your signing configuration:
-   ```bash
-   git commit --allow-empty -m "Test GPG signing"
-   ```
-
-4. Verify the commit is signed:
-   ```bash
-   git log --show-signature -1
-   ```
-
-## Pre-commit Setup
-
-This repository includes pre-commit hooks for code quality, managed through Nix (no separate installation required):
-
-1. The pre-commit hooks are automatically installed by home-manager through the `modules/pre-commit/default.nix` module.
-
-2. The hooks are configured to run:
-   - nixpkgs-fmt: Formats Nix code automatically
-   - statix fix: Fixes common Nix code issues
-
-3. The hooks run automatically on each commit, ensuring code quality.
-
-4. To manually run the hooks on all files:
-   ```bash
-   pre-commit run --all-files
-   ```
-
-## Tips for Daily Usage
-
-- Use the provided aliases for Git, Kubernetes, and other tools
-- The devsisters.sh script is loaded from the rclone mount automatically
-- Direnv is configured to automatically load environment variables from .envrc files
-
-## Customization
-
-To customize this configuration for your own use:
-
-1. Edit `modules/darwin/common.nix` for main system settings shared by all machines
-2. Edit `modules/darwin/macbook.nix` or `modules/darwin/macstudio.nix` for machine-type settings
-3. Edit `home.nix` to adjust user packages and settings
-4. Modify `modules/host-config/default.nix` to add machine types
-5. Update `modules/rclone/*.nix` for custom remote mounts
-6. Modify `modules/awsctx/awsctx.nix` for AWS integration settings
-7. Update encrypted files using agenix in `modules/agenix/`
-
 ## Troubleshooting
 
 ### Homebrew Issues
@@ -303,25 +280,29 @@ To customize this configuration for your own use:
 
 - **Homebrew path issues**: If Homebrew is installed but nix-darwin can't find it, make sure it's in your PATH. For Apple Silicon Macs, Homebrew is typically installed in `/opt/homebrew/bin/brew`.
 
-### Host Configuration
+### skhd Issues
 
-- **Git signing**: For commit signing, add `gitSigningKey` and `enableGitSigning = true` to your machine type config
-- **New machine type**: Choose the closest configuration when running `darwin-rebuild`
+- **Keyboard shortcuts not working**: Ensure Secure Keyboard Entry is disabled in your terminal (Terminal → Secure Keyboard Entry) and check accessibility permissions.
 
-### General Setup Issues
-
-- **Home Manager not found**: If `home-manager` command is not found, use `nix run home-manager/master -- switch --flake . --impure` instead.
-
-- **Shell environment not updated**: After initial installation, you may need to restart your terminal or run `source /etc/static/zshrc`.
-
-- **Nix channel errors**: If you see errors about nix channels, you may need to run `nix-channel --update` before proceeding.
-
-- **Secrets decryption fails**: Ensure your SSH key is added to `modules/agenix/ssh.nix` and the secrets have been rekeyed with `agenix --rekey` on an existing machine.
+- **skhd failing to start**: Run `~/Desktop/restart_skhd.command` to diagnose and restart the service.
 
 ### Other Issues
 
 - **SSH key issues**: Ensure your SSH key is properly set up at `~/.ssh/id_ed25519`
 
-- **Mount errors**: Check `~/Library/Logs/rclone-mount.log` for details on rclone mounting issues.
+- **Secrets decryption fails**: Ensure your SSH key is added to `modules/agenix/ssh.nix` and the secrets have been rekeyed with `agenix --rekey` on an existing machine.
 
-- **Package installation failures**: Some packages might fail to install. Try running `nix-collect-garbage -d` to clean up the Nix store, then retry the installation.
+## Features
+
+- **Centralized system configuration** using nix-darwin
+- **User environment management** with home-manager
+- **Machine-specific configurations** (MacBook vs Mac Studio)
+- **Shell Environment**: ZSH with oh-my-zsh and powerlevel10k theme
+- **Development Tools**: Git, Neovim, Terraform, various programming languages
+- **Cloud Tools**: AWS CLI, Google Cloud SDK, kubectl, Vault
+- **Custom Mounts**: rclone with automatic mounting of remote filesystems
+- **Security**: GPG and SSH configuration with macOS keychain integration
+- **Machine-specific Configuration**: Automatic detection and configuration for different machines
+- **System Configuration**: macOS settings and Homebrew package management via nix-darwin
+- **Code Quality**: Pre-commit hooks with nixpkgs-fmt and statix for consistent Nix code
+- **Stage Manager Shortcuts**: Easy toggling via keyboard shortcuts

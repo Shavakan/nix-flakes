@@ -252,7 +252,7 @@ in
             # Create or update the symlink
             $DRY_RUN_CMD ln -sf "$SOURCE_PATH" "$TARGET_FILE"
             $DRY_RUN_CMD chmod 600 "$TARGET_FILE"
-            echo "Created kubeconfig symlink: $TARGET_FILE -> $SOURCE_PATH"
+            # echo "Created kubeconfig symlink: $TARGET_FILE -> $SOURCE_PATH"
           else
             echo "Warning: Source path $SOURCE_PATH not found or rclone not mounted."
             echo "Will try again on next activation."

@@ -1,6 +1,12 @@
+# modules/darwin/default.nix (previously common.nix)
 { pkgs, ... }:
 
 {
+  # Import all services
+  imports = [
+    ./services
+  ];
+
   # Enable nix
   nix.enable = true;
 
