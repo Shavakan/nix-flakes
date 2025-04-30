@@ -6,6 +6,13 @@ let
   cfg = config.services.rclone;
 in
 {
+  # Import submodules in the correct dependency order
+  imports = [
+    ./mount.nix
+    ./launchd.nix
+    ./cd-rclone
+  ];
+
   options.services.rclone = {
     enable = mkEnableOption "rclone with secrets management";
 

@@ -4,9 +4,7 @@
   # Import configurations
   imports = [
     # ./mcp-servers.nix
-    ./modules/rclone/rclone.nix
-    ./modules/rclone/rclone-mount.nix
-    ./modules/rclone/rclone-launchd.nix
+    ./modules/rclone
     ./modules/awsctx/awsctx.nix
     ./modules/git # Git configuration
     ./modules/neovim # Neovim configuration
@@ -113,7 +111,7 @@
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;
 
-  # Configure rclone with agenix
+  # Configure rclone services in the correct dependency order
   services.rclone = {
     enable = true;
     configFile = ./modules/agenix/rclone.conf.age;
@@ -131,7 +129,16 @@
     ];
   };
 
-  # Enable the rclone-launchd service to automatically mount at login
+  # Enable cd-rclone for easier navigation to rclone mount directories
+  programs.cd-rclone = {
+    enable = true;
+    extraDirs = {
+      kube = "kubeconfigs";
+      # Add more shortcuts as needed for other directories
+    };
+  };
+  
+  # Enable the rclone-launchd service last to avoid circular dependencies
   services.rclone-launchd = {
     enable = true;
   };
