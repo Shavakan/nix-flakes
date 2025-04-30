@@ -11,69 +11,46 @@ let
   # Repository URL - Use SSH instead of HTTPS
   repoUrl = "git@github.com:devsisters/awsctx.git";
 
-  # Helper function to create directories
-  createDirs = pkgs.writeShellScript "create-awsctx-dirs" ''
-    mkdir -p "$HOME/Library/Application Support/awsctx"
-    mkdir -p "$HOME/Library/Caches/awsctx"
-    mkdir -p "$HOME/workspace"
-  '';
+  # Create a standalone awsctx script that doesn't depend on the repository
+  awsctxScript = pkgs.writeScriptBin "awsctx" ''
+    #!/usr/bin/env bash
+    # Simple AWS profile context switcher
 
-  # Clone the repository if it doesn't exist
-  cloneRepo = pkgs.writeShellScript "clone-awsctx-repo" ''
-    ${createDirs}
-    
-    # Check if the repository already exists
-    if [ ! -d "${sourcePath}" ]; then
-      mkdir -p "$(dirname "${sourcePath}")"
-      
-      # Check if SSH key exists and has proper permissions
-      SSH_KEY="$HOME/.ssh/id_ed25519"
-      if [ -f "$SSH_KEY" ]; then
-        # Ensure proper permissions
-        chmod 600 "$SSH_KEY" 2>/dev/null || true
+    if [ -z "$1" ]; then
+      echo "Available AWS profiles:"
+      aws configure list-profiles
+      echo ""
+      if [ -n "$AWS_PROFILE" ]; then
+        echo "Current profile: $AWS_PROFILE"
+      else
+        echo "No AWS profile currently active"
       fi
-      
-      # Clone with appropriate settings
-      GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
-      ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1
-      
-      if [ $? -ne 0 ]; then
-        # Fallback to HTTPS if SSH fails (silently)
-        ${pkgs.git}/bin/git clone https://github.com/devsisters/awsctx.git "${sourcePath}" >/dev/null 2>&1
-      fi
+      exit 0
+    fi
+
+    # Check if the profile exists
+    if aws configure list-profiles | grep -q "^$1$"; then
+      export AWS_PROFILE="$1"
+      echo "Switched to AWS profile: $AWS_PROFILE"
     else
-      # Make sure the repository uses the right remote URL (silently)
-      CURRENT_URL=$(cd "${sourcePath}" && ${pkgs.git}/bin/git remote get-url origin 2>/dev/null)
-      if [ "$CURRENT_URL" = "https://github.com/devsisters/awsctx.git" ]; then
-        (cd "${sourcePath}" && ${pkgs.git}/bin/git remote set-url origin ${repoUrl}) >/dev/null 2>&1
-      fi
+      echo "Error: AWS profile '$1' not found"
+      echo "Available profiles:"
+      aws configure list-profiles
+      exit 1
     fi
   '';
 
-  # Link the profiles directory to awsctx config instead of copying individual files
-  setupProfiles = pkgs.writeShellScript "setup-awsctx-profiles" ''
-    # First ensure the repository is cloned
-    ${cloneRepo}
+  # Create a standalone aws profile lister
+  awsLsScript = pkgs.writeScriptBin "awsls" ''
+    #!/usr/bin/env bash
+    # List AWS profiles
+
+    echo "Available AWS profiles:"
+    aws configure list-profiles
     
-    # Source path to profiles directory
-    PROFILES_SRC="${sourcePath}/profiles"
-    
-    # Destination for configs
-    CONFIG_DIR="$HOME/Library/Application Support/awsctx"
-    PROFILES_LINK="$CONFIG_DIR/profiles"
-    
-    # Create symlink for the entire profiles directory
-    if [ -d "$PROFILES_SRC" ]; then
-      # Remove old symlink if it exists
-      if [ -L "$PROFILES_LINK" ]; then
-        rm -f "$PROFILES_LINK"
-      # Remove old directory if it exists
-      elif [ -d "$PROFILES_LINK" ]; then
-        rm -rf "$PROFILES_LINK"
-      fi
-      
-      # Create a new symlink
-      ln -sf "$PROFILES_SRC" "$PROFILES_LINK"
+    if [ -n "$AWS_PROFILE" ]; then
+      echo ""
+      echo "Current profile: $AWS_PROFILE"
     fi
   '';
 
@@ -96,26 +73,93 @@ in
       coreutils
       findutils
       git # Ensure git is available for cloning
+      awsctxScript # Our custom awsctx script
+      awsLsScript  # Our custom awsls script
     ];
 
     # Add awsctx to the path 
     home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
 
-    # Create directories, clone repository, and setup profiles
-    # Run after git config is established
-    home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "verifyHostname" ] ''
-      # Run setupProfiles silently
-      export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new"
-      $DRY_RUN_CMD ${setupProfiles} >/dev/null 2>&1
+    # Create directories and clone repository via activation script
+    home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      # Create required directories
+      mkdir -p "$HOME/Library/Application Support/awsctx"
+      mkdir -p "$HOME/Library/Caches/awsctx"
+      mkdir -p "$HOME/workspace"
+      
+      # Clone repo if it doesn't exist
+      if [ ! -d "${sourcePath}" ]; then
+        mkdir -p "$(dirname "${sourcePath}")"
+        
+        # Check if SSH key exists and has proper permissions
+        SSH_KEY="$HOME/.ssh/id_ed25519"
+        if [ -f "$SSH_KEY" ]; then
+          # Ensure proper permissions
+          chmod 600 "$SSH_KEY" 2>/dev/null || true
+        fi
+        
+        # Clone with appropriate settings
+        GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=accept-new" \
+        ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1 || \
+        ${pkgs.git}/bin/git clone https://github.com/devsisters/awsctx.git "${sourcePath}" >/dev/null 2>&1
+      fi
+      
+      # Link profiles directory
+      PROFILES_SRC="${sourcePath}/profiles"
+      CONFIG_DIR="$HOME/Library/Application Support/awsctx"
+      PROFILES_LINK="$CONFIG_DIR/profiles"
+      
+      if [ -d "$PROFILES_SRC" ]; then
+        # Remove old symlink or directory if it exists
+        if [ -L "$PROFILES_LINK" ]; then
+          rm -f "$PROFILES_LINK"
+        elif [ -d "$PROFILES_LINK" ]; then
+          rm -rf "$PROFILES_LINK"
+        fi
+        
+        # Create a new symlink
+        ln -sf "$PROFILES_SRC" "$PROFILES_LINK"
+      fi
+      
+      # Create shells/zsh directory in awsctx repo if it doesn't exist
+      mkdir -p "${sourcePath}/shells/zsh"
+      
+      # Create a simple awsctx integration file for ZSH if it doesn't exist
+      if [ ! -f "${sourcePath}/shells/zsh/awsctx.zsh" ]; then
+        cat > "${sourcePath}/shells/zsh/awsctx.zsh" << 'EOF'
+#!/usr/bin/env zsh
+# awsctx shell integration for ZSH
+
+# Export the profile to prompt if it's set
+if [ -n "$AWS_PROFILE" ]; then
+  export RPROMPT="%F{blue}[$AWS_PROFILE]%f $RPROMPT"
+fi
+
+# AWS prompt update function
+function aws_prompt_info() {
+  if [ -n "$AWS_PROFILE" ]; then
+    echo "%F{blue}[$AWS_PROFILE]%f"
+  fi
+}
+EOF
+      fi
     '';
 
     # Configure zsh integration
     programs.zsh = mkIf cfg.includeZshSupport {
       initExtra = ''
-        # Source awsctx for zsh
+        # Add awsctx bin directory to PATH
+        if [ -d "${sourcePath}/bin" ]; then
+          export PATH="${sourcePath}/bin:$PATH"
+        fi
+        
+        # Source awsctx zsh integration if available
         if [ -f "${sourcePath}/shells/zsh/awsctx.zsh" ]; then
           source "${sourcePath}/shells/zsh/awsctx.zsh"
         fi
+        
+        # Show AWS profile in prompt if set
+        export RPROMPT="%F{blue}[$AWS_PROFILE]%f $RPROMPT"
       '';
     };
   };

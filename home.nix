@@ -37,6 +37,12 @@
       saml2aws
       google-cloud-sdk
 
+      # Search tools
+      ripgrep # Fast search tool (used in place of the missing oh-my-zsh plugin)
+
+      # ZSH Enhancements
+      zsh-powerlevel10k # Powerlevel10k theme (installed directly)
+
       # GPG
       gnupg
 

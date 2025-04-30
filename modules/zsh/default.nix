@@ -3,6 +3,15 @@
 with lib;
 
 {
+  # Install powerlevel10k directly in the system packages to ensure it's available
+  home.packages = with pkgs; [
+    zsh-powerlevel10k
+  ];
+
+  # Create p10k.zsh configuration file directly in home directory
+  home.file.".p10k.zsh".source = ./p10k.zsh;
+
+  # ZSH Configuration
   programs.zsh = {
     enable = true;
 
@@ -31,21 +40,14 @@ with lib;
         "aws"
         "kubectl"
         "fzf"
-        "ripgrep"
       ];
-
-      # Using Powerlevel10k theme if it was detected
-      theme = "powerlevel10k/powerlevel10k";
+      
+      # Leave theme empty in oh-my-zsh - we'll load powerlevel10k directly
+      theme = "";
     };
 
     # Plugins not covered by Oh-My-Zsh
     plugins = [
-      {
-        # Powerlevel10k
-        name = "powerlevel10k";
-        src = zsh-powerlevel10k;
-        file = "powerlevel10k.zsh-theme";
-      }
       {
         # Auto pair brackets, quotes, etc.
         name = "zsh-autopair";
@@ -53,73 +55,31 @@ with lib;
       }
     ];
 
-    # Environment variables
-    initExtraBeforeCompInit = ''
-      # Check if p10k config exists
+    # Init powerlevel10k first in zshrc, as recommended in the thread
+    initExtraFirst = ''
+      # Source powerlevel10k from the system
+      source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme
+      
+      # Load p10k config
       [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
     '';
 
-    # Shell aliases
-    shellAliases = {
-      # Directory navigation
-      cdw = "cd $HOME/workspace/ && ls";
-
-      # Git aliases
-      gb = "echo 'git branch' && git branch";
-      gba = "echo 'git branch -a' && git branch -a";
-      gs = "echo 'git status' && git status";
-      gsl = "echo 'git stash list' && git stash list";
-      gsp = "echo 'git stash pop' && git stash pop";
-      gd = "echo 'git diff' && git diff";
-      gds = "echo 'git diff --staged' && git diff --staged";
-      gfp = "echo 'git fetch --prune' && git fetch --prune && git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}' | xargs git branch -d";
-      gfpdr = "echo 'git fetch --prune --dry-run' && git fetch --prune --dry-run";
-      gsur = "echo 'git submodule update --recursive' && git submodule update --recursive";
-      grhh = "echo 'git reset --hard HEAD' && git reset --hard HEAD";
-      gprr = "echo 'git pull --rebase' && git pull --rebase";
-
-      # Podman aliases
-      pp = "echo 'podman ps' && podman ps";
-      psp = "echo 'podman system prune' && podman system prune";
-      pc = "podman-compose";
-
-      # Terraform
-      tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
-
-      # Kubernetes
-      k = "kubectl";
-      kg = "kubectl get";
-      kgp = "kubectl get pods";
-      kgn = "kubectl get nodes";
-      kge = "kubectl get events";
-      kgs = "kubectl get services";
-      kgd = "kubectl get deployments";
-      ka = "kubectl apply -f";
-      kd = "kubectl describe";
-      kdp = "kubectl describe pods";
-      kdn = "kubectl describe nodes";
-      krm = "kubectl delete";
-      kl = "kubectl logs";
-      klf = "kubectl logs -f";
-      ke = "kubectl exec -it";
-      kc = "kubectl config current-context";
-      kcc = "kubectl config get-contexts";
-      ksc = "kubectl config use-context";
-
-      # Neovim
-      vim = "nvim";
-      vi = "nvim";
-      vimdiff = "nvim -d";
-
-      # System tools
-      mtr = "sudo ${pkgs.mtr}/bin/mtr";
-
-      # Python tools - use uv instead of pip
-      pip = "uv pip";
-    };
-
-    # Additional Zsh configuration
+    # Environment variables
     initExtra = ''
+      # Ensure oh-my-zsh cache directory has proper permissions
+      if [ -d "$HOME/.cache/oh-my-zsh" ]; then
+        chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
+      else
+        mkdir -p "$HOME/.cache/oh-my-zsh"
+        chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
+      fi
+      
+      # Fix oh-my-zsh related issues
+      if command -v ripgrep >/dev/null 2>&1; then
+        # Create a symlink for ripgrep in case the plugin is missing
+        alias rg="ripgrep"
+      fi
+      
       # Initialize LS_COLORS to distinguish between files and directories
       export CLICOLOR=1
       export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
@@ -187,16 +147,26 @@ with lib;
         source "$(fzf-share)/completion.zsh"
       fi
       
-      # Better kubectl completion
+      # Better kubectl completion and functions
       if command -v kubectl >/dev/null; then
         source <(kubectl completion zsh)
         
-        # Kubernetes helper functions
-        kgpn() {
+        # Kubernetes helper functions as direct functions (no aliases)
+        # Basic kubectl shortcuts as functions
+        function kgp() { kubectl get pods "$@"; }
+        function kgn() { kubectl get nodes "$@"; }
+        function kge() { kubectl get events "$@"; }
+        function kgs() { kubectl get services "$@"; }
+        function kgd() { kubectl get deployments "$@"; }
+        function kdp() { kubectl describe pods "$@"; }
+        function kdn() { kubectl describe nodes "$@"; }
+        
+        # Advanced kubectl functions
+        function kgpn() {
           kubectl get pods | grep "$1"
         }
         
-        kdpn() {
+        function kdpn() {
           POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
           if [ -n "$POD" ]; then
             kubectl describe pod "$POD"
@@ -205,7 +175,7 @@ with lib;
           fi
         }
         
-        kln() {
+        function kln() {
           POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
           if [ -n "$POD" ]; then
             shift
@@ -215,7 +185,7 @@ with lib;
           fi
         }
         
-        ken() {
+        function ken() {
           POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
           if [ -n "$POD" ]; then
             shift
@@ -225,7 +195,7 @@ with lib;
           fi
         }
         
-        kpfn() {
+        function kpfn() {
           if [ $# -lt 2 ]; then
             echo "Usage: kpfn <pod-name> <local-port>:<remote-port>"
             return 1
@@ -240,27 +210,27 @@ with lib;
           fi
         }
         
-        kresources() {
+        function kresources() {
           kubectl top pod "$@"
         }
         
-        knode-resources() {
+        function knode-resources() {
           kubectl top node "$@"
         }
         
-        krestart() {
+        function krestart() {
           kubectl rollout restart deployment "$1"
         }
         
-        kwatch() {
+        function kwatch() {
           watch kubectl get pods "$@"
         }
         
-        kapply() {
+        function kapply() {
           kubectl apply -f "$1" && kubectl get pods -w
         }
         
-        kenv() {
+        function kenv() {
           if [ $# -eq 2 ]; then
             kubectl config use-context "$1" && kubectl config set-context --current --namespace="$2"
             echo "Switched to context '$1' and namespace '$2'"
@@ -277,6 +247,58 @@ with lib;
         }
       fi
     '';
+
+    # Shell aliases
+    shellAliases = {
+      # Directory navigation
+      cdw = "cd $HOME/workspace/ && ls";
+
+      # Git aliases
+      gb = "echo 'git branch' && git branch";
+      gba = "echo 'git branch -a' && git branch -a";
+      gs = "echo 'git status' && git status";
+      gsl = "echo 'git stash list' && git stash list";
+      gsp = "echo 'git stash pop' && git stash pop";
+      gd = "echo 'git diff' && git diff";
+      gds = "echo 'git diff --staged' && git diff --staged";
+      gfp = "echo 'git fetch --prune' && git fetch --prune && git branch -r | awk '{print $1}' | egrep -v -f /dev/fd/0 <(git branch -vv | grep origin) | awk '{print $1}' | xargs git branch -d";
+      gfpdr = "echo 'git fetch --prune --dry-run' && git fetch --prune --dry-run";
+      gsur = "echo 'git submodule update --recursive' && git submodule update --recursive";
+      grhh = "echo 'git reset --hard HEAD' && git reset --hard HEAD";
+      gprr = "echo 'git pull --rebase' && git pull --rebase";
+
+      # Podman aliases
+      pp = "echo 'podman ps' && podman ps";
+      psp = "echo 'podman system prune' && podman system prune";
+      pc = "podman-compose";
+
+      # Terraform
+      tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
+
+      # Kubernetes - keeping only the simple ones that won't cause conflicts
+      k = "kubectl";
+      kg = "kubectl get";
+      ka = "kubectl apply -f";
+      kd = "kubectl describe";
+      krm = "kubectl delete";
+      kl = "kubectl logs";
+      klf = "kubectl logs -f";
+      ke = "kubectl exec -it";
+      kc = "kubectl config current-context";
+      kcc = "kubectl config get-contexts";
+      ksc = "kubectl config use-context";
+
+      # Neovim
+      vim = "nvim";
+      vi = "nvim";
+      vimdiff = "nvim -d";
+
+      # System tools
+      mtr = "sudo ${pkgs.mtr}/bin/mtr";
+
+      # Python tools - use uv instead of pip
+      pip = "uv pip";
+    };
   };
 
   # Enable other shell integrations
@@ -299,8 +321,4 @@ with lib;
     nix-direnv.enable = true;
     enableZshIntegration = true;
   };
-
-  # Skip creating p10k.zsh file since you already have one
-  # home.file.".p10k.zsh" = { ... };
-
 }
