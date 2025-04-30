@@ -175,10 +175,9 @@
     '';
   };
 
-  # Enable awsctx service with zsh support
+  # Enable awsctx service
   services.awsctx = {
     enable = true;
-    includeZshSupport = true;
   };
 
   # Configure SSH with proper agent setup
