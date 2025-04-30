@@ -12,7 +12,7 @@ git clone https://github.com/yourusername/nix-flakes.git ~/nix-flakes
 cd ~/nix-flakes
 
 # Apply system configuration
-darwin-rebuild switch --flake .
+darwin-rebuild switch --flake . --impure
 
 # Apply user configuration
 home-manager switch --flake . --impure
@@ -25,7 +25,7 @@ home-manager switch --flake . --impure
 nix flake update
 
 # Apply changes
-darwin-rebuild switch --flake .
+darwin-rebuild switch --flake . --impure
 home-manager switch --flake . --impure
 ```
 
@@ -99,7 +99,7 @@ home-manager switch --flake . --impure
    cd ~/nix-flakes
 
    # Build and apply the configuration using your hostname
-   ./result/bin/darwin-rebuild switch --flake .#$(hostname)
+   ./result/bin/darwin-rebuild switch --flake .#$(hostname) --impure
    
    # Source the updated shell configuration
    source /etc/static/zshrc
@@ -116,6 +116,58 @@ home-manager switch --flake . --impure
    This will set up your complete environment including ZSH with Oh-My-Zsh and the powerlevel10k theme, which are configured in the `modules/zsh/default.nix` module.
    
    When you first launch your terminal after installation, the powerlevel10k configuration wizard will run automatically. Follow the prompts to set up your preferred terminal appearance.
+
+## iTerm2 Configuration
+
+Your iTerm2 terminal is configured through nix-darwin, which manages settings, profiles, and appearance preferences declaratively.
+
+### Features
+
+- **Profile Management**: The default profile is based on the provided Default.json, with support for additional custom profiles
+- **Theme Integration**: Auto-detects system dark/light mode when theme is set to "auto"
+- **Visual Customization**: Controls transparency, blur, colors, fonts, and cursor style
+- **Status Bar**: Configurable status bar with various components (CPU, memory, etc.)
+- **Smart Selection**: Enables intelligent text selection for URLs, file paths, etc.
+
+### Applying Changes
+
+When making changes to the iTerm2 configuration in `modules/darwin/services/iterm2.nix`, you must use the `--impure` flag with darwin-rebuild:
+
+```bash
+darwin-rebuild switch --flake . --impure
+```
+
+The `--impure` flag is required because the configuration detects your system's current dark/light mode setting when using the "auto" theme option.
+
+### Adding Custom Profiles
+
+You can add custom profiles by editing the `custom.iterm2.profiles` section in `modules/darwin/services/default.nix`:
+
+```nix
+profiles = {
+  "Work" = {
+    default = false;
+    name = "Work";
+    font = "MesloLGS-NF-Regular";
+    fontSize = 13;
+    useNonAsciiFont = false;
+    # Additional settings...
+  };
+};
+```
+
+### Advanced Preferences
+
+Additional iTerm2 preferences can be configured via the `advancedPreferences` option:
+
+```nix
+advancedPreferences = {
+  "AlternateMouseScroll" = true;
+  "AutoCommandHistory" = true;
+  "SoundForEsc" = false;
+  # Additional preferences...
+};
+```
 
 ## Keyboard Shortcuts
 
@@ -150,6 +202,7 @@ An executable script is also placed on your Desktop ("Toggle Stage Manager.comma
 │   │   ├── macstudio.nix # Mac Studio configuration
 │   │   └── services/    # Services modules
 │   │       ├── default.nix      # Services configuration
+│   │       ├── iterm2.nix       # iTerm2 configuration
 │   │       └── stage-manager.nix # Stage Manager module
 │   ├── host-config/     # Machine type detection and settings
 │   ├── pre-commit/      # Pre-commit hooks configuration
@@ -163,7 +216,7 @@ This setup uses per-machine configurations based on hostname:
 
 1. Apply your configuration using:
    ```bash
-   darwin-rebuild switch --flake .#$(hostname)
+   darwin-rebuild switch --flake .#$(hostname) --impure
    ```
 
 2. To add a new machine:
