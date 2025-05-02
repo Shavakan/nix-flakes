@@ -65,7 +65,7 @@
     # Container tools
     podman
     podman-compose
-    
+
     # Add skhd explicitly to ensure it's available 
     skhd
   ];
@@ -79,8 +79,9 @@
       upgrade = true; # Upgrade outdated packages
     };
     casks = [
-      "macfuse" # Install macFUSE as a cask
-      "notion" # Install Notion
+      "aerial"
+      "macfuse"
+      "notion"
     ];
     global = {
       brewfile = true; # Use Brewfile for manual operations too
