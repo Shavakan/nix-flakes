@@ -10,6 +10,7 @@
     ./modules/neovim
     ./modules/zsh
     ./modules/claude
+    ./modules/vscode
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage

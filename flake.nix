@@ -5,6 +5,12 @@
     # Package sources - use nixpkgs-unstable for compatibility
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # nix-vscode-extensions - for VS Code extensions from marketplace
+    nix-vscode-extensions = {
+      url = "github:nix-community/nix-vscode-extensions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nix-darwin - use master for unstable
     darwin = {
       url = "github:LnL7/nix-darwin/master";
@@ -81,7 +87,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -103,6 +109,8 @@
           (final: prev: {
             agenix = agenix.packages.${darwinSystem}.default;
           })
+          # Add nix-vscode-extensions overlay
+          nix-vscode-extensions.overlays.default
         ];
       };
 
@@ -160,6 +168,8 @@
           inherit username agenix zsh-powerlevel10k zsh-autopair;
           # Pass vim plugins
           inherit vim-nord vim-surround vim-commentary vim-easy-align fzf-vim vim-fugitive vim-nix vim-terraform vim-go;
+          # Add nix-vscode-extensions for VS Code
+          inherit nix-vscode-extensions;
         };
       };
 
