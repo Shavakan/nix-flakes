@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, ... }@inputs:
 
 {
   imports = [
@@ -8,6 +8,9 @@
 
   programs.vscode = {
     enable = true;
+
+    # Explicitly set the package
+    package = pkgs.vscode;
 
     # New structure uses mutableExtensionsDir differently
     # With profiles, we need to use the new structure
