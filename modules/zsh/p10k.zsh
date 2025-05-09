@@ -186,11 +186,53 @@
   # Prompt symbol and configuration for promgt
   # ... [The rest of your p10k.zsh configuration] ...
 
+  # Directory colors for dark mode
+  typeset -g POWERLEVEL9K_DIR_FOREGROUND=39      # bright cyan
+  typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND=39
+  typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND=39
+  
+  # Different directory segment colors based on context
+  typeset -g POWERLEVEL9K_DIR_HOME_FOREGROUND=39
+  typeset -g POWERLEVEL9K_DIR_HOME_SUBFOLDER_FOREGROUND=39
+  typeset -g POWERLEVEL9K_DIR_ETC_FOREGROUND=214
+  typeset -g POWERLEVEL9K_DIR_DEFAULT_FOREGROUND=39
+  
+  # Make directory path writable parts stand out
+  typeset -g POWERLEVEL9K_DIR_WRITABLE_FORBIDDEN_FOREGROUND=196
+  
+  # Git/VCS colors for dark mode
+  typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=76        # green
+  typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=178    # yellow
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39    # blue
+  typeset -g POWERLEVEL9K_VCS_CONFLICTED_FOREGROUND=196  # red
+  typeset -g POWERLEVEL9K_VCS_LOADING_FOREGROUND=244     # gray
+  
+  # Git/VCS status colors
+  typeset -g POWERLEVEL9K_VCS_STAGED_MAX_NUM=3
+  typeset -g POWERLEVEL9K_VCS_UNSTAGED_MAX_NUM=3
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_MAX_NUM=3
+  typeset -g POWERLEVEL9K_VCS_CONFLICTED_MAX_NUM=3
+  typeset -g POWERLEVEL9K_VCS_COMMITS_AHEAD_MAX_NUM=3
+  typeset -g POWERLEVEL9K_VCS_COMMITS_BEHIND_MAX_NUM=3
+  
+  # Git/VCS icons
+  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=' '
+  
+  # Prompt character
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=76
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=196
+  
+  # Make status, command execution time, and background jobs stand out
+  typeset -g POWERLEVEL9K_STATUS_OK_FOREGROUND=76
+  typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=196
+  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=101
+  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_FOREGROUND=220
+
   # Instant prompt mode.
   typeset -g POWERLEVEL9K_INSTANT_PROMPT=verbose
 
   # Hot reload allows you to change POWERLEVEL9K options after Powerlevel10k has been initialized.
-  typeset -g POWERLEVEL9K_DISABLE_HOT_RELOAD=true
+  typeset -g POWERLEVEL9K_DISABLE_HOT_RELOAD=false
 
   # If p10k is already loaded, reload configuration.
   (( ! $+functions[p10k] )) || p10k reload
