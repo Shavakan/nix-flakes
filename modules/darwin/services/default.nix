@@ -43,9 +43,9 @@
         unlimitedScrollback = false;
         scrollbackLines = 4000;
         workingDirectory = "~/";
-        blurBackground = false;  # Disable blur for clearer text
-        blurRadius = 0;          # No blur
-        transparency = 0.0;       # No transparency for maximum contrast
+        blurBackground = false; # Disable blur for clearer text
+        blurRadius = 0; # No blur
+        transparency = 0.0; # No transparency for maximum contrast
         useTransparencyOnlyForDefaultBg = true;
         closeOnExit = "always";
       };
@@ -91,6 +91,18 @@
       "HideTabNumber" = false;
       "HideTabCloseButton" = false;
       "DisableWindowSizeSnap" = false;
+      # Additional window size preferences
+      "WindowStyle" = 0;
+      "InitialWindowSize" = "{
+        Width = 1200;
+        Height = 800;
+      }";
+      "OpenNewWindowsHere" = true;
+      "QuitWhenAllWindowsClosed" = true;
+      "BootstrapDimensions" = "{
+        Width = 1200;
+        Height = 800;
+      }";
     };
 
     # Status bar configuration

@@ -21,6 +21,10 @@ let
         "Flashing Bell" = profile."Flashing Bell" or false;
         "BM Growl" = profile."BM Growl" or true;
         
+        # Window size settings
+        "Columns" = profile."Columns" or 120;
+        "Rows" = profile."Rows" or 30;
+            
         # Font settings
         "Normal Font" = profile."Normal Font" or "MesloLGS-NF-Regular 13";
         "Non Ascii Font" = profile."Non Ascii Font" or "Monaco 12";
@@ -37,9 +41,6 @@ let
         "Blur Radius" = profile."Blur Radius" or 7;
         "Transparency" = profile."Transparency" or 0.3;
         "Only The Default BG Color Uses Transparency" = profile."Only The Default BG Color Uses Transparency" or true;
-        "Screen" = profile."Screen" or (-1);
-        "Columns" = profile."Columns" or 80;
-        "Rows" = profile."Rows" or 25;
         "Scrollback Lines" = profile."Scrollback Lines" or 4000;
         "Unlimited Scrollback" = profile."Unlimited Scrollback" or false;
         "Disable Window Resizing" = profile."Disable Window Resizing" or false;
@@ -230,6 +231,8 @@ let
     "Use Italic Font" = true;
     "Use Bright Bold" = true;    # Ensure bold text is bright
     "Minimum Contrast" = 0.5;    # Increase minimum contrast
+    "Columns" = 120;            # Set default width to 120 columns
+    "Rows" = 30;                # Set default height to 30 rows
   };
 in {
   options.custom.iterm2 = {
@@ -529,32 +532,35 @@ in {
           # Default profile based on JSON
           if cfg.useDefaultProfile then profileToDefaults defaultProfile else {}
         ) // (
-          # Add user-configured profiles if any
+          # User-configured profiles
           if cfg.profiles != {} then 
-            builtins.foldl' (acc: name: 
-              let profile = cfg.profiles.${name}; 
-              in acc // {
-                "New Bookmarks" = acc."New Bookmarks" or [] ++ [{
-                  Name = profile.name;
-                  Guid = "profile-${builtins.hashString "md5" profile.name}";
-                  "Default Bookmark" = if profile.default then "Yes" else "No";
-                  "Normal Font" = "${profile.font} ${toString profile.fontSize}";
-                  "Use Non-ASCII Font" = profile.useNonAsciiFont;
-                  "Non Ascii Font" = "${profile.nonAsciiFont} ${toString profile.nonAsciiFontSize}";
-                  "Use Bold Font" = profile.useBoldFont;
-                  "Use Italic Font" = profile.useItalicFont;
-                  "Unlimited Scrollback" = profile.unlimitedScrollback;
-                  "Scrollback Lines" = profile.scrollbackLines;
-                  "Working Directory" = profile.workingDirectory;
-                  "Custom Directory" = "Yes";
-                  "Blur" = profile.blurBackground;
-                  "Blur Radius" = profile.blurRadius;
-                  "Transparency" = profile.transparency;
-                  "Only The Default BG Color Uses Transparency" = profile.useTransparencyOnlyForDefaultBg;
-                  "Close Sessions On End" = profile.closeOnExit == "always";
-                  "Prompt Before Closing 2" = profile.closeOnExit == "never";
-                }];
-              }) {} (builtins.attrNames cfg.profiles)
+          builtins.foldl' (acc: name: 
+          let profile = cfg.profiles.${name}; 
+          in acc // {
+          "New Bookmarks" = acc."New Bookmarks" or [] ++ [{
+          Name = profile.name;
+          Guid = "profile-${builtins.hashString "md5" profile.name}";
+          "Default Bookmark" = if profile.default then "Yes" else "No";
+          "Normal Font" = "${profile.font} ${toString profile.fontSize}";
+          "Use Non-ASCII Font" = profile.useNonAsciiFont;
+          "Non Ascii Font" = "${profile.nonAsciiFont} ${toString profile.nonAsciiFontSize}";
+          "Use Bold Font" = profile.useBoldFont;
+          "Use Italic Font" = profile.useItalicFont;
+          "Unlimited Scrollback" = profile.unlimitedScrollback;
+          "Scrollback Lines" = profile.scrollbackLines;
+          "Working Directory" = profile.workingDirectory;
+          "Custom Directory" = "Yes";
+          "Blur" = profile.blurBackground;
+          "Blur Radius" = profile.blurRadius;
+          "Transparency" = profile.transparency;
+          "Only The Default BG Color Uses Transparency" = profile.useTransparencyOnlyForDefaultBg;
+          "Close Sessions On End" = profile.closeOnExit == "always";
+          "Prompt Before Closing 2" = profile.closeOnExit == "never";
+            # Set larger default window size
+              "Columns" = 120;
+                        "Rows" = 30;
+                      }];
+                    }) {} (builtins.attrNames cfg.profiles)
           else {}
         );
     };
