@@ -32,6 +32,23 @@
 
     # Add any additional profiles as needed
     profiles = {
+      "Default" = {
+        default = true;
+        name = "Default";
+        font = "MesloLGS-NF-Regular";
+        fontSize = 13;
+        useNonAsciiFont = false;
+        useBoldFont = true;
+        useItalicFont = true;
+        unlimitedScrollback = false;
+        scrollbackLines = 4000;
+        workingDirectory = "~/";
+        blurBackground = false;  # Disable blur for clearer text
+        blurRadius = 0;          # No blur
+        transparency = 0.0;       # No transparency for maximum contrast
+        useTransparencyOnlyForDefaultBg = true;
+        closeOnExit = "always";
+      };
       "Work" = {
         default = false;
         name = "Work";

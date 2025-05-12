@@ -1,60 +1,31 @@
-# Zsh Configuration Module
+# ZSH Module
 
-This module provides a comprehensive, declarative Zsh configuration using Nix and home-manager.
+This module configures ZSH shell with a comprehensive set of features for a productive development environment.
 
 ## Features
 
-- **Powerlevel10k Theme**: Modern, fast, and highly customizable prompt
-- **Syntax Highlighting**: Real-time syntax highlighting for better readability
-- **Auto-suggestions**: Fish-like command suggestions based on history
-- **Auto-completion**: Tab completion with context-aware behavior
-- **Directory Navigation**: Advanced directory jumping with auto-cd
-- **Git Integration**: Enhanced Git experience with aliases and status information
-- **FZF Integration**: Fuzzy-finding for files, history, and more
-- **Direnv Support**: Automatic loading of environment variables per directory
+- Powerlevel10k theme with instant prompt
+- Intelligent color handling in terminal
+- Comprehensive Git and Kubernetes integration
+- Numerous productivity helpers and aliases
 
-## Customization
+## Theme Integration
 
-To customize this configuration:
+This module integrates with the themes module to ensure consistent coloring between the prompt, ls output, and terminal completion.
 
-1. Edit the `default.nix` file directly
-2. Adjust shell aliases in the `shellAliases` attribute set
-3. Add environment variables in the `initExtra` string
-4. Configure Oh-My-Zsh plugins in the `oh-my-zsh.plugins` list
+To change themes, modify the `themes.selected` option in your home.nix:
 
-## Extensions
-
-This module integrates several key Zsh extensions:
-
-- **FZF**: Fuzzy finder for files, history, etc.
-- **Direnv**: Directory-specific environment variables
-- **Powerlevel10k**: Feature-rich prompt theme
-- **Zsh Syntax Highlighting**: Command highlighting
-- **Zsh Autosuggestions**: Fish-like automatic suggestions
-
-## Usage
-
-This module is automatically imported in the main `home.nix` file. After changing configuration, apply with:
-
-```bash
-LANG=en_US.UTF-8 home-manager switch --flake . --impure
+```nix
+{
+  imports = [
+    ./modules/themes
+    ./modules/zsh
+    # Other modules...
+  ];
+  
+  # Select your theme
+  themes.selected = "nord"; # Options: nord, monokai, solarized-dark, solarized-light
+}
 ```
 
-## Configuration Files
-
-- **default.nix**: Main Zsh configuration
-- **.p10k.zsh**: Powerlevel10k theme configuration (generated on first run)
-
-## Useful Shortcuts
-
-The configuration includes several helpful keyboard shortcuts:
-
-- **Ctrl+R**: Fuzzy search command history
-- **Ctrl+T**: Fuzzy find files in current directory
-- **Alt+C**: Fuzzy find and CD into subdirectories
-- **Tab**: Smart completion and suggestions
-
-## Requirements
-
-- Nix package manager
-- home-manager
+To view the current theme information, use the `show_current_theme` function in your shell.

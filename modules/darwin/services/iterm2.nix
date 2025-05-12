@@ -56,15 +56,16 @@ let
           "Blue Component" = 0.73333334922790527;
         };
         "Minimum Contrast" = profile."Minimum Contrast" or 0;
+        # Adjust these colors for better visibility in dark themes - pure white text on pure black
         "Foreground Color" = profile."Foreground Color" or {
-          "Red Component" = 0.73333334922790527;
-          "Green Component" = 0.73333334922790527;
-          "Blue Component" = 0.73333334922790527;
+          "Red Component" = 1.0;
+          "Green Component" = 1.0;
+          "Blue Component" = 1.0;
         };
         "Background Color" = profile."Background Color" or {
-          "Red Component" = 0;
-          "Green Component" = 0;
-          "Blue Component" = 0;
+          "Red Component" = 0.0;
+          "Green Component" = 0.0;
+          "Blue Component" = 0.0;
         };
         "Selection Color" = profile."Selection Color" or {
           "Red Component" = 0.70980000495910645;
@@ -214,15 +215,21 @@ let
     "Draw Powerline Glyphs" = true;
     "Normal Font" = "MesloLGS-NF-Regular 13";
     "Use Non-ASCII Font" = false;
-    "Blur" = true;
-    "Blur Radius" = 7;
-    "Transparency" = 0.29999999999999999;
+    "Blur" = false;             # Disable blur for clearer text
+    "Blur Radius" = 0;          # No blur
+    "Transparency" = 0.0;        # No transparency for maximum contrast
     "Only The Default BG Color Uses Transparency" = true;
     "Scrollback Lines" = 4000;
     "Working Directory" = "/Users/shavakan";
     "Close Sessions On End" = true;
     "Prompt Before Closing 2" = false;
     "BM Growl" = true;
+    "ASCII Anti Aliased" = true;
+    "Non-ASCII Anti Aliased" = true;
+    "Use Bold Font" = true;
+    "Use Italic Font" = true;
+    "Use Bright Bold" = true;    # Ensure bold text is bright
+    "Minimum Contrast" = 0.5;    # Increase minimum contrast
   };
 in {
   options.custom.iterm2 = {
@@ -565,5 +572,17 @@ in {
     
     # Ensure iTerm2 is installed
     environment.systemPackages = [ pkgs.iterm2 ];
+    
+    # Create a service that ensures the font is properly installed
+    system.activationScripts.iterm2-fonts = {
+      text = ''
+        echo "Ensuring MesloLGS NF font is properly installed for iTerm2..."
+        
+        # Refresh font cache to recognize the Meslo Nerd Fonts
+        if command -v fc-cache >/dev/null 2>&1; then
+          fc-cache -f -v
+        fi
+      '';
+    };
   };
 }

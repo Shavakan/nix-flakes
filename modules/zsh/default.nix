@@ -1,15 +1,68 @@
-{ config, lib, pkgs, zsh-powerlevel10k, zsh-autopair, ... }:
+{ config, lib, pkgs, zsh-powerlevel10k, zsh-autopair, selectedTheme ? null, ... }:
 
 with lib;
 
 {
-  # Install powerlevel10k directly in the system packages to ensure it's available
-  home.packages = with pkgs; [
-    zsh-powerlevel10k
-  ];
+  # No longer need powerlevel10k
+  # home.packages = with pkgs; [
+  #   zsh-powerlevel10k
+  # ];
 
-  # Create p10k.zsh configuration file directly in home directory
-  home.file.".p10k.zsh".source = ./p10k.zsh;
+  # Generate a themed Powerlevel10k configuration
+  home.file.".p10k.zsh" = {
+    # Use text directly instead of a separate file
+    text = let
+      # Read the template file
+      templateContent = builtins.readFile ./p10k.zsh;
+      
+      # Get colors from the theme
+      dirColor = if selectedTheme != null then toString selectedTheme.p10kColors.directory else "33";
+      gitCleanColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitClean else "76";
+      gitModifiedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitModified else "214";
+      gitUntrackedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitUntracked else "39";
+      themeName = if selectedTheme != null then selectedTheme.name else "default";
+      
+      # Apply color replacements
+      withColorsContent = builtins.replaceStrings 
+        [
+          "typeset -g POWERLEVEL9K_DIR_FOREGROUND=33"
+          "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=82"
+          "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=220"
+          "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39"
+        ]
+        [
+          "typeset -g POWERLEVEL9K_DIR_FOREGROUND=${dirColor}"
+          "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=${gitCleanColor}"
+          "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=${gitModifiedColor}"
+          "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=${gitUntrackedColor}"
+        ]
+        templateContent;
+      
+      # Always show kubernetes context with a simpler approach
+      finalContent = builtins.replaceStrings 
+        ["typeset -g POWERLEVEL9K_KUBECONTEXT_SHOW_ON_COMMAND='kubectl|helm|kubens|kubectx|oc|istioctl|skaffold|stern|k'"]
+        ["# Always show kubernetes context regardless of command\ntypeset -g POWERLEVEL9K_KUBECONTEXT_ALWAYS_SHOW=true"]
+        withColorsContent;
+    in
+      ''${finalContent}
+      
+      # Current theme: ${themeName}
+    '';
+  };
+  
+  # Create a separate file for Kubernetes context styling with additional formatting
+  home.file.".p10k-k8s.zsh" = {
+    text = ''
+      # CUSTOM K8S CONTEXT SETTINGS - ADDED BY NIX
+      # Custom kubernetes context format
+      typeset -g POWERLEVEL9K_KUBECONTEXT_PREFIX='%F{6}[%f'
+      typeset -g POWERLEVEL9K_KUBECONTEXT_SUFFIX='%F{6}]%f'
+
+      # Always include namespace in the prompt
+      typeset -g POWERLEVEL9K_KUBECONTEXT_SHOW_DEFAULT_NAMESPACE=true
+    '';
+  };
+
 
   # ZSH Configuration
   programs.zsh = {
@@ -42,7 +95,7 @@ with lib;
         "fzf"
       ];
       
-      # Leave theme empty in oh-my-zsh - we'll load powerlevel10k directly
+      # We're using powerlevel10k directly, so no theme needed here
       theme = "";
     };
 
@@ -53,19 +106,50 @@ with lib;
         name = "zsh-autopair";
         src = zsh-autopair;
       }
+      {
+        # Powerlevel10k theme
+        name = "powerlevel10k";
+        src = zsh-powerlevel10k;
+        file = "powerlevel10k.zsh-theme";
+      }
     ];
 
-    # Init powerlevel10k first in zshrc, as recommended in the thread
+    # Powerlevel10k initialization must come before anything else
     initExtraFirst = ''
-      # Source powerlevel10k from the system
-      source ${pkgs.zsh-powerlevel10k}/share/zsh-powerlevel10k/powerlevel10k.zsh-theme
+      # Ensure USERNAME is defined (sometimes not available in shells)
+      export USERNAME="$(whoami)"
       
-      # Load p10k config
-      [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+      # Enable Powerlevel10k instant prompt - simplified version to avoid syntax issues
+      if [ -d "$HOME/.cache" ]; then
+        p10k_instant_file="$HOME/.cache/p10k-instant-prompt-$(whoami).zsh"
+        if [ -r "$p10k_instant_file" ]; then
+          source "$p10k_instant_file"
+        fi
+      fi
+
+      # Initialize Powerlevel10k
+      [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
+      
+      # Apply custom Kubernetes context styling
+      [ -f ~/.p10k-k8s.zsh ] && source ~/.p10k-k8s.zsh
     '';
 
     # Environment variables
     initExtra = ''
+      # Force terminal to use colors
+      export TERM="xterm-256color"
+      export COLORTERM="truecolor"
+      
+      # Enable colors
+      autoload -U colors && colors
+      
+      # Display current theme function
+      show_current_theme() {
+        echo "Current theme: ${if selectedTheme != null then selectedTheme.name else "default"}"
+        echo "Theme can be changed in home.nix by setting 'themes.selected'"
+        echo "Available themes: nord, monokai, solarized-dark, solarized-light"
+      }
+      
       # Ensure oh-my-zsh cache directory has proper permissions
       if [ -d "$HOME/.cache/oh-my-zsh" ]; then
         chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
@@ -80,9 +164,8 @@ with lib;
         alias rg="ripgrep"
       fi
       
-      # Initialize LS_COLORS to distinguish between files and directories
-      export CLICOLOR=1
-      export LSCOLORS=ExGxBxDxCxEgEdxbxgxcxd
+      # Set ZSH completion to use LS_COLORS
+      zstyle ':completion:*' list-colors "$LS_COLORS"
       
       # Custom zsh settings
       setopt AUTO_CD
@@ -112,7 +195,10 @@ with lib;
       # Kubernetes
       export KUBECONFIG=$HOME/.kube/config
       export KUBE_CONFIG_PATH=$KUBECONFIG
-      export PATH="''${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
+      # Simplified path to avoid ZSH-specific syntax
+      if [ -d "$HOME/.krew/bin" ]; then
+        export PATH="$HOME/.krew/bin:$PATH"
+      fi
       
       # GPG configuration
       export GPG_TTY=$(tty)
@@ -142,7 +228,8 @@ with lib;
       fi
       
       # FZF configuration for better search experience
-      if [ -n "''${commands[fzf-share]}" ]; then
+      # Using direct path for fzf-share instead of ZSH array access
+      if command -v fzf-share > /dev/null 2>&1; then
         source "$(fzf-share)/key-bindings.zsh"
         source "$(fzf-share)/completion.zsh"
       fi
@@ -250,8 +337,18 @@ with lib;
 
     # Shell aliases
     shellAliases = {
+      # ls aliases with color by default
+      ls = "ls --color=auto";  # GNU ls with colors
+      ll = "ls -la --color=auto";  # Long listing
+      la = "ls -A --color=auto";  # All files except . and ..
+      l = "ls -CF --color=auto";  # Columnar format with file indicators
+      lh = "ls -lh --color=auto"; # Human-readable sizes
+      lt = "ls -lt --color=auto"; # Sort by time, newest first
       # Directory navigation
       cdw = "cd $HOME/workspace/ && ls";
+
+      # Shell reload
+      reload-shell = "source ~/.zshrc && source ~/.p10k.zsh && source ~/.p10k-k8s.zsh && echo 'Using theme: ${if selectedTheme != null then selectedTheme.name else "default"}'";
 
       # Git aliases
       gb = "echo 'git branch' && git branch";
@@ -302,6 +399,12 @@ with lib;
   };
 
   # Enable other shell integrations
+
+  # Remove the custom K8s context display activation script since we're using a file approach
+  # home.activation.addKubernetesContextStyles = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  #   # This has been replaced with a direct file approach
+  # '';
+
 
   # fzf for fuzzy finding
   programs.fzf = {

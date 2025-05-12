@@ -48,70 +48,29 @@
     status                  # exit code of the last command
     command_execution_time  # duration of the last command
     background_jobs         # presence of background jobs
-    direnv                  # direnv status (https://direnv.net/)
-    asdf                    # asdf version manager (https://github.com/asdf-vm/asdf)
-    virtualenv              # python virtual environment (https://docs.python.org/3/library/venv.html)
-    anaconda                # conda environment (https://conda.io/)
-    pyenv                   # python environment (https://github.com/pyenv/pyenv)
-    goenv                   # go environment (https://github.com/syndbg/goenv)
-    nodenv                  # node.js version from nodenv (https://github.com/nodenv/nodenv)
-    nvm                     # node.js version from nvm (https://github.com/nvm-sh/nvm)
-    nodeenv                 # node.js environment (https://github.com/ekalinin/nodeenv)
-    # node_version          # node.js version
-    # go_version            # go version (https://golang.org)
-    # rust_version          # rustc version (https://www.rust-lang.org)
-    # dotnet_version        # .NET version (https://dotnet.microsoft.com)
-    # php_version           # php version (https://www.php.net/)
-    # laravel_version       # laravel php framework version (https://laravel.com/)
-    # java_version          # java version (https://www.java.com/)
-    # package               # name@version from package.json (https://docs.npmjs.com/files/package.json)
-    rbenv                   # ruby version from rbenv (https://github.com/rbenv/rbenv)
-    rvm                     # ruby version from rvm (https://rvm.io)
-    fvm                     # flutter version management (https://github.com/leoafarias/fvm)
-    luaenv                  # lua version from luaenv (https://github.com/cehoffman/luaenv)
-    jenv                    # java version from jenv (https://github.com/jenv/jenv)
-    plenv                   # perl version from plenv (https://github.com/tokuhirom/plenv)
-    perlbrew                # perl version from perlbrew (https://github.com/gugod/App-perlbrew)
-    phpenv                  # php version from phpenv (https://github.com/phpenv/phpenv)
-    scalaenv                # scala version from scalaenv (https://github.com/scalaenv/scalaenv)
-    haskell_stack           # haskell version from stack (https://haskellstack.org/)
     kubecontext             # current kubernetes context (https://kubernetes.io/)
-    terraform               # terraform workspace (https://www.terraform.io)
-    # terraform_version     # terraform version (https://www.terraform.io)
     aws                     # aws profile (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
-    aws_eb_env              # aws elastic beanstalk environment (https://aws.amazon.com/elasticbeanstalk/)
-    azure                   # azure account name (https://docs.microsoft.com/en-us/cli/azure)
-    gcloud                  # google cloud cli account and project (https://cloud.google.com/)
-    google_app_cred         # google application credentials (https://cloud.google.com/docs/authentication/production)
-    toolbox                 # toolbox name (https://github.com/containers/toolbox)
-    context                 # user@hostname
-    nordvpn                 # nordvpn connection status, linux only (https://nordvpn.com/)
-    ranger                  # ranger shell (https://github.com/ranger/ranger)
-    nnn                     # nnn shell (https://github.com/jarun/nnn)
-    lf                      # lf shell (https://github.com/gokcehan/lf)
-    xplr                    # xplr shell (https://github.com/sayanarijit/xplr)
-    vim_shell               # vim shell indicator (:sh)
-    midnight_commander      # midnight commander shell (https://midnight-commander.org/)
-    nix_shell               # nix shell (https://nixos.org/nixos/nix-pills/developing-with-nix-shell.html)
-    # vpn_ip                # virtual private network indicator
-    # load                  # CPU load
-    # disk_usage            # disk usage
-    # ram                   # free RAM
-    # swap                  # used swap
-    todo                    # todo items (https://github.com/todotxt/todo.txt-cli)
-    timewarrior             # timewarrior tracking status (https://timewarrior.net/)
-    taskwarrior             # taskwarrior task count (https://taskwarrior.org/)
-    # cpu_arch              # CPU architecture
-    time                    # current time
     # =========================[ Line #2 ]=========================
     newline
-    # ip                    # ip address and bandwidth usage for a specified network interface
-    # public_ip             # public IP address
-    # proxy                 # system-wide http/https/ftp proxy
-    # battery               # internal battery
-    # wifi                  # wifi speed
-    # example               # example user-defined segment (see prompt_example function below)
+    time                    # current time
   )
+
+  # Other potential segments that can be added if needed
+  #  node_version          # node.js version
+  #  go_version            # go version (https://golang.org)
+  #  rust_version          # rustc version (https://www.rust-lang.org)
+  #  dotnet_version        # .NET version (https://dotnet.microsoft.com)
+  #  php_version           # php version (https://www.php.net/)
+  #  laravel_version       # laravel php framework version (https://laravel.com/)
+  #  java_version          # java version (https://www.java.com/)
+  #  package               # name@version from package.json (https://docs.npmjs.com/files/package.json)
+  #  rbenv                  # ruby version from rbenv (https://github.com/rbenv/rbenv)
+  #  rvm                    # ruby version from rvm (https://rvm.io)
+  #  fvm                    # flutter version management (https://github.com/leoafarias/fvm)
+  #  luaenv                 # lua version from luaenv (https://github.com/cehoffman/luaenv)
+  #  jenv                   # java version from jenv (https://github.com/jenv/jenv)
+  #  terraform              # terraform workspace (https://www.terraform.io)
+  #  aws_eb_env             # aws elastic beanstalk environment (https://aws.amazon.com/elasticbeanstalk/)
 
   # Defines character set used by powerlevel10k. It's best to let `p10k configure` set it for you.
   typeset -g POWERLEVEL9K_MODE=nerdfont-complete
@@ -125,6 +84,9 @@
   typeset -g POWERLEVEL9K_{LEFT,RIGHT}_{LEFT,RIGHT}_WHITESPACE=  # no surrounding whitespace
   typeset -g POWERLEVEL9K_{LEFT,RIGHT}_SUBSEGMENT_SEPARATOR=' '  # separate segments with a space
   typeset -g POWERLEVEL9K_{LEFT,RIGHT}_SEGMENT_SEPARATOR=        # no end-of-line symbol
+  
+  # Default Foreground (text) color - adjust this for dark background to make text more visible
+  typeset -g POWERLEVEL9K_FOREGROUND=249  # Light gray for better visibility in dark themes
 
   # When set to true, icons appear before content on both sides of the prompt. When set
   # to false, icons go after content. If empty or not set, icons go before content in the left
@@ -186,28 +148,45 @@
   # Prompt symbol and configuration for promgt
   # ... [The rest of your p10k.zsh configuration] ...
 
-  # Directory colors for dark mode
-  typeset -g POWERLEVEL9K_DIR_FOREGROUND=39      # bright cyan
-  typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND=39
-  typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND=39
+  # Set up basic prompt segments foreground and background colors
+  # Using direct ANSI color codes for maximum compatibility
   
-  # Different directory segment colors based on context
-  typeset -g POWERLEVEL9K_DIR_HOME_FOREGROUND=39
-  typeset -g POWERLEVEL9K_DIR_HOME_SUBFOLDER_FOREGROUND=39
-  typeset -g POWERLEVEL9K_DIR_ETC_FOREGROUND=214
-  typeset -g POWERLEVEL9K_DIR_DEFAULT_FOREGROUND=39
+  # Directory - bright blue to match ls colors
+  typeset -g POWERLEVEL9K_DIR_FOREGROUND=33
+  typeset -g POWERLEVEL9K_DIR_BACKGROUND="none"
   
-  # Make directory path writable parts stand out
-  typeset -g POWERLEVEL9K_DIR_WRITABLE_FORBIDDEN_FOREGROUND=196
+  # Git branch - cyan on black
+  typeset -g POWERLEVEL9K_VCS_BRANCH_FOREGROUND=81
+  typeset -g POWERLEVEL9K_VCS_BRANCH_BACKGROUND="none"
   
-  # Git/VCS colors for dark mode
-  typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=76        # green
-  typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=178    # yellow
-  typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39    # blue
-  typeset -g POWERLEVEL9K_VCS_CONFLICTED_FOREGROUND=196  # red
-  typeset -g POWERLEVEL9K_VCS_LOADING_FOREGROUND=244     # gray
+  # Git clean - green on black
+  typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=82
+  typeset -g POWERLEVEL9K_VCS_CLEAN_BACKGROUND="none"
   
-  # Git/VCS status colors
+  # Git modified - yellow on black
+  typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=220
+  typeset -g POWERLEVEL9K_VCS_MODIFIED_BACKGROUND="none"
+  
+  # Git untracked - blue on black
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39
+  typeset -g POWERLEVEL9K_VCS_UNTRACKED_BACKGROUND="none"
+  
+  # Kubernetes - bright blue on black
+  typeset -g POWERLEVEL9K_KUBECONTEXT_FOREGROUND=38
+  typeset -g POWERLEVEL9K_KUBECONTEXT_BACKGROUND="none"
+  
+  # AWS profile - orange on black
+  typeset -g POWERLEVEL9K_AWS_FOREGROUND=208
+  typeset -g POWERLEVEL9K_AWS_BACKGROUND="none"
+  
+  # Prompt symbol
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VIINS_FOREGROUND=76
+  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VIINS_FOREGROUND=196
+  
+  # VCS branch icon
+  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=' '
+  
+  # Various max values for git status
   typeset -g POWERLEVEL9K_VCS_STAGED_MAX_NUM=3
   typeset -g POWERLEVEL9K_VCS_UNSTAGED_MAX_NUM=3
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_MAX_NUM=3
@@ -215,18 +194,22 @@
   typeset -g POWERLEVEL9K_VCS_COMMITS_AHEAD_MAX_NUM=3
   typeset -g POWERLEVEL9K_VCS_COMMITS_BEHIND_MAX_NUM=3
   
-  # Git/VCS icons
-  typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=' '
+  # Kubernetes settings
+  typeset -g POWERLEVEL9K_KUBECONTEXT_SHOW_ON_COMMAND='kubectl|helm|kubens|kubectx|oc|istioctl|skaffold|stern|k'
   
-  # Prompt character
-  typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=76
-  typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_{VIINS,VICMD,VIVIS,VIOWR}_FOREGROUND=196
+  # Status indicators with high contrast colors
+  typeset -g POWERLEVEL9K_STATUS_OK_FOREGROUND=76         # green
+  typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=196     # red
+  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=178  # yellow
+  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_FOREGROUND=172  # light orange
   
-  # Make status, command execution time, and background jobs stand out
-  typeset -g POWERLEVEL9K_STATUS_OK_FOREGROUND=76
-  typeset -g POWERLEVEL9K_STATUS_ERROR_FOREGROUND=196
-  typeset -g POWERLEVEL9K_COMMAND_EXECUTION_TIME_FOREGROUND=101
-  typeset -g POWERLEVEL9K_BACKGROUND_JOBS_FOREGROUND=220
+  # Time, context, etc.
+  typeset -g POWERLEVEL9K_TIME_FOREGROUND=247             # light gray
+  typeset -g POWERLEVEL9K_TIME_BACKGROUND=0               # black
+  
+  # Context indicator
+  typeset -g POWERLEVEL9K_CONTEXT_FOREGROUND=139          # medium purple
+  typeset -g POWERLEVEL9K_CONTEXT_BACKGROUND=0            # black
 
   # Instant prompt mode.
   typeset -g POWERLEVEL9K_INSTANT_PROMPT=verbose

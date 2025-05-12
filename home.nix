@@ -4,6 +4,9 @@
   # Import configurations
   imports = [
     # ./mcp-servers.nix
+    # Load themes first, then ls-colors, then other modules
+    ./modules/themes # Centralized theme management
+    ./modules/ls-colors # Add colorized ls support
     ./modules/rclone
     ./modules/awsctx
     ./modules/git
@@ -25,6 +28,13 @@
 
     # Packages to install to the user profile
     packages = with pkgs; [
+      # System utilities
+      coreutils # GNU coreutils for ls with color support
+      findutils # GNU find, locate, and xargs
+
+      # Fonts
+      nerd-fonts.meslo-lg
+
       # Development languages and tools
       terraform
       dotnet-sdk # .NET SDK (current version)
@@ -146,6 +156,9 @@
   services.rclone-launchd = {
     enable = true;
   };
+
+  # Configure themes for terminal and related utilities
+  themes.selected = "nord"; # Options: nord, monokai, solarized-dark, solarized-light
 
   # Enhanced GPG configuration
   programs.gpg = {
