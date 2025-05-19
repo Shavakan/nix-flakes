@@ -14,6 +14,7 @@
     ./modules/zsh
     ./modules/claude
     ./modules/vscode
+    ./modules/cargo # Cargo configuration with SSH agent support for Git dependencies
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage

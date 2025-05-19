@@ -174,17 +174,61 @@
       };
 
       # Development shells for the project
-      devShells.${darwinSystem}.default = pkgs.mkShell {
-        buildInputs = with pkgs; [
-          # Single formatter
-          nixpkgs-fmt # Standard Nix formatter
+      devShells.${darwinSystem} = {
+        default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            # Single formatter
+            nixpkgs-fmt # Standard Nix formatter
 
-          # Single linter
-          statix # Comprehensive linter for Nix code
+            # Single linter
+            statix # Comprehensive linter for Nix code
 
-          # Pre-commit framework
-          pre-commit # Git hook manager
-        ];
+            # Pre-commit framework
+            pre-commit # Git hook manager
+          ];
+
+          # Add SSH agent forwarding for all shells
+          shellHook = ''
+            # Ensure SSH agent is available
+            if [ -z "$SSH_AUTH_SOCK" ]; then
+              export SSH_AUTH_SOCK="$(launchctl getenv SSH_AUTH_SOCK)"
+            fi
+            
+            # Configure cargo to use the system Git client
+            export CARGO_NET_GIT_FETCH_WITH_CLI=true
+            
+            echo "SSH_AUTH_SOCK is set to: $SSH_AUTH_SOCK"
+            echo "Development environment ready!"
+          '';
+        };
+
+        # Rust development shell with nightly toolchain
+        rust = pkgs.mkShell {
+          # Environment variables for the shell
+          RUSTUP_TOOLCHAIN = "nightly";
+          CARGO_NET_GIT_FETCH_WITH_CLI = "true";
+
+          buildInputs = with pkgs; [
+            # Rust toolchain management
+            rustup
+
+            # Development dependencies
+            pkg-config
+            openssl.dev
+          ];
+
+          shellHook = ''
+              # Ensure SSH agent is available
+              if [ -z "$SSH_AUTH_SOCK" ]; then
+              export SSH_AUTH_SOCK="$(launchctl getenv SSH_AUTH_SOCK)"
+            fi
+        
+            # Check if nightly is installed, install it if not
+            rustup toolchain list | grep -q nightly || rustup toolchain install nightly --profile minimal
+        
+            echo "Rust nightly development shell ready!"
+          '';
+        };
       };
     };
 }
