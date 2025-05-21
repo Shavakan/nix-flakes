@@ -6,11 +6,6 @@ let
   claudeAccessiblePaths = [
     "/Users/shavakan/Desktop"
     "/Users/shavakan/Downloads"
-    "/Users/shavakan/workspace/svn2git"
-    "/Users/shavakan/workspace/awsctx"
-    "/Users/shavakan/workspace/cos-server"
-    "/Users/shavakan/workspace/helm-charts-cos"
-    "/Users/shavakan/dotfiles"
     "/Users/shavakan/nix-flakes"
   ];
 
@@ -41,7 +36,7 @@ let
 in
 {
   # Create activation script to write the Claude desktop config file and wrapper script
-  home.activation.configureClaude = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.configureClaude = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     # Ensure Claude directory exists with proper permissions
     CLAUDE_DIR="$HOME/Library/Application Support/Claude"
     $DRY_RUN_CMD mkdir -p "$CLAUDE_DIR"
