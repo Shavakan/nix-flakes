@@ -2,8 +2,32 @@
 { config, lib, pkgs, ... }:
 
 let
-  # Define paths that should be accessible to Claude
-  claudeAccessiblePaths = [
+  # Define machine-specific configurations
+  machineConfigs = {
+    "macbook" = {
+      # MacBook-specific accessible paths
+      claudeAccessiblePaths = [
+        "/Users/shavakan/Desktop"
+        "/Users/shavakan/Downloads"
+        "/Users/shavakan/nix-flakes"
+        "/Users/shavakan/workspace/awsctx"
+        "/Users/shavakan/workspace/cos-server"
+        "/Users/shavakan/workspace/helm-charts-cos"
+      ];
+    };
+
+    "macstudio" = {
+      # Mac Studio-specific accessible paths
+      claudeAccessiblePaths = [
+        "/Users/shavakan/Desktop"
+        "/Users/shavakan/Downloads"
+        "/Users/shavakan/nix-flakes"
+      ];
+    };
+  };
+
+  # Default accessible paths (used if hostname detection fails)
+  defaultAccessiblePaths = [
     "/Users/shavakan/Desktop"
     "/Users/shavakan/Downloads"
     "/Users/shavakan/nix-flakes"
@@ -18,12 +42,12 @@ let
     exec /run/current-system/sw/bin/npx @modelcontextprotocol/server-filesystem "$@"
   '';
 
-  # Claude desktop config (exactly matching existing working config)
-  claudeDesktopConfig = {
+  # Function to generate Claude desktop config based on paths
+  mkClaudeDesktopConfig = paths: {
     mcpServers = {
       filesystem = {
         command = "/Users/shavakan/Library/Application Support/Claude/mcp-filesystem-wrapper.sh";
-        args = claudeAccessiblePaths;
+        args = paths;
       };
       nixos = {
         command = "/run/current-system/sw/bin/uvx";
@@ -53,9 +77,34 @@ in
     $DRY_RUN_CMD mv "$TEMP_WRAPPER" "$WRAPPER_PATH"
     $DRY_RUN_CMD chmod 755 "$WRAPPER_PATH"
     
+    # Detect hostname and machine type to determine accessible paths
+    if [ -x /bin/hostname ]; then
+      HOSTNAME_CMD="/bin/hostname"
+    elif [ -x /usr/bin/hostname ]; then
+      HOSTNAME_CMD="/usr/bin/hostname"
+    else
+      CURRENT_HOSTNAME="unknown"
+    fi
+
+    if [ -n "$HOSTNAME_CMD" ]; then
+      CURRENT_HOSTNAME=$($HOSTNAME_CMD | tr -d '\n')
+    fi
+    
+    MACHINE_TYPE="unknown"
+    CONFIG_CONTENT=""
+    
+    if [[ "$CURRENT_HOSTNAME" == MacBook* ]]; then
+      MACHINE_TYPE="macbook"
+      CONFIG_CONTENT='${builtins.toJSON (mkClaudeDesktopConfig machineConfigs.macbook.claudeAccessiblePaths)}'
+    elif [[ "$CURRENT_HOSTNAME" == macstudio* ]]; then
+      MACHINE_TYPE="macstudio"
+      CONFIG_CONTENT='${builtins.toJSON (mkClaudeDesktopConfig machineConfigs.macstudio.claudeAccessiblePaths)}'
+    else
+      CONFIG_CONTENT='${builtins.toJSON (mkClaudeDesktopConfig defaultAccessiblePaths)}'
+    fi
+    
     # Create the Claude desktop config file
     CONFIG_FILE="$CLAUDE_DIR/claude_desktop_config.json"
-    CONFIG_CONTENT='${builtins.toJSON claudeDesktopConfig}'
     
     # Write config to temporary file first to avoid partial writes
     TEMP_CONFIG=$(mktemp)
