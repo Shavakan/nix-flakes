@@ -88,6 +88,7 @@ in
       awsLoginAll 
       pkgs.saml2aws
       pkgs.git
+      pkgs.coreutils # For timeout command
     ];
     
     # Create required directories and sync profiles
@@ -97,14 +98,20 @@ in
       CACHE_DIR="$HOME/Library/Caches/awsctx"
       mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
       
-      # Ensure repository exists and pull latest changes
+      # Ensure repository exists and pull latest changes with timeout
       if [ ! -d "${sourcePath}" ]; then
         mkdir -p "$(dirname "${sourcePath}")"
-        ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1
+        # Add timeout for git clone
+        ${pkgs.coreutils}/bin/timeout 30 ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1 || {
+          echo "Warning: Failed to clone awsctx repository (timeout or network issue), skipping..."
+        }
       else
         # Only pull if it's a git repository and not a local change
-        if [ -d "${sourcePath}/.git" ] && ! ${pkgs.git}/bin/git -C "${sourcePath}" status --porcelain | grep -q .; then
-          ${pkgs.git}/bin/git -C "${sourcePath}" pull --ff-only >/dev/null 2>&1 || true
+        if [ -d "${sourcePath}/.git" ] && ! ${pkgs.git}/bin/git -C "${sourcePath}" status --porcelain 2>/dev/null | grep -q .; then
+          # Add timeout for git pull and make it non-blocking
+          ${pkgs.coreutils}/bin/timeout 10 ${pkgs.git}/bin/git -C "${sourcePath}" pull --ff-only >/dev/null 2>&1 || {
+            echo "Warning: Failed to update awsctx repository (timeout or network issue), using existing version..."
+          }
         fi
       fi
       

@@ -43,33 +43,48 @@ in
 
     # Add an activation script to decrypt the secret
     home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      # Ensure the directory exists
+      # Define log files
+      LOG_DIR="$HOME/nix-flakes/logs"
+      DECRYPT_LOG="$LOG_DIR/rclone-decrypt.log"
+      ERROR_LOG="$LOG_DIR/rclone-errors.log"
+      
+      # Create log directory if it doesn't exist
+      mkdir -p "$LOG_DIR"
+      
+      # Ensure the target directory exists
       mkdir -p "${cfg.targetDirectory}" >/dev/null 2>&1
       
-      # Get paths
-      SSH_KEY="$HOME/.ssh/id_ed25519"
-      RULES_FILE="$HOME/nix-flakes/modules/agenix/ssh.nix"
-      SECRET_FILE="${toString cfg.configFile}"
-      TARGET_FILE="${cfg.targetDirectory}/rclone.conf"
-      TEMP_FILE="${cfg.targetDirectory}/rclone.conf.tmp"
-      ERROR_FILE="/tmp/agenix-error.log"
-      
-      # Define log function based on verbose setting
-      log() {
-        if [ "${toString cfg.verbose}" = "true" ]; then
-          echo "$1"
-        fi
+      # Log function
+      log_message() {
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$DECRYPT_LOG"
       }
       
-      log "Processing rclone config"
+      # Error log function
+      log_error() {
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$DECRYPT_LOG"
+        echo "ERROR: $1" >&2
+      }
       
-      # Check if the secret exists
-      if [ -f "$SECRET_FILE" ]; then
-        log "Secret file found"
+      # Get paths - use the original flake directory structure
+      SSH_KEY="$HOME/.ssh/id_ed25519"
+      FLAKE_DIR="$HOME/nix-flakes"
+      SECRET_FILE="modules/agenix/rclone.conf.age"  # Use relative path to match secrets.nix
+      TARGET_FILE="${cfg.targetDirectory}/rclone.conf"
+      TEMP_FILE="${cfg.targetDirectory}/rclone.conf.tmp"
+      
+      log_message "Starting rclone config decryption"
+      log_message "Log file: $DECRYPT_LOG"
+      log_message "Error log file: $ERROR_LOG"
+      
+      # Check if the secret exists (use absolute path for checking)
+      ABSOLUTE_SECRET_FILE="$FLAKE_DIR/$SECRET_FILE"
+      if [ -f "$ABSOLUTE_SECRET_FILE" ]; then
+        log_message "Secret file found at $ABSOLUTE_SECRET_FILE"
         
         # Calculate and check hash of the secret file to detect changes
         HASH_FILE="${cfg.targetDirectory}/.rclone.conf.age.hash"
-        CURRENT_HASH=$(${pkgs.coreutils}/bin/sha256sum "$SECRET_FILE" | cut -d' ' -f1)
+        CURRENT_HASH=$(${pkgs.coreutils}/bin/sha256sum "$ABSOLUTE_SECRET_FILE" | cut -d' ' -f1)
         STORED_HASH=""
         
         if [ -f "$HASH_FILE" ]; then
@@ -78,33 +93,37 @@ in
         
         # If hash has changed or hash file doesn't exist, decrypt again
         if [ "$CURRENT_HASH" != "$STORED_HASH" ] || [ ! -f "$TARGET_FILE" ]; then
-          log "Changes detected in secret file or target doesn't exist"
+          log_message "Changes detected in secret file or target doesn't exist, attempting decryption"
           
-          # Clear any previous error logs
-          rm -f "$ERROR_FILE" >/dev/null 2>&1
+          # Clear any previous temp files
+          rm -f "$TEMP_FILE" >/dev/null 2>&1
           
-          # Try to decrypt with SSH key
+          # Change to the flake directory for proper context
+          ORIGINAL_DIR=$(pwd)
+          cd "$FLAKE_DIR" || {
+            log_error "Cannot change to flake directory $FLAKE_DIR"
+            exit 1
+          }
+          
           if [ -f "$SSH_KEY" ]; then
-            log "Using SSH key for decryption"
-            rm -f "$TEMP_FILE" >/dev/null 2>&1
+            log_message "Using SSH key for decryption: $SSH_KEY"
             
-            # Run agenix with the key with minimal output
-            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" -i "$SSH_KEY" > "$TEMP_FILE" 2>"$ERROR_FILE"
+            "${pkgs.agenix}/bin/agenix" -d "$SECRET_FILE" -i "$SSH_KEY" > "$TEMP_FILE" 2>>"$ERROR_LOG"
             DECRYPT_STATUS=$?
           else
-            # If key not found, try with agent
-            log "Using SSH agent for decryption"
-            rm -f "$TEMP_FILE" >/dev/null 2>&1
-            
-            # Try with agent
-            ${pkgs.agenix}/bin/agenix -d "$SECRET_FILE" > "$TEMP_FILE" 2>"$ERROR_FILE"
+            log_message "SSH key not found, trying without identity"
+
+            "${pkgs.agenix}/bin/agenix" -d "$SECRET_FILE" > "$TEMP_FILE" 2>>"$ERROR_LOG"
             DECRYPT_STATUS=$?
           fi
           
+          # Return to original directory
+          cd "$ORIGINAL_DIR"
+          
           # Check if decryption succeeded
           if [ $DECRYPT_STATUS -eq 0 ] && [ -s "$TEMP_FILE" ]; then
-            # Validate decrypted content (should start with [ for rclone config)
-            if grep -q '^\[' "$TEMP_FILE"; then
+            # Validate decrypted content (should start with [ for rclone config or contain config data)
+            if grep -q '^\[' "$TEMP_FILE" || grep -q 'type.*=' "$TEMP_FILE"; then
               # Update the target file
               mv "$TEMP_FILE" "$TARGET_FILE" >/dev/null 2>&1
               chmod 600 "$TARGET_FILE" >/dev/null 2>&1
@@ -114,36 +133,39 @@ in
               
               # Update the hash file with new hash
               echo "$CURRENT_HASH" > "$HASH_FILE"
-              log "Rclone config updated successfully"
+              log_message "Rclone config decryption successful"
             else
-              echo "Error: Decryption output is not a valid rclone config"
+              log_error "Decrypted content does not appear to be a valid rclone config"
+              log_error "Content preview: $(head -5 "$TEMP_FILE" 2>/dev/null || echo "Unable to read temp file")"
               rm -f "$TEMP_FILE" >/dev/null 2>&1
             fi
           else
-            # Only show error in case of failure
-            echo "Error: Failed to decrypt rclone config (status: $DECRYPT_STATUS)"
+            # Show error details
+            log_error "Failed to decrypt rclone config \(exit status: $DECRYPT_STATUS\)"
             
-            if [ -f "$ERROR_FILE" ] && [ -s "$ERROR_FILE" ]; then
-              cat "$ERROR_FILE"
+            # Show what was actually written to temp file for debugging
+            if [ -f "$TEMP_FILE" ]; then
+              log_error "Content written to temp file: $(head -10 "$TEMP_FILE" 2>/dev/null || echo "Unable to read temp file")"
             fi
             
             rm -f "$TEMP_FILE" >/dev/null 2>&1
             
             # Use backup if available
             if [ -f "${cfg.targetDirectory}/rclone.conf.backup" ]; then
-              log "Using backup rclone config"
+              log_message "Using backup rclone config"
               cp "${cfg.targetDirectory}/rclone.conf.backup" "$TARGET_FILE" >/dev/null 2>&1
             fi
           fi
         else
-          log "No changes detected in secret file, using existing config"
+          log_message "No changes detected in secret file, using existing config"
         fi
       else
-        echo "Error: Secret file not found at $SECRET_FILE"
+        log_error "Secret file not found at $ABSOLUTE_SECRET_FILE"
+        log_error "Expected location: $ABSOLUTE_SECRET_FILE"
+        log_error "Flake directory contents: $(ls -la "$FLAKE_DIR/modules/agenix/" 2>/dev/null || echo "Directory not accessible")"
       fi
       
-      # Clean up error file
-      rm -f "$ERROR_FILE" >/dev/null 2>&1
+      log_message "Completed rclone config decryption"
     '';
   };
 }
