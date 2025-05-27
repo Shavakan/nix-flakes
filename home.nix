@@ -216,6 +216,7 @@
     appleId = "chiyah92@icloud.com";
     apps = {
       "Paste" = 967805235;
+      "WireGuard" = 1451685025;
     };
   };
 
