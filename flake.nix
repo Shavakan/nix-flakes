@@ -197,8 +197,13 @@
           ./home.nix
           agenix.homeManagerModules.default
 
-          # Add hostname-aware modules
           ./modules/host-config
+
+          {
+            imports = [
+              ./modules/mas
+            ];
+          }
         ];
 
         # Extra special args to pass to home.nix
