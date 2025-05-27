@@ -42,27 +42,22 @@ in
     ];
 
     # Add an activation script to decrypt the secret
-    home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    home.activation.decryptRcloneConfig = lib.hm.dag.entryAfter [ "setupLogging" "writeBoundary" ] ''
       # Define log files
-      LOG_DIR="$HOME/nix-flakes/logs"
-      DECRYPT_LOG="$LOG_DIR/rclone-decrypt.log"
-      ERROR_LOG="$LOG_DIR/rclone-errors.log"
-      
-      # Create log directory if it doesn't exist
-      mkdir -p "$LOG_DIR"
+      ERROR_LOG="$NIX_LOG_DIR/rclone-errors.log"
       
       # Ensure the target directory exists
       mkdir -p "${cfg.targetDirectory}" >/dev/null 2>&1
       
       # Log function
       log_message() {
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$DECRYPT_LOG"
+        log_nix "rclone-decrypt" "$1"
       }
       
       # Error log function
       log_error() {
         echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$DECRYPT_LOG"
+        log_nix "rclone-decrypt" "ERROR: $1"
         echo "ERROR: $1" >&2
       }
       
@@ -74,8 +69,6 @@ in
       TEMP_FILE="${cfg.targetDirectory}/rclone.conf.tmp"
       
       log_message "Starting rclone config decryption"
-      log_message "Log file: $DECRYPT_LOG"
-      log_message "Error log file: $ERROR_LOG"
       
       # Check if the secret exists (use absolute path for checking)
       ABSOLUTE_SECRET_FILE="$FLAKE_DIR/$SECRET_FILE"

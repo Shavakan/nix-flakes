@@ -22,35 +22,12 @@
         # Using MesloLGS NF for better terminal experience
         font = "MesloLGS-NF-Regular";
         fontSize = 13;
-        useNonAsciiFont = true;
-        nonAsciiFont = "NanumGothicCoding";
-        nonAsciiFontSize = 13;
+        useNonAsciiFont = false;
         useBoldFont = true;
         useItalicFont = true;
         unlimitedScrollback = true;
         scrollbackLines = 100000; # Still set a high value even though unlimited is enabled
         workingDirectory = "~/";
-        blurBackground = true;
-        blurRadius = 2;
-        transparency = 0.3;
-        useTransparencyOnlyForDefaultBg = true;
-        closeOnExit = "always";
-      };
-      "Work" = {
-        default = false;
-        name = "Work";
-        font = "MesloLGS-NF-Regular";
-        fontSize = 13;
-        useNonAsciiFont = true;
-        nonAsciiFont = "NanumGothicCoding";
-        nonAsciiFontSize = 13;
-        cursorType = "box";
-        colorScheme = "Solarized Dark";
-        useBoldFont = true;
-        useItalicFont = true;
-        unlimitedScrollback = true;
-        scrollbackLines = 100000; # Still set a high value even though unlimited is enabled
-        workingDirectory = "~/workspace";
         blurBackground = true;
         blurRadius = 2;
         transparency = 0.3;

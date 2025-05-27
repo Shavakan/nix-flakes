@@ -21,6 +21,7 @@ let
     # Log function for debugging
     log() {
       echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" | tee -a "$MOUNT_LOG"
+      # This script is run outside of activation scripts, so we can't use log_nix directly
     }
     
     log_error() {
@@ -307,6 +308,12 @@ let
     MOUNT_LOG="$LOG_DIR/rclone-mount.log"
     ERROR_LOG="$LOG_DIR/rclone-errors.log"
     
+    # Helper function for logging debug output (when called outside of activation scripts)
+    log_debug() {
+      echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_DIR/rclone-debug.log"
+      echo "$1"
+    }
+    
     # Function to print section headers
     print_header() {
       echo -e "\n===== $1 =====\n"
@@ -557,24 +564,20 @@ in
     ];
 
     # Create an activation script to mount remotes with improved error handling (quieter version)
-    home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter [ "decryptRcloneConfig" ] ''
+    home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter [ "setupLogging" "decryptRcloneConfig" ] ''
       # Define log files
-      LOG_DIR="$HOME/nix-flakes/logs"
-      MOUNT_LOG="$LOG_DIR/rclone-mount.log"
-      ERROR_LOG="$LOG_DIR/rclone-errors.log"
-      
-      # Create log directory if it doesn't exist
-      mkdir -p "$LOG_DIR" > /dev/null 2>&1
+      MOUNT_LOG="$NIX_LOG_DIR/rclone-mount.log"
+      ERROR_LOG="$NIX_LOG_DIR/rclone-errors.log"
       
       # Log function (silent in console, only in log file)
       log_message() {
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$MOUNT_LOG"
+        log_nix "rclone-mount" "$1"
       }
       
       # Error log function
       log_error() {
         echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$MOUNT_LOG"
+        log_nix "rclone-mount" "ERROR: $1"
         # Only errors are shown in console
         echo "Error: $1"
       }
@@ -627,7 +630,7 @@ in
     '';
 
     # Create a comprehensive activation script to link all configurations
-    home.activation.linkMountConfigurations = lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
+    home.activation.linkMountConfigurations = lib.hm.dag.entryAfter [ "setupLogging" "mountRcloneRemotes" ] ''
       # Define helper function for linking files - quieter version
       link_configuration() {
         local config_name="$1"
@@ -683,9 +686,10 @@ in
           chmod $permissions "$target_file" 2>/dev/null || true
           
           if [ $changed -eq 1 ]; then
-            echo "• Updated configuration link for $config_name"
+            log_nix "rclone-config" "Updated configuration link for $config_name"
           fi
         else
+          log_nix "rclone-config" "⚠️  Source not found for $config_name: $source_file"
           echo "⚠️  Source not found for $config_name: $source_file"
         fi
       }
@@ -714,11 +718,12 @@ in
           # but don't show any output for it
           DEVSISTERS_SCRIPT="$MOUNT_POINT/devsisters.sh"
           if [ -f "$DEVSISTERS_SCRIPT" ] && ! grep -q "source ~/.devsisters.sh" ~/.zshrc 2>/dev/null; then
-            # Save this message to a log file instead of printing it
-            echo "• Add 'source ~/.devsisters.sh' to your shell profile to load devsisters script automatically" >> "$LOG_DIR/rclone-config-hints.log"
+            # Log hint using common logging framework
+            log_nix "rclone-config" "Add 'source ~/.devsisters.sh' to your shell profile to load devsisters script automatically"
           fi
           
         else
+          log_nix "rclone-config" "⚠️  Mount point not accessible: $MOUNT_POINT"
           echo "⚠️  Mount point not accessible: $MOUNT_POINT"
         fi
         ''

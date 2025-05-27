@@ -25,6 +25,24 @@
       base = "en_US.UTF-8";
     };
 
+    # Common logging framework for all activation scripts
+    activation.setupLogging = lib.hm.dag.entryBefore [ ] ''
+      # Create log directory
+      export NIX_LOG_DIR="$HOME/nix-flakes/logs"
+      mkdir -p "$NIX_LOG_DIR" > /dev/null 2>&1
+      
+      # Common log function that all activation scripts can use
+      log_nix() {
+        local component="$1"
+        local message="$2"
+        local log_file="$NIX_LOG_DIR/$component.log"
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - $message" >> "$log_file"
+      }
+      
+      # Export the function so it's available to all activation scripts
+      export -f log_nix
+    '';
+
     # Packages to install to the user profile
     packages = with pkgs; [
       # System utilities
@@ -190,7 +208,7 @@
   };
 
   themes.selected = "nord";
-  
+
   # Mac App Store applications
   services.mas = {
     enable = true;

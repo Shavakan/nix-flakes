@@ -242,42 +242,42 @@ in {
     # Ensure iTerm2 is installed
     home.packages = [ pkgs.iterm2 ];
     
-    # Font installation service that runs on activation to ensure fonts are available
-    home.activation.installFonts = lib.hm.dag.entryBefore ["iterm2-config"] ''
+    # Font installation service that runs on activation to ensure fonts are available (quiet version)
+    home.activation.installFonts = lib.hm.dag.entryAfter ["setupLogging"] ''
       # Install the fonts to user's font directory
       USER_FONTS_DIR="$HOME/Library/Fonts"
-      mkdir -p "$USER_FONTS_DIR"
+      mkdir -p "$USER_FONTS_DIR" > /dev/null 2>&1
       
-      # Find and copy MesloLGS NF fonts
-      echo "Installing MesloLGS NF fonts to user directory..." >&2
+      log_nix "fonts" "Installing iTerm2 fonts to $USER_FONTS_DIR"
+      
+      # Find and copy MesloLGS NF fonts quietly
       find /nix/store -name "MesloLGS NF*.ttf" 2>/dev/null | while IFS= read -r font; do
         font_name=$(basename "$font")
-        cp -f "$font" "$USER_FONTS_DIR/"
-        echo "Installed font: $font_name" >&2
+        cp -f "$font" "$USER_FONTS_DIR/" > /dev/null 2>&1
+        log_nix "fonts" "Installed font: $font_name"
       done
       
-      # Find and copy NanumGothicCoding fonts
-      echo "Installing NanumGothicCoding fonts to user directory..." >&2
+      # Find and copy NanumGothicCoding fonts quietly
       find /nix/store -name "NanumGothicCoding*.ttf" 2>/dev/null | while IFS= read -r font; do
         font_name=$(basename "$font")
-        cp -f "$font" "$USER_FONTS_DIR/"
-        echo "Installed font: $font_name" >&2
+        cp -f "$font" "$USER_FONTS_DIR/" > /dev/null 2>&1
+        log_nix "fonts" "Installed font: $font_name"
       done
     '';
     
-    # Simplified activation script that directly writes a minimal working config
-    home.activation.iterm2-config = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      echo "Configuring iTerm2 with minimal settings..." >&2
+    # Simplified activation script that directly writes a minimal working config (quiet version)
+    home.activation.iterm2-config = lib.hm.dag.entryAfter ["setupLogging"] ''
+      log_nix "iterm2" "Configuring iTerm2"
       
       # Check if the Launch Services registration needs to be fixed
       ITERM_PATH="$HOME/.nix-profile/Applications/iTerm2.app"
       if [ -e "$ITERM_PATH" ]; then
-        echo "Re-registering iTerm2 with Launch Services..." >&2
-        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$ITERM_PATH"
+        log_nix "iterm2" "Re-registering iTerm2 with Launch Services"
+        /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$ITERM_PATH" > /dev/null 2>&1
       fi
       
       # First clear all existing preferences to start fresh
-      echo "Cleaning up any previous iTerm2 preferences..." >&2
+      log_nix "iterm2" "Cleaning up previous iTerm2 preferences"
       rm -f ~/Library/Preferences/com.googlecode.iterm2.plist 2>/dev/null || true
       rm -rf ~/Library/Application\ Support/iTerm2 2>/dev/null || true
       rm -rf ~/Library/Saved\ Application\ State/com.googlecode.iterm2.savedState 2>/dev/null || true
@@ -286,62 +286,49 @@ in {
       sleep 1
       
       # Create a minimal, safe configuration that won't crash
-      echo "Creating minimal configuration..." >&2
+      log_nix "iterm2" "Creating minimal configuration"
       
       # Set basic preferences
-      /usr/bin/defaults write com.googlecode.iterm2 "QuitWhenAllWindowsClosed" -bool false
-      /usr/bin/defaults write com.googlecode.iterm2 "PromptOnQuit" -bool false
-      /usr/bin/defaults write com.googlecode.iterm2 "TabViewType" -int 0
-      /usr/bin/defaults write com.googlecode.iterm2 "UseMetal" -bool true
-      /usr/bin/defaults write com.googlecode.iterm2 "AlternateMouseScroll" -bool true
-      /usr/bin/defaults write com.googlecode.iterm2 "SoundForEsc" -bool false
-      
-      # We've replaced this with a more direct approach using defaults write
-      # This approach creates the profiles directly instead of using plist files and PlistBuddy
-      # No cleanup needed since we don't create temporary files anymore
+      /usr/bin/defaults write com.googlecode.iterm2 "QuitWhenAllWindowsClosed" -bool false > /dev/null 2>&1
+      /usr/bin/defaults write com.googlecode.iterm2 "PromptOnQuit" -bool false > /dev/null 2>&1
+      /usr/bin/defaults write com.googlecode.iterm2 "TabViewType" -int 0 > /dev/null 2>&1
+      /usr/bin/defaults write com.googlecode.iterm2 "UseMetal" -bool true > /dev/null 2>&1
+      /usr/bin/defaults write com.googlecode.iterm2 "AlternateMouseScroll" -bool true > /dev/null 2>&1
+      /usr/bin/defaults write com.googlecode.iterm2 "SoundForEsc" -bool false > /dev/null 2>&1
       
       # Force preferences to take effect
       killall cfprefsd 2>/dev/null || true
       
-      echo "iTerm2 configured with minimal settings. Now applying font settings..." >&2
+      log_nix "iterm2" "Applying font settings"
       
       # Get the current preference file path
       PLIST_FILE="$HOME/Library/Preferences/com.googlecode.iterm2.plist"
       
-      # Apply font settings to iTerm2 profiles
-      echo "Applying fonts to iTerm2 profiles..." >&2
-      
       # Create a minimal emergency fix script and run it - this will not disturb existing profiles
       cat > /tmp/fix-iterm-fonts.sh << 'EOF'
 #!/bin/bash
-
-# Completely simple script to create a fresh iTerm2 configuration with correct fonts
-
-# Create a fresh plist with our settings
-echo "Creating fresh minimal iTerm2 preferences..."
-
 # Remove any existing plist
 rm -f ~/Library/Preferences/com.googlecode.iterm2.plist 2>/dev/null || true
 
 # Create very basic preferences
-/usr/bin/defaults write com.googlecode.iterm2 "QuitWhenAllWindowsClosed" -bool false
-/usr/bin/defaults write com.googlecode.iterm2 "PromptOnQuit" -bool false
-/usr/bin/defaults write com.googlecode.iterm2 "NoSyncNeverRemindPrefsChangesLostForFile" -bool true
-/usr/bin/defaults write com.googlecode.iterm2 "NoSyncNeverRemindPrefsChangesLostForFile_selection" -int 0
+/usr/bin/defaults write com.googlecode.iterm2 "QuitWhenAllWindowsClosed" -bool false > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "PromptOnQuit" -bool false > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "NoSyncNeverRemindPrefsChangesLostForFile" -bool true > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "NoSyncNeverRemindPrefsChangesLostForFile_selection" -int 0 > /dev/null 2>&1
 
 # Modern tab styling
-/usr/bin/defaults write com.googlecode.iterm2 "TabStyleWithAutomaticOption" -int 5
-/usr/bin/defaults write com.googlecode.iterm2 "TabViewType" -int 0
-/usr/bin/defaults write com.googlecode.iterm2 "HideTab" -bool false
-/usr/bin/defaults write com.googlecode.iterm2 "HideTabNumber" -bool false
-/usr/bin/defaults write com.googlecode.iterm2 "HideTabCloseButton" -bool false
-/usr/bin/defaults write com.googlecode.iterm2 "ShowPaneTitles" -bool true
-/usr/bin/defaults write com.googlecode.iterm2 "ShowFullScreenTabBar" -bool true
-/usr/bin/defaults write com.googlecode.iterm2 "FlashTabBarInFullscreen" -bool true
-/usr/bin/defaults write com.googlecode.iterm2 "StretchTabsToFillBar" -bool true
+/usr/bin/defaults write com.googlecode.iterm2 "TabStyleWithAutomaticOption" -int 5 > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "TabViewType" -int 0 > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "HideTab" -bool false > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "HideTabNumber" -bool false > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "HideTabCloseButton" -bool false > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "ShowPaneTitles" -bool true > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "ShowFullScreenTabBar" -bool true > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "FlashTabBarInFullscreen" -bool true > /dev/null 2>&1
+/usr/bin/defaults write com.googlecode.iterm2 "StretchTabsToFillBar" -bool true > /dev/null 2>&1
 
 # Create a default profile with MesloLGS font - now we know the correct format
-/usr/bin/defaults write com.googlecode.iterm2 "New Bookmarks" -array
+/usr/bin/defaults write com.googlecode.iterm2 "New Bookmarks" -array > /dev/null 2>&1
 /usr/bin/defaults write com.googlecode.iterm2 "New Bookmarks" -array-add '{
     "Name" = "Default";
     "Guid" = "Default";
@@ -357,7 +344,7 @@ rm -f ~/Library/Preferences/com.googlecode.iterm2.plist 2>/dev/null || true
     "Transparency" = 0.3;
     "Only The Default BG Color Uses Transparency" = 1;
     "Unlimited Scrollback" = 1;
-}'
+}' > /dev/null 2>&1
 
 # Create a work profile
 /usr/bin/defaults write com.googlecode.iterm2 "New Bookmarks" -array-add '{
@@ -375,12 +362,10 @@ rm -f ~/Library/Preferences/com.googlecode.iterm2.plist 2>/dev/null || true
     "Transparency" = 0.3;
     "Only The Default BG Color Uses Transparency" = 1;
     "Unlimited Scrollback" = 1;
-}'
+}' > /dev/null 2>&1
 
 # Set the default bookmark
-/usr/bin/defaults write com.googlecode.iterm2 "Default Bookmark Guid" "Default"
-
-echo "Created fresh iTerm2 configuration"
+/usr/bin/defaults write com.googlecode.iterm2 "Default Bookmark Guid" "Default" > /dev/null 2>&1
 
 # Force refresh preferences
 killall cfprefsd 2>/dev/null || true
@@ -388,15 +373,13 @@ EOF
 
       # Make the script executable and run it
       chmod +x /tmp/fix-iterm-fonts.sh
-      echo "Running conservative font fix script..." >&2
-      /tmp/fix-iterm-fonts.sh
+      log_nix "iterm2" "Running iTerm2 configuration script"
+      /tmp/fix-iterm-fonts.sh > /dev/null 2>&1
       
       # Clean up
       rm -f /tmp/fix-iterm-fonts.sh
       
-      echo "Applied font settings conservatively" >&2
-      
-      echo "iTerm2 configuration complete with MesloLGS NF Regular and NanumGothicCoding fonts." >&2
+      log_nix "iterm2" "iTerm2 configuration complete"
     '';
   };
 }

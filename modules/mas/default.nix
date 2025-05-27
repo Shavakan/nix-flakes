@@ -4,13 +4,14 @@ with lib;
 
 let
   cfg = config.services.mas;
-in {
+in
+{
   options.services.mas = {
     enable = mkEnableOption "Mac App Store CLI and application management";
 
     apps = mkOption {
       type = types.attrsOf types.int;
-      default = {};
+      default = { };
       example = {
         "AppName1" = 123456789;
         "AppName2" = 987654321;
@@ -31,15 +32,13 @@ in {
     home.packages = [ pkgs.mas ];
 
     # Create activation script for Mac App Store apps with quiet output
-    home.activation.manageMacAppStore = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      # Set up logging in the nix-flakes/logs directory
-      MAS_LOG_DIR="$HOME/nix-flakes/logs"
-      MAS_LOG="$MAS_LOG_DIR/mas.log"
-      mkdir -p "$MAS_LOG_DIR" > /dev/null 2>&1
+    home.activation.manageMacAppStore = lib.hm.dag.entryAfter [ "setupLogging" "writeBoundary" ] ''
+      # Use the common logging framework
+      MAS_LOG="$NIX_LOG_DIR/mas.log"
       
-      # Log function
+      # Log function that uses the common log framework
       log_mas() {
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$MAS_LOG"
+        log_nix "mas" "$1"
       }
       
       log_mas "Starting Mac App Store app management"
