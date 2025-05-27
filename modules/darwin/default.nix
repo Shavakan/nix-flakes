@@ -160,6 +160,9 @@
       NSAutomaticQuoteSubstitutionEnabled = false;
       NSAutomaticSpellingCorrectionEnabled = false;
       _HIHideMenuBar = false;
+      
+      # Disable press-and-hold for character picker popup
+      ApplePressAndHoldEnabled = false;
 
       # Key repeat
       InitialKeyRepeat = 15;
