@@ -85,6 +85,7 @@
 
       # Tools
       obsidian
+      code-cursor
 
       # Terminal
       # iterm2 is now managed by the programs.iterm2 module
