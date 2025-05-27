@@ -59,6 +59,8 @@
       # Secrets management
       agenix
       vault
+      _1password # 1Password CLI tool (op command)
+      _1password-gui # 1Password GUI application
 
       # System utilities
       watch
@@ -91,7 +93,10 @@
   };
 
   # Allow unfree packages (required for JetBrains IDEs)
-  nixpkgs.config.allowUnfree = true;
+  nixpkgs.config = {
+    allowUnfree = true;
+    allowBroken = true; # For packages like 1Password GUI that might be marked as broken
+  };
 
   # Disable showing news on update
   news.display = "silent";
