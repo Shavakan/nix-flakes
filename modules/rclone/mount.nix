@@ -299,7 +299,7 @@ let
     echo "Synced $SYNC_COUNT mount(s)"
   '';
 
-  # Enhanced debug script
+  # Enhanced debug script including configuration status
   debugScript = pkgs.writeShellScriptBin "rclone-debug" ''
     #!/usr/bin/env bash
     
@@ -354,7 +354,7 @@ let
       echo "⚠️  Config file NOT found: $CONFIG_FILE"
     fi
     
-    print_header "Mount Points"
+    print_header "Mount Points and Linked Configurations"
     ${concatMapStringsSep "\n" (mount: ''
       MOUNT_POINT="${mount.mountPoint}"
       # Expand tilde
@@ -377,6 +377,39 @@ let
         echo "  Directory exists: ✗"
       fi
     '') cfg.mounts}
+    
+    # Check all configured symlinks
+    ${concatMapStringsSep "\n" (linkConfig: 
+      let 
+        firstMount = if (length cfg.mounts) > 0 then (elemAt cfg.mounts 0) else null;
+        mountPoint = if firstMount != null then firstMount.mountPoint else "";
+        sourcePath = if mountPoint != "" then "${mountPoint}/${linkConfig.sourcePath}" else "";
+        targetPath = linkConfig.targetPath;
+      in ''
+      echo ""
+      echo "Configuration: ${linkConfig.name}"
+      SOURCE_PATH=$(eval echo "${sourcePath}")
+      TARGET_PATH=$(eval echo "${targetPath}")
+      
+      if [ -e "$SOURCE_PATH" ]; then
+        echo "  Source exists: ✓ ($SOURCE_PATH)"
+      else
+        echo "  Source exists: ✗ ($SOURCE_PATH)"
+      fi
+      
+      if [ -L "$TARGET_PATH" ]; then
+        LINK_TARGET=$(readlink "$TARGET_PATH")
+        if [ "$LINK_TARGET" = "$SOURCE_PATH" ]; then
+          echo "  Link correct: ✓ ($TARGET_PATH -> $LINK_TARGET)"
+        else
+          echo "  Link incorrect: ⚠️  ($TARGET_PATH -> $LINK_TARGET, expected $SOURCE_PATH)"
+        fi
+      elif [ -f "$TARGET_PATH" ]; then
+        echo "  Target exists (not symlink): ⚠️  ($TARGET_PATH)"
+      else
+        echo "  Link missing: ✗ ($TARGET_PATH)"
+      fi
+    '') cfg.linkedConfigurations}
     
     print_header "Recent Log Entries"
     if [ -f "$MOUNT_LOG" ] && [ -s "$MOUNT_LOG" ]; then
@@ -404,25 +437,6 @@ in
   options.services.rclone-mount = {
     enable = mkEnableOption "rclone mount service";
 
-    # Kubernetes config symlink settings
-    kubeConfigPath = mkOption {
-      type = types.str;
-      default = "kubeconfig";
-      description = "Path relative to the first mount where the kubeconfig file is stored";
-    };
-
-    kubeConfigDir = mkOption {
-      type = types.str;
-      default = "${config.home.homeDirectory}/.kube";
-      description = "Directory where kubeconfig symlink is created";
-    };
-
-    kubeConfigName = mkOption {
-      type = types.str;
-      default = "config";
-      description = "Name of the kubeconfig file to create in the kubeConfigDir";
-    };
-
     mounts = mkOption {
       type = types.listOf (types.submodule {
         options = {
@@ -448,6 +462,79 @@ in
       default = [ ];
       description = "List of rclone remotes to mount";
     };
+
+    # Configuration linking options
+    linkedConfigurations = mkOption {
+      type = types.listOf (types.submodule {
+        options = {
+          name = mkOption {
+            type = types.str;
+            description = "Name of the configuration for identification";
+            example = "kubeconfig";
+          };
+
+          sourcePath = mkOption {
+            type = types.str;
+            description = "Path to the source file within the mount";
+            example = "kubeconfig";
+          };
+
+          targetPath = mkOption {
+            type = types.str;
+            description = "Target path where the symlink should be created";
+            example = "~/.kube/config";
+          };
+
+          permissions = mkOption {
+            type = types.str;
+            default = "600";
+            description = "File permissions to set on the target";
+          };
+
+          createTargetDir = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Whether to create the target directory if it doesn't exist";
+          };
+
+          backupExisting = mkOption {
+            type = types.bool;
+            default = true;
+            description = "Whether to backup existing files before linking";
+          };
+        };
+      });
+      default = [
+        {
+          name = "kubeconfig";
+          sourcePath = "kubeconfig";
+          targetPath = "${config.home.homeDirectory}/.kube/config";
+          permissions = "600";
+        }
+        {
+          name = "saml2aws";
+          sourcePath = "saml2aws";
+          targetPath = "${config.home.homeDirectory}/.saml2aws";
+          permissions = "600";
+        }
+        {
+          name = "devsisters-script";
+          sourcePath = "devsisters.sh";
+          targetPath = "${config.home.homeDirectory}/.devsisters.sh";
+          permissions = "755";
+        }
+      ];
+      description = "List of configurations to link from the mount directory";
+    };
+
+    # Environment variables to set based on linked configurations
+    environmentVariables = mkOption {
+      type = types.attrsOf types.str;
+      default = {
+        KUBECONFIG = "${config.home.homeDirectory}/.kube/config";
+      };
+      description = "Environment variables to set for linked configurations";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -469,7 +556,7 @@ in
       pkgs.macfuse-stubs
     ];
 
-    # Create an activation script to mount remotes with improved error handling
+    # Create an activation script to mount remotes with improved error handling (quieter version)
     home.activation.mountRcloneRemotes = lib.hm.dag.entryAfter [ "decryptRcloneConfig" ] ''
       # Define log files
       LOG_DIR="$HOME/nix-flakes/logs"
@@ -477,9 +564,9 @@ in
       ERROR_LOG="$LOG_DIR/rclone-errors.log"
       
       # Create log directory if it doesn't exist
-      mkdir -p "$LOG_DIR"
+      mkdir -p "$LOG_DIR" > /dev/null 2>&1
       
-      # Log function
+      # Log function (silent in console, only in log file)
       log_message() {
         echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$MOUNT_LOG"
       }
@@ -488,16 +575,15 @@ in
       log_error() {
         echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$ERROR_LOG"
         echo "$(date '+%Y-%m-%d %H:%M:%S') - ERROR: $1" >> "$MOUNT_LOG"
+        # Only errors are shown in console
+        echo "Error: $1"
       }
       
       log_message "Starting rclone mount activation"
-      log_message "Log file: $MOUNT_LOG"
-      log_message "Error log file: $ERROR_LOG"
       
       # Check for macFUSE installation
       if [ ! -d "/Library/Frameworks/macFUSE.framework" ]; then
         log_error "macFUSE framework not found. Please install macFUSE from https://osxfuse.github.io/"
-        log_error "rclone mounting requires macFUSE to be installed on macOS"
         exit 0  # Don't fail the entire activation
       fi
       
@@ -515,69 +601,134 @@ in
           EXPANDED_MOUNT=$(eval echo "${mount.mountPoint}")
           
           # Check if already mounted and working
-          if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $EXPANDED_MOUNT "; then
-            if ls -la "$EXPANDED_MOUNT" >/dev/null 2>&1; then
-              log_message "${mount.remote} already mounted and accessible at $EXPANDED_MOUNT"
-              continue
+          if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $EXPANDED_MOUNT " && ls -la "$EXPANDED_MOUNT" >/dev/null 2>&1; then
+            log_message "${mount.remote} already mounted and accessible at $EXPANDED_MOUNT"
+            # Skip this mount
+            (true)
+          else
+            # Not mounted or not accessible, (re)mount it
+            if ! /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $EXPANDED_MOUNT "; then
+              log_message "${mount.remote} not mounted, will mount now"
             else
               log_message "${mount.remote} mounted but not accessible, will remount"
             fi
-          fi
-          
-          # Attempt to mount using the improved script
-          if ${mountScript}/bin/rclone-mount "${mount.remote}" "${mount.mountPoint}" >> "$MOUNT_LOG" 2>> "$ERROR_LOG"; then
-            log_message "Successfully set up mount for ${mount.remote}"
-          else
-            log_error "Failed to mount ${mount.remote} to ${mount.mountPoint}"
-            log_error "Check logs for details or run 'rclone-debug' for diagnostics"
+            
+            # Mount in the background and don't display anything to console unless there's an error
+            ${mountScript}/bin/rclone-mount "${mount.remote}" "${mount.mountPoint}" >> "$MOUNT_LOG" 2>> "$ERROR_LOG" || {
+              log_error "Failed to mount ${mount.remote}"
+            }
           fi
         '') cfg.mounts}
       else
         log_error "Config file $CONFIG_FILE not found"
-        log_error "Ensure rclone service is enabled and secrets are properly decrypted"
       fi
       
       log_message "Completed rclone mount activation"
     '';
 
-    # Create an activation script to set up the kubeconfig symlink
-    home.activation.linkKubeConfig =
-      let
-        # Use the first mount point by default
-        firstMount = if (length cfg.mounts) > 0 then (elemAt cfg.mounts 0) else null;
-        mountPoint = if firstMount != null then firstMount.mountPoint else "";
-      in
-      lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
-        if [ "${mountPoint}" != "" ]; then
-          # Expand tilde in mount point
-          EXPANDED_MOUNT=$(eval echo "${mountPoint}")
-          SOURCE_PATH="$EXPANDED_MOUNT/${cfg.kubeConfigPath}"
-          TARGET_DIR="${cfg.kubeConfigDir}"
-          TARGET_FILE="$TARGET_DIR/${cfg.kubeConfigName}"
-          
-          if [ -e "$SOURCE_PATH" ]; then
-            # Make sure target directory exists
-            $DRY_RUN_CMD mkdir -p "$TARGET_DIR"
-            
-            # If target exists and is not a symlink, back it up
-            if [ -f "$TARGET_FILE" ] && [ ! -L "$TARGET_FILE" ]; then
-              echo "Backing up existing kubeconfig to $TARGET_FILE.backup"
-              $DRY_RUN_CMD cp "$TARGET_FILE" "$TARGET_FILE.backup"
-            fi
-            
-            # Create or update the symlink
-            $DRY_RUN_CMD ln -sf "$SOURCE_PATH" "$TARGET_FILE"
-            $DRY_RUN_CMD chmod 600 "$TARGET_FILE" 2>/dev/null || true
-          else
-            echo "Note: kubeconfig source $SOURCE_PATH not found"
-            echo "Will be available after rclone mount succeeds"
-          fi
+    # Create a comprehensive activation script to link all configurations
+    home.activation.linkMountConfigurations = lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
+      # Define helper function for linking files - quieter version
+      link_configuration() {
+        local config_name="$1"
+        local source_path="$2"
+        local target_path="$3"
+        local permissions="$4"
+        local create_dir="$5"
+        local backup="$6"
+        local mount_point="$7"
+        local changed=0
+        
+        # Expand paths
+        local source_file="$mount_point/$source_path"
+        local target_file=$(eval echo "$target_path")
+        local target_dir=$(dirname "$target_file")
+        
+        # Create target directory if needed and requested
+        if [ "$create_dir" = "true" ] && [ ! -d "$target_dir" ]; then
+          mkdir -p "$target_dir" > /dev/null 2>&1
+          changed=1
         fi
-      '';
+        
+        if [ -e "$source_file" ]; then          
+          # Handle existing target
+          if [ -e "$target_file" ]; then
+            if [ -L "$target_file" ]; then
+              # It's a symlink - check if it points to our source
+              local link_target=$(readlink "$target_file")
+              if [ "$link_target" = "$source_file" ]; then
+                # Already correctly configured, nothing to do
+                return 0
+              else
+                if [ "$backup" = "true" ]; then
+                  mv "$target_file" "$target_file.backup" > /dev/null 2>&1
+                else
+                  rm "$target_file" > /dev/null 2>&1
+                fi
+                changed=1
+              fi
+            else
+              # It's a regular file
+              if [ "$backup" = "true" ]; then
+                mv "$target_file" "$target_file.backup" > /dev/null 2>&1
+              else
+                rm "$target_file" > /dev/null 2>&1
+              fi
+              changed=1
+            fi
+          fi
+          
+          # Create or update the symlink
+          ln -sf "$source_file" "$target_file" > /dev/null 2>&1
+          chmod $permissions "$target_file" 2>/dev/null || true
+          
+          if [ $changed -eq 1 ]; then
+            echo "• Updated configuration link for $config_name"
+          fi
+        else
+          echo "⚠️  Source not found for $config_name: $source_file"
+        fi
+      }
+      
+      # Get the first mount point as the base
+      ${if (length cfg.mounts) > 0 then
+        let firstMount = elemAt cfg.mounts 0; in
+        ''
+        MOUNT_POINT=$(eval echo "${firstMount.mountPoint}")
+        
+        if [ -d "$MOUNT_POINT" ]; then
+          # Only log things that change or have errors
+          LINK_CHANGES=0
+          
+          ${concatMapStringsSep "\n" (linkConfig: ''
+            link_configuration "${linkConfig.name}" \
+                              "${linkConfig.sourcePath}" \
+                              "${linkConfig.targetPath}" \
+                              "${linkConfig.permissions}" \
+                              "${toString linkConfig.createTargetDir}" \
+                              "${toString linkConfig.backupExisting}" \
+                              "$MOUNT_POINT"
+          '') cfg.linkedConfigurations}
+          
+          # Special handling for devsisters script - source it if it's a shell script
+          # but don't show any output for it
+          DEVSISTERS_SCRIPT="$MOUNT_POINT/devsisters.sh"
+          if [ -f "$DEVSISTERS_SCRIPT" ] && ! grep -q "source ~/.devsisters.sh" ~/.zshrc 2>/dev/null; then
+            # Save this message to a log file instead of printing it
+            echo "• Add 'source ~/.devsisters.sh' to your shell profile to load devsisters script automatically" >> "$LOG_DIR/rclone-config-hints.log"
+          fi
+          
+        else
+          echo "⚠️  Mount point not accessible: $MOUNT_POINT"
+        fi
+        ''
+      else ''
+        # No mounts configured - silent output
+        true
+      ''}
+    '';
 
-    # Set environment variable for KUBECONFIG
-    home.sessionVariables = {
-      KUBECONFIG = "${cfg.kubeConfigDir}/${cfg.kubeConfigName}";
-    };
+    # Set environment variables for linked configurations
+    home.sessionVariables = cfg.environmentVariables;
   };
 }

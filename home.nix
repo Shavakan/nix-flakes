@@ -130,7 +130,7 @@
     configFile = ./modules/agenix/rclone.conf.age;
   };
 
-  # Configure rclone mounting service with integrated kubeconfig support
+  # Configure rclone mounting service with comprehensive configuration linking
   services.rclone-mount = {
     enable = true;
     mounts = [
@@ -141,8 +141,49 @@
       }
     ];
 
-    # Kubeconfig path within rclone mount
-    kubeConfigPath = "kubeconfig";
+    # Configure all files that should be linked from the mount directory
+    linkedConfigurations = [
+      {
+        name = "kubeconfig";
+        sourcePath = "kubeconfig";
+        targetPath = "${config.home.homeDirectory}/.kube/config";
+        permissions = "600";
+        createTargetDir = true;
+        backupExisting = true;
+      }
+      {
+        name = "saml2aws";
+        sourcePath = "saml2aws";
+        targetPath = "${config.home.homeDirectory}/.saml2aws";
+        permissions = "600";
+        createTargetDir = true;
+        backupExisting = true;
+      }
+      {
+        name = "devsisters-script";
+        sourcePath = "devsisters.sh";
+        targetPath = "${config.home.homeDirectory}/.devsisters.sh";
+        permissions = "755";
+        createTargetDir = false;
+        backupExisting = true;
+      }
+      # GPG config is now managed by home-manager, not through rclone mount
+      # Add more configurations as needed
+      # {
+      #   name = "aws-config";
+      #   sourcePath = "aws/config";
+      #   targetPath = "${config.home.homeDirectory}/.aws/config";
+      #   permissions = "600";
+      #   createTargetDir = true;
+      #   backupExisting = true;
+      # }
+    ];
+
+    # Environment variables for linked configurations
+    environmentVariables = {
+      KUBECONFIG = "${config.home.homeDirectory}/.kube/config";
+      # Add other environment variables as needed
+    };
   };
 
   # Enable cd-rclone for easier navigation to rclone mount directories
@@ -219,29 +260,4 @@
       IdentitiesOnly yes
     '';
   };
-
-  # Create an activation script that loads the Devsisters script after mount
-  home.activation.loadAndSourceDevsistersScript = lib.hm.dag.entryAfter [ "mountRcloneRemotes" ] ''
-    SCRIPT_PATH="$HOME/mnt/rclone/devsisters.sh"
-    LINK_PATH="$HOME/.devsisters.sh"
-    
-    # Check if mount is available and script exists
-    if [ -f "$SCRIPT_PATH" ]; then
-      # Update symlink if needed
-      $DRY_RUN_CMD ln -sf "$SCRIPT_PATH" "$LINK_PATH"
-      
-      # Try to source it immediately for this session
-      if [ -f "$LINK_PATH" ]; then
-        # Create a temporary wrapper script that sources the Devsisters script
-        TEMP_SCRIPT=$(mktemp)
-        echo "#!/bin/bash" > "$TEMP_SCRIPT"
-        echo "source \"$LINK_PATH\"" >> "$TEMP_SCRIPT"
-        chmod +x "$TEMP_SCRIPT"
-        
-        # Execute the temporary script
-        $DRY_RUN_CMD "$TEMP_SCRIPT" > /dev/null 2>&1 || true
-        rm -f "$TEMP_SCRIPT"
-      fi
-    fi
-  '';
 }
