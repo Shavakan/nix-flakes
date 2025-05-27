@@ -36,6 +36,11 @@
     # Package managers
     uv
 
+    # Fonts for system-wide availability
+    meslo-lgs-nf # Meslo Nerd Font patched for Powerlevel10k
+    nerd-fonts.jetbrains-mono # JetBrains Mono with Nerd Font glyphs
+    nanum # Nanum Korean font set (includes Nanum Gothic Coding)
+    
     # System-level tools
     coreutils
     openssh
@@ -58,8 +63,6 @@
     # GUI applications
     vscode
     slack
-    iterm2
-    alacritty
     google-chrome
 
     # Container tools

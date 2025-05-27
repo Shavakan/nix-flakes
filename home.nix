@@ -15,6 +15,7 @@
     ./modules/claude
     ./modules/vscode
     ./modules/cargo # Cargo configuration with SSH agent support for Git dependencies
+    ./modules/iterm2 # iTerm2 configuration (migrated from nix-darwin)
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -32,9 +33,6 @@
       # System utilities
       coreutils # GNU coreutils for ls with color support
       findutils # GNU find, locate, and xargs
-
-      # Fonts
-      nerd-fonts.meslo-lg
 
       # Development languages and tools
       terraform
@@ -70,6 +68,9 @@
 
       # Tools
       obsidian
+
+      # Terminal
+      # iterm2 is now managed by the programs.iterm2 module
 
       # Communication
       slack # Slack desktop client

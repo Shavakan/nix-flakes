@@ -124,6 +124,25 @@
         "MacBook-changwonlee" = darwin.lib.darwinSystem {
           system = darwinSystem;
           modules = [
+            # Configure nixpkgs with overlays
+            {
+              nixpkgs.config.allowUnfree = true;
+              nixpkgs.overlays = [
+                # Add unstable channel
+                (final: prev: {
+                  unstable = import nixpkgs {
+                    system = darwinSystem;
+                    config.allowUnfree = true;
+                  };
+                })
+                # Add agenix to pkgs
+                (final: prev: {
+                  agenix = agenix.packages.${darwinSystem}.default;
+                })
+                # Add nix-vscode-extensions overlay
+                nix-vscode-extensions.overlays.default
+              ];
+            }
             # Main darwin configuration
             ./modules/darwin
             # MacBook-specific settings
@@ -137,6 +156,25 @@
         "macstudio-changwonlee" = darwin.lib.darwinSystem {
           system = darwinSystem;
           modules = [
+            # Configure nixpkgs with overlays
+            {
+              nixpkgs.config.allowUnfree = true;
+              nixpkgs.overlays = [
+                # Add unstable channel
+                (final: prev: {
+                  unstable = import nixpkgs {
+                    system = darwinSystem;
+                    config.allowUnfree = true;
+                  };
+                })
+                # Add agenix to pkgs
+                (final: prev: {
+                  agenix = agenix.packages.${darwinSystem}.default;
+                })
+                # Add nix-vscode-extensions overlay
+                nix-vscode-extensions.overlays.default
+              ];
+            }
             # Main darwin configuration
             ./modules/darwin
             # Mac Studio-specific settings
