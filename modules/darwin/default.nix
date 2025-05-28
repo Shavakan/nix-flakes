@@ -2,6 +2,11 @@
 { pkgs, ... }:
 
 {
+  # Configure primary user for nix-darwin 
+  system.primaryUser = {
+    name = "shavakan";
+    home = "/Users/shavakan";
+  };
   # Import all services
   imports = [
     ./services
