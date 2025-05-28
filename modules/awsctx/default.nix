@@ -98,21 +98,26 @@ in
       CACHE_DIR="$HOME/Library/Caches/awsctx"
       mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
       
-      # Ensure repository exists and pull latest changes with timeout
-      if [ ! -d "${sourcePath}" ]; then
-        mkdir -p "$(dirname "${sourcePath}")"
-        # Add timeout for git clone
-        ${pkgs.coreutils}/bin/timeout 30 ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1 || {
-          echo "Warning: Failed to clone awsctx repository (timeout or network issue), skipping..."
-        }
-      else
-        # Only pull if it's a git repository and not a local change
+      # Check if the repository directory exists, assuming it's already been set up
+      if [ -d "${sourcePath}" ]; then
+        log_nix "awsctx" "Found existing awsctx repository at ${sourcePath}"
+        
+        # Only attempt to update if it's a git repository and doesn't have local changes
         if [ -d "${sourcePath}/.git" ] && ! ${pkgs.git}/bin/git -C "${sourcePath}" status --porcelain 2>/dev/null | grep -q .; then
-          # Add timeout for git pull and make it non-blocking
-          ${pkgs.coreutils}/bin/timeout 10 ${pkgs.git}/bin/git -C "${sourcePath}" pull --ff-only >/dev/null 2>&1 || {
-            echo "Warning: Failed to update awsctx repository (timeout or network issue), using existing version..."
-          }
+          # Attempt a quick update, but don't worry if it fails - use existing version
+          log_nix "awsctx" "Attempting to update existing repository"
+          if ${pkgs.coreutils}/bin/timeout 5 ${pkgs.git}/bin/git -C "${sourcePath}" pull --ff-only >/dev/null 2>&1; then
+            log_nix "awsctx" "Successfully updated awsctx repository"
+          else
+            log_nix "awsctx" "Update skipped, using existing version"
+          fi
+        else
+          log_nix "awsctx" "Repository has local changes, skipping update"
         fi
+      else
+        # This is a fallback case, as the repository should already exist
+        log_nix "awsctx" "Expected repository not found at ${sourcePath}"
+        echo "Warning: awsctx repository not found at ${sourcePath}"
       fi
       
       # Clear any existing config files to avoid conflicts
