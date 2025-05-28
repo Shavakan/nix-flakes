@@ -675,7 +675,7 @@ in
               fi
             else
               log_message "${mount.remote} successfully mounted to ${mount.mountPoint}"
-            }
+            fi
           fi
         '') cfg.mounts}
       else
