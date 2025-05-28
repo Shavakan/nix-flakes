@@ -77,7 +77,7 @@ let
     
     log "Remote '$REMOTE_NAME' found in config"
     
-    # Clean unmount function for macOS
+    # Enhanced unmount function for macOS with robust error handling
     cleanup_mount() {
       log "Ensuring mount point is clean before mounting"
       
@@ -87,20 +87,38 @@ let
       # Wait a moment for processes to die
       sleep 1
       
-      # Try diskutil first (macOS native)
-      if command -v diskutil >/dev/null 2>&1; then
-        log "Using diskutil to unmount"
-        diskutil unmount force "$MOUNTPOINT" >> "$MOUNT_LOG" 2>&1 || true
+      # Check if the mount point is still in use
+      if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $MOUNTPOINT "; then
+        log "Mount point is still active, attempting to unmount"
+        
+        # Try diskutil first (macOS native)
+        if command -v diskutil >/dev/null 2>&1; then
+          log "Using diskutil to unmount"
+          diskutil unmount force "$MOUNTPOINT" >> "$MOUNT_LOG" 2>&1 || true
+        fi
+        
+        # Also try umount if available (should be provided by system)
+        if command -v umount >/dev/null 2>&1; then
+          log "Using umount command"
+          umount -f "$MOUNTPOINT" >> "$MOUNT_LOG" 2>&1 || true
+        fi
       fi
       
-      # Also try umount if available (should be provided by system)
-      if command -v umount >/dev/null 2>&1; then
-        log "Using umount command"
-        umount "$MOUNTPOINT" >> "$MOUNT_LOG" 2>&1 || true
-      fi
+      # Even if the mount point looks unmounted in mount table, macFUSE can still have stale handles
+      # This is a well-known issue with macFUSE/OSXFUSE that can cause "Resource busy" errors
+      
+      # Force kill ANY macfuse processes that might be holding the mount point
+      ${pkgs.procps}/bin/pkill -f "macfuse.*$MOUNTPOINT" 2>/dev/null || true
       
       # Give time for cleanup
       sleep 2
+      
+      # Final verification
+      if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $MOUNTPOINT "; then
+        log "Warning: Mount point still appears to be in use after cleanup attempts"
+      else
+        log "Mount point is clean and ready for mounting"
+      fi
     }
     
     # Perform cleanup
@@ -112,74 +130,103 @@ let
     
     # Mount the remote filesystem with optimized options for macOS
     log "Mounting $REMOTE to $MOUNTPOINT"
-    ${pkgs.rclone}/bin/rclone mount "$REMOTE" "$MOUNTPOINT" \
-      --config="$CONFIG_FILE" \
-      --vfs-cache-mode writes \
-      --vfs-cache-max-age 24h \
-      --vfs-cache-max-size 2G \
-      --vfs-write-back 5s \
-      --buffer-size 64M \
-      --transfers 4 \
-      --checkers 8 \
-      --low-level-retries 10 \
-      --retries 3 \
-      --timeout 60s \
-      --contimeout 60s \
-      --allow-non-empty \
-      --cache-dir="$CACHE_DIR" \
-      --log-level=INFO \
-      --log-file="$MOUNT_LOG" \
-      --attr-timeout=1s \
-      --dir-cache-time=24h \
-      --poll-interval=15s \
-      --daemon \
-      --rc \
-      --rc-addr=127.0.0.1:0 \
-      --rc-no-auth \
-      --volname="rclone-$REMOTE_NAME" >> "$MOUNT_LOG" 2>> "$ERROR_LOG" &
+    
+    # Check for the "Resource busy" error which is a common macFUSE issue
+    MOUNT_ATTEMPTS=0
+    MAX_MOUNT_ATTEMPTS=3
+    MOUNT_SUCCESS=0
+    
+    while [ $MOUNT_ATTEMPTS -lt $MAX_MOUNT_ATTEMPTS ] && [ $MOUNT_SUCCESS -eq 0 ]; do
+      MOUNT_ATTEMPTS=$((MOUNT_ATTEMPTS + 1))
       
-    RCLONE_PID=$!
-    log "Started rclone process with PID: $RCLONE_PID"
-    
-    # Wait for mount to initialize
-    log "Waiting for mount to initialize"
-    WAIT_COUNT=0
-    MAX_WAIT=30
-    
-    while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
-      if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $MOUNTPOINT "; then
-        log "Mount detected, checking accessibility"
-        if ls -la "$MOUNTPOINT" >/dev/null 2>&1; then
-          log "Successfully mounted $REMOTE to $MOUNTPOINT"
-          log "Mount is accessible and working"
-          exit 0
-        else
-          log "Mount detected but not yet accessible, waiting..."
+      if [ $MOUNT_ATTEMPTS -gt 1 ]; then
+        log "Retrying mount (attempt $MOUNT_ATTEMPTS of $MAX_MOUNT_ATTEMPTS)"
+        # Additional cleanup for retries
+        cleanup_mount
+        sleep 5
+      fi
+      
+      ${pkgs.rclone}/bin/rclone mount "$REMOTE" "$MOUNTPOINT" \
+        --config="$CONFIG_FILE" \
+        --vfs-cache-mode writes \
+        --vfs-cache-max-age 24h \
+        --vfs-cache-max-size 2G \
+        --vfs-write-back 5s \
+        --buffer-size 64M \
+        --transfers 4 \
+        --checkers 8 \
+        --low-level-retries 10 \
+        --retries 3 \
+        --timeout 60s \
+        --contimeout 60s \
+        --allow-non-empty \
+        --cache-dir="$CACHE_DIR" \
+        --log-level=INFO \
+        --log-file="$MOUNT_LOG" \
+        --attr-timeout=1s \
+        --dir-cache-time=24h \
+        --poll-interval=15s \
+        --daemon \
+        --rc \
+        --rc-addr=127.0.0.1:0 \
+        --rc-no-auth \
+        --volname="rclone-$REMOTE_NAME" >> "$MOUNT_LOG" 2>> "$ERROR_LOG" &
+      
+      RCLONE_PID=$!
+      log "Started rclone process with PID: $RCLONE_PID (attempt $MOUNT_ATTEMPTS)"
+      
+      # Wait for mount to initialize
+      WAIT_COUNT=0
+      MAX_WAIT=10  # Shorter wait time per attempt
+      
+      while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
+        if /sbin/mount | ${pkgs.gnugrep}/bin/grep -q " $MOUNTPOINT "; then
+          if ls -la "$MOUNTPOINT" >/dev/null 2>&1; then
+            log "Successfully mounted $REMOTE to $MOUNTPOINT on attempt $MOUNT_ATTEMPTS"
+            MOUNT_SUCCESS=1
+            break 2  # Break out of both loops
+          fi
         fi
-      fi
-      
-      # Check if rclone process is still running
-      if ! kill -0 $RCLONE_PID 2>/dev/null; then
-        log_error "rclone process died unexpectedly"
-        break
-      fi
-      
-      sleep 1
-      WAIT_COUNT=$((WAIT_COUNT + 1))
+        
+        # Check if process died with resource busy error
+        if ! kill -0 $RCLONE_PID 2>/dev/null; then
+          # Check log for resource busy error
+          if tail -20 "$MOUNT_LOG" | grep -q "Resource busy"; then
+            log "Detected 'Resource busy' error, will retry after cleanup"
+            break  # Break inner loop to retry
+          else
+            log "Rclone process died without resource busy error"
+            # Continue waiting in case it's restarting itself
+          fi
+        fi
+        
+        sleep 1
+        WAIT_COUNT=$((WAIT_COUNT + 1))
+      done
     done
     
-    # If we get here, mount failed
-    log_error "Mount failed or timed out after $MAX_WAIT seconds"
-    log_error "Killing rclone process $RCLONE_PID"
-    kill $RCLONE_PID 2>/dev/null || true
-    
-    # Try to show recent errors
-    if [ -f "$ERROR_LOG" ]; then
-      log_error "Recent errors:"
-      tail -10 "$ERROR_LOG" 2>/dev/null || true
+    # If we got here without success, it's a failure
+    if [ $MOUNT_SUCCESS -eq 0 ]; then
+      log_error "Mount failed after $MAX_MOUNT_ATTEMPTS attempts"
+      
+      # Cleanup any lingering processes
+      if [ -n "$RCLONE_PID" ] && kill -0 $RCLONE_PID 2>/dev/null; then
+        log_error "Killing rclone process $RCLONE_PID"
+        kill $RCLONE_PID 2>/dev/null || true
+      fi
+      
+      # Try to show recent errors
+      if [ -f "$ERROR_LOG" ]; then
+        log_error "Recent errors:"
+        tail -10 "$ERROR_LOG" 2>/dev/null || true
+      fi
+      
+      exit 1
+    else
+      # Mount was successful
+      log "Mount is accessible and working"
+      exit 0
     fi
-    
-    exit 1
   '';
 
   # Enhanced unmount script
@@ -616,9 +663,18 @@ in
               log_message "${mount.remote} mounted but not accessible, will remount"
             fi
             
-            # Mount in the background and don't display anything to console unless there's an error
-            ${mountScript}/bin/rclone-mount "${mount.remote}" "${mount.mountPoint}" >> "$MOUNT_LOG" 2>> "$ERROR_LOG" || {
+            # Mount in the background with robust error handling
+            if ! ${mountScript}/bin/rclone-mount "${mount.remote}" "${mount.mountPoint}" >> "$MOUNT_LOG" 2>> "$ERROR_LOG"; then
+              # Show more context on the failure
               log_error "Failed to mount ${mount.remote}"
+              RECENT_ERRORS=$(tail -10 "$ERROR_LOG" 2>/dev/null)
+              if echo "$RECENT_ERRORS" | grep -q "Resource busy"; then
+                log_error "Mount point appears to be busy. Will retry on next activation."
+              elif echo "$RECENT_ERRORS" | grep -q "macFUSE"; then
+                log_error "MacFUSE error detected. Please ensure MacFUSE is properly installed."
+              fi
+            else
+              log_message "${mount.remote} successfully mounted to ${mount.mountPoint}"
             }
           fi
         '') cfg.mounts}
