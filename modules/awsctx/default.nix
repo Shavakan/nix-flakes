@@ -98,8 +98,8 @@ in
       CACHE_DIR="$HOME/Library/Caches/awsctx"
       mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
       
-      # Check if the repository directory exists, assuming it's already been set up
-      if [ -d "${sourcePath}" ]; then
+      # Check if the repository directory exists and has profiles
+      if [ -d "${sourcePath}" ] && [ -d "${sourcePath}/profiles" ] && ls "${sourcePath}/profiles"/*.config >/dev/null 2>&1; then
         log_nix "awsctx" "Found existing awsctx repository at ${sourcePath}"
         
         # Only attempt to update if it's a git repository and doesn't have local changes
@@ -115,9 +115,47 @@ in
           log_nix "awsctx" "Repository has local changes, skipping update"
         fi
       else
-        # This is a fallback case, as the repository should already exist
-        log_nix "awsctx" "Expected repository not found at ${sourcePath}"
-        echo "Warning: awsctx repository not found at ${sourcePath}"
+        # Clone the repository if it doesn't exist or doesn't have profiles
+        log_nix "awsctx" "Setting up awsctx repository at ${sourcePath}"
+        mkdir -p "$(dirname "${sourcePath}")"
+        
+        # Force-set git config values for the clone to ensure it works without prompts
+        export GIT_CONFIG_COUNT=2
+        export GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf"
+        export GIT_CONFIG_VALUE_0="git@github.com:"
+        export GIT_CONFIG_KEY_1="core.sshCommand"
+        export GIT_CONFIG_VALUE_1="ssh -o BatchMode=yes"
+        
+        # Try cloning with detailed error reporting
+        clone_output=$(${pkgs.git}/bin/git clone "${repoUrl}" "${sourcePath}" 2>&1)
+        clone_status=$?
+        
+        if [ $clone_status -ne 0 ]; then
+          log_nix "awsctx" "Error: Failed to clone awsctx repository. Details: $clone_output"
+          
+          # If directory was created but clone failed, remove it to avoid partial clones
+          if [ -d "${sourcePath}" ]; then
+            log_nix "awsctx" "Removing partial clone directory"
+            rm -rf "${sourcePath}"
+          fi
+          
+          # Try alternate URL as fallback (directly using HTTPS rather than SSH)
+          log_nix "awsctx" "Trying alternate HTTPS URL..."
+          alt_url="https://github.com/devsisters/awsctx.git"
+          clone_output=$(${pkgs.git}/bin/git clone "$alt_url" "${sourcePath}" 2>&1)
+          clone_status=$?
+          
+          if [ $clone_status -ne 0 ]; then
+            log_nix "awsctx" "Error: Failed to clone from alternate URL. Details: $clone_output"
+          else
+            log_nix "awsctx" "Successfully cloned awsctx repository from alternate URL"
+          fi
+        else
+          log_nix "awsctx" "Successfully cloned awsctx repository"
+        fi
+        
+        # Clear git config exports
+        unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0 GIT_CONFIG_KEY_1 GIT_CONFIG_VALUE_1
       fi
       
       # Clear any existing config files to avoid conflicts
@@ -125,44 +163,90 @@ in
       
       # Create symlinks for config files (not copies) to maintain live updates
       if [ -d "${sourcePath}/profiles" ]; then
-        for config_file in ${sourcePath}/profiles/*.config; do
-          if [ -f "$config_file" ]; then
-            basename=$(basename "$config_file")
-            ln -sf "$config_file" "$CONFIG_DIR/$basename"
-          fi
-        done
+        # First check if there are any config files
+        if ls "${sourcePath}/profiles/"*.config >/dev/null 2>&1; then
+          log_nix "awsctx" "Creating symlinks for AWS config profiles"
+          for config_file in ${sourcePath}/profiles/*.config; do
+            if [ -f "$config_file" ]; then
+              basename=$(basename "$config_file")
+              ln -sf "$config_file" "$CONFIG_DIR/$basename"
+              log_nix "awsctx" "Linked profile: $basename"
+            fi
+          done
+        else
+          log_nix "awsctx" "No config files found in ${sourcePath}/profiles"
+        fi
+      else
+        log_nix "awsctx" "Profiles directory not found at ${sourcePath}/profiles"
+      fi
+      
+      # Verify profiles were linked correctly
+      if [ -z "$(ls -A "$CONFIG_DIR" 2>/dev/null)" ]; then
+        log_nix "awsctx" "Warning: No AWS profiles were linked to $CONFIG_DIR"
+      else
+        log_nix "awsctx" "Successfully linked $(ls "$CONFIG_DIR" | wc -l | tr -d ' ') AWS profiles"
       fi
     '';
     
     # Direct shell function implementation
     programs.zsh.initExtra = mkIf (config.programs.zsh.enable or false) ''
-      # Add bin directory to PATH for aws-login-all script
-      export PATH="${sourcePath}/bin:$PATH"
+      # Set up required environment variables for AWS CLI compatibility
+      [[ -z "$XDG_CONFIG_HOME" ]] && export XDG_CONFIG_HOME="$HOME/Library/Application Support"
+      [[ -z "$XDG_CACHE_HOME" ]] && export XDG_CACHE_HOME="$HOME/Library/Caches"
       
-      # awsctx function - direct implementation
+      # Standard awsctx directory locations
+      export CONFIG_DIR="$XDG_CONFIG_HOME/awsctx"
+      export CACHE_DIR="$XDG_CACHE_HOME/awsctx"
+      
+      # Add bin directory to PATH for scripts
+      export PATH="${sourcePath}/bin:$PATH"
+
+      # awsctx function - simple implementation that follows AWS SDK standards
       function awsctx() {
         local ctx="$1"
         
-        # Set up directories
-        [[ -z "$XDG_CONFIG_HOME" ]] && local XDG_CONFIG_HOME="$HOME/Library/Application Support"
-        [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/Library/Caches"
+        if [[ -z "$ctx" ]]; then
+          echo "Current AWS context: $AWSCTX"
+          if [[ -n "$AWS_PROFILE" && "$AWS_PROFILE" != "$AWSCTX" ]]; then
+            echo "Current AWS_PROFILE: $AWS_PROFILE"
+          fi
+          return 0
+        fi
         
-        local CONFIG_DIR="$XDG_CONFIG_HOME/awsctx"
-        local CACHE_DIR="$XDG_CACHE_HOME/awsctx"
+        # Check if credentials file exists
+        if [[ ! -f "$CACHE_DIR/$ctx.credentials" ]]; then
+          echo "Error: No credentials found for profile '$ctx'"
+          echo "Run aws-login-all to authenticate first"
+          return 1
+        fi
         
         # Set environment variables
         export AWSCTX="$ctx"
+        export AWS_PROFILE="$ctx"
         export AWS_SHARED_CREDENTIALS_FILE="$CACHE_DIR/$ctx.credentials"
         export AWS_CONFIG_FILE="$CONFIG_DIR/$ctx.config"
+        
+        echo "Switched to AWS context: $ctx"
       }
       
       # Completion function for awsctx
       function _awsctx() {
-        [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/Library/Caches"
-        local CACHE_DIR="$XDG_CACHE_HOME/awsctx"
         _files -W "$CACHE_DIR" -g "*.credentials(:r)"
       }
       compdef _awsctx awsctx
+      
+      # Alias to list available contexts
+      alias awsctx-ls="ls -1 \"$CACHE_DIR\" | grep \".credentials$\" | sed 's/\.credentials$//'"
+      
+      # Ensure AWS CLI can find credentials by default if AWS_PROFILE is set
+      # This sets AWS_SHARED_CREDENTIALS_FILE and AWS_CONFIG_FILE if not already set
+      if [[ -n "$AWS_PROFILE" && -z "$AWS_SHARED_CREDENTIALS_FILE" && -f "$CACHE_DIR/$AWS_PROFILE.credentials" ]]; then
+        export AWS_SHARED_CREDENTIALS_FILE="$CACHE_DIR/$AWS_PROFILE.credentials"
+      fi
+      
+      if [[ -n "$AWS_PROFILE" && -z "$AWS_CONFIG_FILE" && -f "$CONFIG_DIR/$AWS_PROFILE.config" ]]; then
+        export AWS_CONFIG_FILE="$CONFIG_DIR/$AWS_PROFILE.config"
+      fi
     '';
   };
 }
