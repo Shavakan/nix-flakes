@@ -188,8 +188,8 @@ in
       fi
     '';
     
-    # Direct shell function implementation
-    programs.zsh.initExtra = mkIf (config.programs.zsh.enable or false) ''
+    # Direct shell function implementation using the new approach
+    programs.zsh.initContent = mkIf (config.programs.zsh.enable or false) ''
       # Set up required environment variables for AWS CLI compatibility
       [[ -z "$XDG_CONFIG_HOME" ]] && export XDG_CONFIG_HOME="$HOME/Library/Application Support"
       [[ -z "$XDG_CACHE_HOME" ]] && export XDG_CACHE_HOME="$HOME/Library/Caches"

@@ -103,7 +103,7 @@ in
     ];
 
     # Add shell function for zsh only
-    programs.zsh.initExtra = mkIf config.programs.zsh.enable ''
+    programs.zsh.initContent = mkIf config.programs.zsh.enable ''
       # cd-rclone function for zsh
       cdr() {
         if [ "$#" -eq 0 ]; then
