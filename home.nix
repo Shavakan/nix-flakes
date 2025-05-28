@@ -42,6 +42,23 @@
       # Export the function so it's available to all activation scripts
       export -f log_nix
     '';
+    
+    # Link 1Password to ~/Applications
+    activation.link1Password = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      # Create ~/Applications directory if it doesn't exist
+      mkdir -p ~/Applications
+      
+      # Find the 1Password app path in the Nix profile
+      ONEPASSWORD_APP_PATH=$(find ~/.nix-profile/Applications -name "1Password.app" -type d 2>/dev/null || echo "")
+      
+      if [ -n "$ONEPASSWORD_APP_PATH" ]; then
+        # Link 1Password to ~/Applications
+        ln -sfn "$ONEPASSWORD_APP_PATH" ~/Applications/1Password.app
+        log_nix "1password" "Linked 1Password.app to ~/Applications"
+      else
+        log_nix "1password" "Warning: Could not find 1Password.app in nix profile"
+      fi
+    '';
 
     # Packages to install to the user profile
     packages = with pkgs; [
@@ -236,7 +253,9 @@
     enableExtraSocket = true;
     defaultCacheTtl = 3600;
     maxCacheTtl = 86400;
-    pinentryPackage = pkgs.pinentry_mac;
+    pinentry = {
+      package = pkgs.pinentry_mac;
+    };
     extraConfig = ''
       allow-loopback-pinentry
       allow-emacs-pinentry
