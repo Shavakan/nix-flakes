@@ -6,7 +6,7 @@
   programs.iterm2 = {
     enable = true;
     disablePromptOnQuit = true;
-    theme = "auto";
+    theme = "dark"; # Fixed theme instead of auto to prevent crashes
     tabsPosition = "top";
     windowStyle = "normal";
     enableSmartSelection = true;
@@ -22,16 +22,14 @@
         # Using MesloLGS NF for better terminal experience
         font = "MesloLGS-NF-Regular";
         fontSize = 13;
-        useNonAsciiFont = false;
         useBoldFont = true;
         useItalicFont = true;
         unlimitedScrollback = true;
         scrollbackLines = 100000; # Still set a high value even though unlimited is enabled
         workingDirectory = "~/";
-        blurBackground = true;
-        blurRadius = 2;
-        transparency = 0.3;
-        useTransparencyOnlyForDefaultBg = true;
+        blurBackground = false; # Disable blur which can cause issues
+        transparency = 0.0; # Disable transparency
+        useTransparencyOnlyForDefaultBg = false;
         closeOnExit = "always";
       };
     };
@@ -48,16 +46,27 @@
       
       # UI preferences
       "HideScrollbar" = false;
-      "DisableFullscreenTransparency" = false;
-      "SplitPaneDimmingAmount" = 0.4;
+      "DisableFullscreenTransparency" = true;
+      "SplitPaneDimmingAmount" = 0.0;
       "EnableProxyIcon" = true;
       "EnableRendezvous" = false;
       "HideMenuBarInFullscreen" = true;
       "SUEnableAutomaticChecks" = true;
       "DisableWindowSizeSnap" = false;
       
+      # Metal renderer settings with safer configuration
+      "UseMetal" = true;
+      "UseAdaptiveFrameRate" = false;
+      "MetalMaximizeThroughput" = false;
+      
+      # Disable theme automatic switching which can cause crashes
+      "AppleInterfaceStyleSwitchesAutomatically" = false;
+      "PreventEscapeSequenceFromClearingHistory" = true;
+      "NoSyncDoNotWarnBeforeMultilinePaste" = true;
+      "NoSyncDoNotWarnBeforeMultilinePaste_selection" = true;
+      
       # Tab styling
-      "TabStyleWithAutomaticOption" = 5; # Modern tab style
+      "TabStyleWithAutomaticOption" = 0; # Simple tab style
       "TabViewType" = 0; # Tabs on top
       "HideTab" = false;
       "ShowFullScreenTabBar" = true;
@@ -77,16 +86,12 @@
       "PromptOnQuit" = false; # Don't prompt on quit
     };
 
-    # Status bar configuration
+    # Status bar configuration - disable status bar which can cause issues
     statusBar = {
-      show = true;
+      show = false;
       position = "bottom";
       components = [
         "CurrentDirectory"
-        "CPU"
-        "Memory"
-        "Battery"
-        "DateTime"
       ];
     };
   };
