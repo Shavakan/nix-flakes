@@ -54,16 +54,17 @@
       "SUEnableAutomaticChecks" = true;
       "DisableWindowSizeSnap" = false;
       
-      # Metal renderer settings with safer configuration
-      "UseMetal" = true;
+      # Disable Metal renderer to prevent crashes
+      "UseMetal" = false;
       "UseAdaptiveFrameRate" = false;
       "MetalMaximizeThroughput" = false;
       
-      # Disable theme automatic switching which can cause crashes
+      # Disable theme automatic switching and appearance changes which can cause crashes
       "AppleInterfaceStyleSwitchesAutomatically" = false;
       "PreventEscapeSequenceFromClearingHistory" = true;
       "NoSyncDoNotWarnBeforeMultilinePaste" = true;
       "NoSyncDoNotWarnBeforeMultilinePaste_selection" = true;
+      "MinimalTheme" = false; # Disable minimal theme which can cause crashes
       
       # Tab styling
       "TabStyleWithAutomaticOption" = 0; # Simple tab style
