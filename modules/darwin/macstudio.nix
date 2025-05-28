@@ -13,6 +13,38 @@
       # Different Dock settings for desktop Mac
       magnification = true;
     };
+    
+    # Power management settings to help with USB devices after wake
+    CustomUserPreferences = {
+      # System-wide power management settings
+      "com.apple.PowerManagement" = {
+        "SleepDisabled" = false;
+        "hibernatemode" = 0; # Disable hibernation (0 = no hibernate)
+        "standby" = 0; # Disable standby
+        "ttyskeepawake" = 1; # Prevent sleep while SSH sessions are active
+        "acwake" = 1; # Wake on AC power reconnect
+        "lidwake" = 1; # Wake when lid is opened
+        
+        # Don't power down USB controllers during sleep
+        # This helps with device recognition after wake
+        "IOPMEnableBluetoothWakeFromSleep" = 1; # Enable Bluetooth wake
+        "UPSRestart" = 1; # Auto-restart after power loss
+      };
+      
+      # USB power management settings
+      "com.apple.driver.AppleUSBMergeNub" = {
+        "IOClass" = "AppleUSBMergeNub";
+        "IOProviderClass" = "AppleUSBDevice";
+        "idProduct" = 0; # For all USB devices
+        "idVendor" = 0; # For all USB vendors
+        "IOPersonalityPublisher" = "com.apple.driver.AppleUSBMergeNub";
+        # Prevent USB device suspension during sleep
+        "kUSBSleepPortCurrentLimit" = 2100; # Increase sleep current limit to 2100mA
+        "kUSBSleepPowerSupply" = 2100; # Increase sleep power supply to 2100mA
+        "kUSBWakePortCurrentLimit" = 2100; # Increase wake current limit to 2100mA
+        "kUSBWakePowerSupply" = 2100; # Increase wake power supply to 2100mA
+      };
+    };
   };
 
   # Mac Studio-specific LaunchAgents
