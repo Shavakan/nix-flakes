@@ -114,28 +114,30 @@ with lib;
       }
     ];
 
-    # Powerlevel10k initialization must come before anything else
-    initExtraFirst = ''
-      # Ensure USERNAME is defined (sometimes not available in shells)
-      export USERNAME="$(whoami)"
-      
-      # Enable Powerlevel10k instant prompt - simplified version to avoid syntax issues
-      if [ -d "$HOME/.cache" ]; then
-        p10k_instant_file="$HOME/.cache/p10k-instant-prompt-$(whoami).zsh"
-        if [ -r "$p10k_instant_file" ]; then
-          source "$p10k_instant_file"
+    # Use the new initContent approach combining both parts
+    initContent = lib.mkMerge [
+      # Content that needs to come first (previously initExtraFirst)
+      (lib.mkBefore ''
+        # Ensure USERNAME is defined (sometimes not available in shells)
+        export USERNAME="$(whoami)"
+        
+        # Enable Powerlevel10k instant prompt - simplified version to avoid syntax issues
+        if [ -d "$HOME/.cache" ]; then
+          p10k_instant_file="$HOME/.cache/p10k-instant-prompt-$(whoami).zsh"
+          if [ -r "$p10k_instant_file" ]; then
+            source "$p10k_instant_file"
+          fi
         fi
-      fi
 
-      # Initialize Powerlevel10k
-      [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
+        # Initialize Powerlevel10k
+        [ -f ~/.p10k.zsh ] && source ~/.p10k.zsh
+        
+        # Apply custom Kubernetes context styling
+        [ -f ~/.p10k-k8s.zsh ] && source ~/.p10k-k8s.zsh
+      '')
       
-      # Apply custom Kubernetes context styling
-      [ -f ~/.p10k-k8s.zsh ] && source ~/.p10k-k8s.zsh
-    '';
-
-    # Environment variables
-    initExtra = ''
+      # Main content (previously initExtra)
+      ''
       # Force terminal to use colors
       export TERM="xterm-256color"
       export COLORTERM="truecolor"
@@ -333,7 +335,8 @@ with lib;
           fi
         }
       fi
-    '';
+    ''
+    ];
 
     # Shell aliases
     shellAliases = {
