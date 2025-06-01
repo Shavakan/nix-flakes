@@ -242,28 +242,6 @@ in {
     # Ensure iTerm2 is installed
     home.packages = [ pkgs.iterm2 ];
     
-    # Font installation service that runs on activation to ensure fonts are available (quiet version)
-    home.activation.installFonts = lib.hm.dag.entryAfter ["setupLogging"] ''
-      # Install the fonts to user's font directory
-      USER_FONTS_DIR="$HOME/Library/Fonts"
-      mkdir -p "$USER_FONTS_DIR" > /dev/null 2>&1
-      
-      log_nix "fonts" "Installing iTerm2 fonts to $USER_FONTS_DIR"
-      
-      # Find and copy MesloLGS NF fonts quietly
-      find /nix/store -name "MesloLGS NF*.ttf" 2>/dev/null | while IFS= read -r font; do
-        font_name=$(basename "$font")
-        cp -f "$font" "$USER_FONTS_DIR/" > /dev/null 2>&1
-        log_nix "fonts" "Installed font: $font_name"
-      done
-      
-      # Find and copy NanumGothicCoding fonts quietly
-      find /nix/store -name "NanumGothicCoding*.ttf" 2>/dev/null | while IFS= read -r font; do
-        font_name=$(basename "$font")
-        cp -f "$font" "$USER_FONTS_DIR/" > /dev/null 2>&1
-        log_nix "fonts" "Installed font: $font_name"
-      done
-    '';
     
     # Simplified activation script that directly writes a minimal working config (quiet version)
     home.activation.iterm2-config = lib.hm.dag.entryAfter ["setupLogging"] ''
