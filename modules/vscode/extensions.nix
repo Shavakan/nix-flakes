@@ -94,6 +94,7 @@
         timonvs.reactsnippetsstandard
         xabikos.javascriptsnippets
         xmonader.vscode-capnp
+        zxh404.vscode-proto3         # Protocol Buffers/gRPC support
         
         # YAML support
         redhat.vscode-yaml

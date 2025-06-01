@@ -161,6 +161,13 @@ with lib;
       " CapnProto
       autocmd FileType capnp setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
       
+      " Protocol Buffers
+      autocmd BufRead,BufNewFile *.proto set filetype=proto
+      autocmd FileType proto setlocal tabstop=2 shiftwidth=2 softtabstop=2 expandtab
+      
+      " gRPC
+      autocmd BufRead,BufNewFile *.grpc.* set filetype=proto
+      
       " Text
       autocmd FileType text setlocal textwidth=80
     '';
