@@ -2,32 +2,35 @@
 
 {
   programs.vscode = {
-    profiles.default.extensions = 
+    profiles.default.extensions =
       # Extensions available in nixpkgs (prefer these when available)
       (with pkgs.vscode-extensions; [
         # Nix support
         bbenoist.nix
-        
+
         # Git integration
-        eamodio.gitlens                # Enhanced Git functionality
-        
+        eamodio.gitlens # Enhanced Git functionality
+        github.vscode-pull-request-github # GitHub PR integration
+
         # AI coding assistant
-        github.copilot                 # GitHub Copilot
-        github.copilot-chat            # GitHub Copilot Chat
-        
+        github.copilot # GitHub Copilot
+        github.copilot-chat # GitHub Copilot Chat
+
         # Languages
-        golang.go                      # Go language support
-        ms-python.python               # Python language support
-        
+        golang.go # Go language support
+        ms-python.python # Python language support
+
         # Tools
-        ms-azuretools.vscode-docker    # Docker integration
-        ms-toolsai.jupyter             # Jupyter notebooks
-        
+        ms-azuretools.vscode-docker # Docker integration
+        ms-toolsai.jupyter # Jupyter notebooks
+
         # Editing experience
-        vscodevim.vim                  # Vim keybindings
-        yzhang.markdown-all-in-one     # Markdown support
+        vscodevim.vim # Vim keybindings
+        yzhang.markdown-all-in-one # Markdown support
+        redhat.vscode-yaml # YAML support
+        zxh404.vscode-proto3 # Protocol Buffers/gRPC support
       ])
-      
+
       # Extensions from VS Code Marketplace (for those not in nixpkgs)
       # Use the proper syntax for extensions with non-identifier names
       ++ (
@@ -43,10 +46,10 @@
         aleksandra.go-group-imports
         premparihar.gotestexplorer
         maxmedia.go-prof
-        
+
         # Database tools
         bajdzis.vscode-database
-        
+
         # Utils and tools
         bbenoist.vagrant
         be5invis.toml
@@ -54,10 +57,7 @@
         docker.docker
         dsznajder.es7-react-js-snippets
         eriklynd.json-tools
-        
-        # GitHub integration
-        github.vscode-pull-request-github
-        
+
         # Python extensions
         guyskk.language-cython
         ms-python.debugpy
@@ -69,7 +69,7 @@
         ms-toolsai.jupyter-renderers
         ms-toolsai.vscode-jupyter-cell-tags
         ms-toolsai.vscode-jupyter-slideshow
-        
+
         # Infrastructure and DevOps
         hashicorp.terraform
         hollowtree.vue-snippets
@@ -79,25 +79,21 @@
         ms-vscode-remote.remote-containers
         # ms-vscode.cpptools - REMOVED (not supported on arm64 Darwin)
         secanis.jenkinsfile-support
-        
+
         # Collaboration
         # ms-vsliveshare.vsliveshare - REMOVED (not needed)
         # ms-vsliveshare.vsliveshare-pack - REMOVED (missing)
-        
+
         # UI/UX and language packs
         ms-ceintl.vscode-language-pack-ko
-        
+
         # Markdown and Documentation
         shd101wyy.markdown-preview-enhanced
-        
+
         # Programming language support
         timonvs.reactsnippetsstandard
         xabikos.javascriptsnippets
         xmonader.vscode-capnp
-        zxh404.vscode-proto3         # Protocol Buffers/gRPC support
-        
-        # YAML support
-        redhat.vscode-yaml
       ]);
   };
 }
