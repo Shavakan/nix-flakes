@@ -1,4 +1,4 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, saml2aws, ... }:
 
 with lib;
 

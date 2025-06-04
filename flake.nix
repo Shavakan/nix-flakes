@@ -5,6 +5,12 @@
     # Package sources - use nixpkgs-unstable for compatibility
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # Custom saml2aws build from devsisters fork
+    saml2aws = {
+      url = "github:devsisters/saml2aws";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nix-vscode-extensions - for VS Code extensions from marketplace
     nix-vscode-extensions = {
       url = "github:nix-community/nix-vscode-extensions";
@@ -87,7 +93,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -108,6 +114,10 @@
           # Add agenix to pkgs
           (final: prev: {
             agenix = agenix.packages.${darwinSystem}.default;
+          })
+          # Add custom saml2aws
+          (final: prev: {
+            saml2aws = saml2aws.packages.${darwinSystem}.default;
           })
           # Add nix-vscode-extensions overlay
           nix-vscode-extensions.overlays.default
@@ -138,6 +148,10 @@
                 # Add agenix to pkgs
                 (final: prev: {
                   agenix = agenix.packages.${darwinSystem}.default;
+                })
+                # Add custom saml2aws
+                (final: prev: {
+                  saml2aws = saml2aws.packages.${darwinSystem}.default;
                 })
                 # Add nix-vscode-extensions overlay
                 nix-vscode-extensions.overlays.default
@@ -170,6 +184,10 @@
                 # Add agenix to pkgs
                 (final: prev: {
                   agenix = agenix.packages.${darwinSystem}.default;
+                })
+                # Add custom saml2aws
+                (final: prev: {
+                  saml2aws = saml2aws.packages.${darwinSystem}.default;
                 })
                 # Add nix-vscode-extensions overlay
                 nix-vscode-extensions.overlays.default
@@ -213,6 +231,8 @@
           inherit vim-nord vim-surround vim-commentary vim-easy-align fzf-vim vim-fugitive vim-nix vim-terraform vim-go;
           # Add nix-vscode-extensions for VS Code
           inherit nix-vscode-extensions;
+          # Add custom saml2aws
+          inherit saml2aws;
         };
       };
 

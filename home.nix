@@ -1,4 +1,4 @@
-{ config, pkgs, lib, hostname, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, ... }@args:
+{ config, pkgs, lib, hostname, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, saml2aws, ... }@args:
 
 {
   imports = [
@@ -60,7 +60,6 @@
       k9s
       kubernetes-helm
       awscli2
-      saml2aws
       google-cloud-sdk
 
       # Search tools
