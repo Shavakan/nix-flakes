@@ -231,7 +231,7 @@
           inherit vim-nord vim-surround vim-commentary vim-easy-align fzf-vim vim-fugitive vim-nix vim-terraform vim-go;
           # Add nix-vscode-extensions for VS Code
           inherit nix-vscode-extensions;
-          # Add custom saml2aws
+          # Add custom inputs
           inherit saml2aws;
         };
       };

@@ -5,9 +5,8 @@ with lib;
 let
   cfg = config.services.awsctx;
   
-  # Source repository path
-  sourcePath = "/Users/shavakan/workspace/awsctx";
-  repoUrl = "https://github.com/devsisters/awsctx.git";
+  # Define where the repo will be cloned
+  repoPath = "${config.home.homeDirectory}/workspace/awsctx";
   
   # Create the aws-login-all script as a proper Nix package
   awsLoginAll = pkgs.writeShellScriptBin "aws-login-all" ''
@@ -80,6 +79,11 @@ in
 {
   options.services.awsctx = {
     enable = mkEnableOption "awsctx AWS profile context switcher";
+    repo = mkOption {
+      type = types.str;
+      default = "git@github.com:devsisters/awsctx.git";
+      description = "The awsctx repository URL";
+    };
   };
 
   config = mkIf cfg.enable {
@@ -88,51 +92,67 @@ in
       awsLoginAll 
       pkgs.saml2aws
       pkgs.git
+      pkgs.openssh
       pkgs.coreutils # For timeout command
     ];
     
-    # Create required directories and sync profiles
+    # Clone the repository and set up symlinks during activation
     home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      # Create required directories for awsctx
       CONFIG_DIR="$HOME/Library/Application Support/awsctx" 
       CACHE_DIR="$HOME/Library/Caches/awsctx"
-      mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
       
-      # Ensure repository exists and pull latest changes with timeout
-      if [ ! -d "${sourcePath}" ]; then
-        mkdir -p "$(dirname "${sourcePath}")"
-        # Add timeout for git clone
-        ${pkgs.coreutils}/bin/timeout 30 ${pkgs.git}/bin/git clone ${repoUrl} "${sourcePath}" >/dev/null 2>&1 || {
-          echo "Warning: Failed to clone awsctx repository (timeout or network issue), skipping..."
-        }
-      else
-        # Only pull if it's a git repository and not a local change
-        if [ -d "${sourcePath}/.git" ] && ! ${pkgs.git}/bin/git -C "${sourcePath}" status --porcelain 2>/dev/null | grep -q .; then
-          # Add timeout for git pull and make it non-blocking
-          ${pkgs.coreutils}/bin/timeout 10 ${pkgs.git}/bin/git -C "${sourcePath}" pull --ff-only >/dev/null 2>&1 || {
-            echo "Warning: Failed to update awsctx repository (timeout or network issue), using existing version..."
-          }
+      # Create the target directory for the repository if it doesn't exist
+      mkdir -p $(dirname "${repoPath}")
+      
+      # Check if SSH agent is running and start it if needed
+      if ! ssh-add -l &>/dev/null; then
+        # Start SSH agent silently
+        eval "$(${pkgs.openssh}/bin/ssh-agent -s)" > /dev/null 2>&1
+        log_nix "awsctx" "Started SSH agent for repository operations"
+      fi
+      
+      # Clone the repository if it doesn't exist
+      if [ ! -d "${repoPath}" ]; then
+        # Create the directory first to ensure we have something to work with
+        # even if the clone fails
+        mkdir -p "${repoPath}"
+        
+        # Use explicit path to SSH
+        export GIT_SSH="${pkgs.openssh}/bin/ssh"
+        
+        # Remove the directory so git can create it
+        rmdir "${repoPath}" 2>/dev/null || true
+        
+        # Try to clone silently, redirecting output to avoid noise
+        if ! ${pkgs.git}/bin/git clone ${cfg.repo} "${repoPath}" > /dev/null 2>&1; then
+          log_nix "awsctx" "Failed to clone repository automatically. This is normal if SSH keys aren't loaded."
+          
+          # Recreate the directory
+          mkdir -p "${repoPath}"
+        else
+          log_nix "awsctx" "Successfully cloned repository to ${repoPath}"
         fi
       fi
       
-      # Clear any existing config files to avoid conflicts
-      rm -f "$CONFIG_DIR"/*.config
-      
-      # Create symlinks for config files (not copies) to maintain live updates
-      if [ -d "${sourcePath}/profiles" ]; then
-        for config_file in ${sourcePath}/profiles/*.config; do
-          if [ -f "$config_file" ]; then
-            basename=$(basename "$config_file")
-            ln -sf "$config_file" "$CONFIG_DIR/$basename"
-          fi
-        done
+      # Create symlink from workspace to Library/Application Support if needed
+      if [ ! -L "$CONFIG_DIR" ]; then
+        # If it's a directory, back it up
+        if [ -d "$CONFIG_DIR" ]; then
+          mv "$CONFIG_DIR" "$CONFIG_DIR.bak.$(date +%s)"
+        fi
+        
+        # Create the symlink
+        ln -sfn "${repoPath}" "$CONFIG_DIR"
       fi
+      
+      # Always create the cache directory
+      mkdir -p "$CACHE_DIR"
     '';
     
     # Direct shell function implementation
     programs.zsh.initExtra = mkIf (config.programs.zsh.enable or false) ''
       # Add bin directory to PATH for aws-login-all script
-      export PATH="${sourcePath}/bin:$PATH"
+      export PATH="${repoPath}/bin:$PATH"
       
       # awsctx function - direct implementation
       function awsctx() {
