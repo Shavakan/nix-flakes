@@ -109,11 +109,8 @@
 
   # Enable font management and make all fonts available to applications
   fonts = {
-    # Enable font management
-    fontDir.enable = true;
-
     # Make fonts available to all applications
-    fonts = with pkgs; [
+    packages = with pkgs; [
       meslo-lgs-nf # Meslo Nerd Font patched for Powerlevel10k
       nerd-fonts.jetbrains-mono # JetBrains Mono with Nerd Font glyphs
       nanum # Nanum Korean font set (includes Nanum Gothic Coding)
