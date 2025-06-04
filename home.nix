@@ -52,7 +52,8 @@
       # Development languages and tools
       terraform
       dotnet-sdk
-      buf # Protocol Buffer linter/formatter
+      buf
+      subversion
 
       # Cloud tools
       kubectl
