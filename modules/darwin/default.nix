@@ -328,6 +328,11 @@
         "DisableLockOnSleep" = false; # Lock when sleeping
         "UseProximityMonitoring" = true; # Use Apple Watch for proximity monitoring
       };
+      
+      # Additional security settings for system default
+      "com.apple.security.plist" = {
+        "AutoUnlock" = true; # Enable Apple Watch unlock globally
+      };
 
       # Firewall settings
       "com.apple.alf" = {

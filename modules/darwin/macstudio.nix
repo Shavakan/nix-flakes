@@ -98,6 +98,27 @@
       "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
         "MouseTwoFingerHorizSwipeGesture" = 1; # Enable two-finger swipe for page navigation
       };
+      
+      # Apple Watch unlock settings
+      "com.apple.security.plist" = {
+        "AutoUnlock" = true; # Enable Apple Watch unlock
+      };
+      
+      # Apple Watch auto unlock settings
+      "com.apple.autounlock" = {
+        "enabled" = 1; # Enable Apple Watch Auto Unlock
+        "disable-proximity-notifications" = 0; # Allow proximity notifications
+        "ShouldNotifyActivity" = 1; # Notify user of unlock activity
+        "DeviceIsSupportedForAutoUnlock" = 1; # Mark this Mac as supported
+      };
+      
+      # Security & Privacy preferences to allow Apple Watch
+      "com.apple.security" = {
+        "AutoWake" = true; # Wake for network access
+        "DisableLockOnSleep" = false; # Lock when sleeping
+        "UseProximityMonitoring" = true; # Use Apple Watch for proximity monitoring
+        "UWUPActive" = true; # Allow Apple Watch unlock
+      };
     };
   };
 
