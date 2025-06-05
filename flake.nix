@@ -11,6 +11,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Fenix for Rust toolchain management
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # nix-vscode-extensions - for VS Code extensions from marketplace
     nix-vscode-extensions = {
       url = "github:nix-community/nix-vscode-extensions";
@@ -93,7 +99,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, ... }@ inputs:
+  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -232,7 +238,7 @@
           # Add nix-vscode-extensions for VS Code
           inherit nix-vscode-extensions;
           # Add custom inputs
-          inherit saml2aws;
+          inherit saml2aws fenix;
         };
       };
 
@@ -265,30 +271,34 @@
           '';
         };
 
-        # Rust development shell with nightly toolchain
+        # Rust development shell with nightly toolchain from fenix
         rust = pkgs.mkShell {
           # Environment variables for the shell
-          RUSTUP_TOOLCHAIN = "nightly";
           CARGO_NET_GIT_FETCH_WITH_CLI = "true";
 
-          buildInputs = with pkgs; [
-            # Rust toolchain management
-            rustup
+          # Use fenix for the Rust toolchain
+          packages = [
+            # Use the same toolchain definition as in the cargo module
+            (fenix.packages.${pkgs.system}.latest.withComponents [
+              "cargo"
+              "clippy"
+              "rust-src"
+              "rustc"
+              "rustfmt"
+              "rust-analyzer"
+            ])
 
             # Development dependencies
-            pkg-config
-            openssl.dev
+            pkgs.pkg-config
+            pkgs.openssl.dev
           ];
 
           shellHook = ''
-              # Ensure SSH agent is available
-              if [ -z "$SSH_AUTH_SOCK" ]; then
+            # Ensure SSH agent is available
+            if [ -z "$SSH_AUTH_SOCK" ]; then
               export SSH_AUTH_SOCK="$(launchctl getenv SSH_AUTH_SOCK)"
             fi
-        
-            # Check if nightly is installed, install it if not
-            rustup toolchain list | grep -q nightly || rustup toolchain install nightly --profile minimal
-        
+            
             echo "Rust nightly development shell ready!"
           '';
         };

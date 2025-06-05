@@ -1,7 +1,18 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, fenix, ... }:
 
 with lib;
 
+let
+  # Create a custom rust toolchain with the components we need
+  rustToolchain = fenix.packages.${pkgs.system}.latest.withComponents [
+    "cargo"
+    "clippy"
+    "rust-src"
+    "rustc"
+    "rustfmt"
+    "rust-analyzer"
+  ];
+in
 {
   # Add cargo configuration
   home.file.".cargo/config.toml" = {
@@ -19,9 +30,9 @@ with lib;
     '';
   };
 
-  # Install rustup and manage manually
-  home.packages = with pkgs; [
-    rustup
+  # Install Rust nightly toolchain via fenix
+  home.packages = [
+    rustToolchain
   ];
   
   # Additional Cargo environment variables added to ZSH
@@ -29,20 +40,10 @@ with lib;
     # Cargo SSH authentication helpers
     export CARGO_NET_GIT_FETCH_WITH_CLI=true
     
-    # Set nightly as the default toolchain
-    export RUSTUP_TOOLCHAIN=nightly
-    
     # Ensure SSH agent socket is available for Git/Cargo
     # This allows cargo to use SSH for Git authentication
     if [ -z "$SSH_AUTH_SOCK" ]; then
       export SSH_AUTH_SOCK="$(launchctl getenv SSH_AUTH_SOCK)"
     fi
-  '';
-  
-  # Add activation script to install rust nightly if not already installed
-  # This is more minimalistic than before
-  home.activation.setupRustNightly = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup toolchain list | grep -q nightly || \
-    $DRY_RUN_CMD ${pkgs.rustup}/bin/rustup toolchain install nightly --profile minimal
   '';
 }

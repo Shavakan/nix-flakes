@@ -66,6 +66,27 @@
         "type": "github"
       }
     },
+    "fenix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-analyzer-src": "rust-analyzer-src"
+      },
+      "locked": {
+        "lastModified": 1749019266,
+        "narHash": "sha256-W7T6/KdLCqs4Dmpfkcs0/pAKHeIW9odWRHIUauST06M=",
+        "owner": "nix-community",
+        "repo": "fenix",
+        "rev": "b6378decc0543a7d64f51fcca7f5727b47812365",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "fenix",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems_2"
@@ -201,6 +222,7 @@
       "inputs": {
         "agenix": "agenix",
         "darwin": "darwin_2",
+        "fenix": "fenix",
         "fzf-vim": "fzf-vim",
         "home-manager": "home-manager_2",
         "nix-vscode-extensions": "nix-vscode-extensions",
@@ -216,6 +238,23 @@
         "vim-terraform": "vim-terraform",
         "zsh-autopair": "zsh-autopair",
         "zsh-powerlevel10k": "zsh-powerlevel10k"
+      }
+    },
+    "rust-analyzer-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1748931088,
+        "narHash": "sha256-OqpRHL9wdrOjmC7eWIOdDC64n96dN1uTokJA6dsCuWs=",
+        "owner": "rust-lang",
+        "repo": "rust-analyzer",
+        "rev": "cf969d21c30fed7eac32d9e485dca4b39df826f8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "rust-lang",
+        "ref": "nightly",
+        "repo": "rust-analyzer",
+        "type": "github"
       }
     },
     "saml2aws": {
