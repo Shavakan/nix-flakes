@@ -44,6 +44,25 @@
         "kUSBWakePortCurrentLimit" = 2100; # Increase wake current limit to 2100mA
         "kUSBWakePowerSupply" = 2100; # Increase wake power supply to 2100mA
       };
+      
+      # IOKit USB settings for HID devices (keyboard, mouse)
+      "com.apple.iokit.IOUSBFamily" = {
+        "USBHIDWakeForeverEnabled" = true; # Keep HID devices awake
+        "USBHIDWakeSupport" = true; # Support wake from HID devices
+        "USBHIDPostResumeDelay" = 1000; # Wait 1 second after resume before accepting HID input
+        "USBHIDPowerManagement" = 0; # Disable HID power management to prevent sleep issues
+      };
+      
+      # XHCI controller settings to prevent reset on wake
+      "com.apple.driver.usb.AppleUSBXHCI" = {
+        "IOCFPlugInTypes" = "";
+        "IOPowerManagement" = {
+          "CapabilityFlags" = 32768; # Keep device powered during sleep
+          "CurrentPowerState" = 2; # Always on
+          "DevicePowerState" = 2; # Always on
+          "WakeReason" = 2; # Wake from any input
+        };
+      };
     };
   };
 
