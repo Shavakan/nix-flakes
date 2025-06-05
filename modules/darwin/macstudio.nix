@@ -14,6 +14,15 @@
       magnification = true;
     };
     
+    # Trackpad settings specific to this machine
+    trackpad = {
+      TrackpadThreeFingerDrag = true; # Enable three-finger drag
+      TrackpadThreeFingerHorizSwipeGesture = 0; # Disable three-finger horizontal swipe
+      TrackpadThreeFingerVertSwipeGesture = 0; # Disable three-finger vertical swipe
+      TrackpadFourFingerHorizSwipeGesture = 2; # Enable four-finger horizontal swipe (1 = disabled, 2 = enabled)
+      TrackpadFourFingerVertSwipeGesture = 2; # Enable four-finger vertical swipe (1 = disabled, 2 = enabled)
+    };
+    
     # Power management settings to help with USB devices after wake
     CustomUserPreferences = {
       # System-wide power management settings
