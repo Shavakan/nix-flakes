@@ -10,6 +10,8 @@
   # Enable nix
   nix.enable = true;
 
+  system.primaryUser = "shavakan";
+
   # Fix for nixbld group ID mismatch
   ids.gids.nixbld = 350;
 
@@ -328,7 +330,7 @@
         "DisableLockOnSleep" = false; # Lock when sleeping
         "UseProximityMonitoring" = true; # Use Apple Watch for proximity monitoring
       };
-      
+
       # Additional security settings for system default
       "com.apple.security.plist" = {
         "AutoUnlock" = true; # Enable Apple Watch unlock globally
@@ -351,16 +353,16 @@
         "FocusModes" = 18; # Show in Control Center and menu bar
         "AirDrop" = 8; # Show in Control Center only
       };
-      
+
       # Night Shift settings
       "com.apple.CoreBrightness" = {
-        "CBColorAdaptationEnabled" = true;  # Enable Night Shift
-        "CBColorAdaptationNightShiftScheduleType" = 1;  # 1 = Custom schedule, 0 = Sunset to Sunrise
-        "CBColorAdaptationNightShiftManualBlueLightReduction" = 0.3;  # Blue light reduction amount (0.0 to 1.0)
-        "CBColorAdaptationNightShiftScheduledStartHour" = 22;  # Start hour (24-hour format)
-        "CBColorAdaptationNightShiftScheduledStartMinute" = 0;  # Start minute
-        "CBColorAdaptationNightShiftScheduledEndHour" = 7;  # End hour (24-hour format)
-        "CBColorAdaptationNightShiftScheduledEndMinute" = 0;  # End minute
+        "CBColorAdaptationEnabled" = true; # Enable Night Shift
+        "CBColorAdaptationNightShiftScheduleType" = 1; # 1 = Custom schedule, 0 = Sunset to Sunrise
+        "CBColorAdaptationNightShiftManualBlueLightReduction" = 0.3; # Blue light reduction amount (0.0 to 1.0)
+        "CBColorAdaptationNightShiftScheduledStartHour" = 22; # Start hour (24-hour format)
+        "CBColorAdaptationNightShiftScheduledStartMinute" = 0; # Start minute
+        "CBColorAdaptationNightShiftScheduledEndHour" = 7; # End hour (24-hour format)
+        "CBColorAdaptationNightShiftScheduledEndMinute" = 0; # End minute
       };
     };
   };
