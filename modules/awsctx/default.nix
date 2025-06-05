@@ -1,4 +1,4 @@
-{ config, lib, pkgs, saml2aws, ... }:
+{ config, lib, pkgs, ... }:
 
 with lib;
 
@@ -8,72 +8,284 @@ let
   # Define where the repo will be cloned
   repoPath = "${config.home.homeDirectory}/workspace/awsctx";
   
+  # Get the XDG directories based on OS
+  getXdgDirs = pkgs.writeShellScript "get-xdg-dirs" ''
+    os="$(uname -s)"
+    
+    case "$os" in
+      Darwin*)
+        echo "CONFIG_DIR=\"''${XDG_CONFIG_HOME:-$HOME/Library/Application\\ Support}/awsctx\""
+        echo "CACHE_DIR=\"''${XDG_CACHE_HOME:-$HOME/Library/Caches}/awsctx\""
+        ;;
+      Linux*)
+        echo "CONFIG_DIR=\"''${XDG_CONFIG_HOME:-$HOME/.config}/awsctx\""
+        echo "CACHE_DIR=\"''${XDG_CACHE_HOME:-$HOME/.cache}/awsctx\""
+        ;;
+      *)
+        echo "Unsupported OS: $os" >&2
+        exit 1
+        ;;
+    esac
+  '';
+  
   # Create the aws-login-all script as a proper Nix package
   awsLoginAll = pkgs.writeShellScriptBin "aws-login-all" ''
     #!/usr/bin/env bash
-
-    function main() {
-      load_os_environments || return 1
-      prepare_directory || return 1
-      do_login
-    }
-
-    function load_os_environments() {
-      local os="$(uname -s)"
-
-      case "''${os}" in
-        Darwin*)
-          [ -z "''${XDG_CONFIG_HOME}" ] && local XDG_CONFIG_HOME="''${HOME}/Library/Application Support"
-          [ -z "''${XDG_CACHE_HOME}" ] && local XDG_CACHE_HOME="''${HOME}/Library/Caches"
-          ;;
-        Linux*)
-          [ -z "''${XDG_CONFIG_HOME}" ] && local XDG_CONFIG_HOME="''${HOME}/.config"
-          [ -z "''${XDG_CACHE_HOME}" ] && local XDG_CACHE_HOME="''${HOME}/.cache"
-          ;;
-        *)
-          echo "Unsupported OS: ''${os}"
-          exit 1
-          ;;
-      esac
-
-      readonly CONFIG_DIR="''${XDG_CONFIG_HOME}/awsctx"
-      readonly CACHE_DIR="''${XDG_CACHE_HOME}/awsctx"
-    }
-
-    function prepare_directory() {
-      mkdir -p "''${CONFIG_DIR}" "''${CACHE_DIR}" || return 1
-    }
-
-    function do_login() {
-      local saml_cache list_roles role
-      local child_pids=()
-      local child_error="false"
-
-      saml_cache="$(mktemp)" || return 1
-      trap "rm ''${saml_cache}" EXIT
-
-      if [ -z "''${SAML2AWS_PASSWORD}" ]; then
-        read -s -p "Password: " SAML2AWS_PASSWORD; export SAML2AWS_PASSWORD; echo
-      fi
-      read -p "OTP: " SAML2AWS_MFA_TOKEN; export SAML2AWS_MFA_TOKEN
-
-      list_roles="$(${pkgs.saml2aws}/bin/saml2aws --disable-keychain --skip-prompt list-roles --cache-saml --cache-file "''${saml_cache}")" || return 2
-
-      for role in $(echo "''${list_roles}" | tail -n+2); do
-        local role_name="''${role##*/}"
-        ${pkgs.saml2aws}/bin/saml2aws --disable-keychain --skip-prompt login --force --role "''${role}" --session-duration 43200 --cache-saml --cache-file "''${saml_cache}" --credentials-file "''${CACHE_DIR}/''${role_name}.credentials" >/dev/null &
-        child_pids+=($!)
-      done
-
-      for pid in "''${child_pids[@]}"; do
-        wait "''${pid}" || child_error="true"
-      done
-
-      test "''${child_error}" == "true" && return 3 || return 0
-    }
-
-    main "$@"
+    set -e
+    
+    # Source XDG directories
+    eval "$(${getXdgDirs})"
+    
+    # Create necessary directories
+    mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
+    
+    # Get credentials
+    if [ -z "''${SAML2AWS_PASSWORD}" ]; then
+      read -s -p "Password: " SAML2AWS_PASSWORD; export SAML2AWS_PASSWORD; echo
+    fi
+    read -p "OTP: " SAML2AWS_MFA_TOKEN; export SAML2AWS_MFA_TOKEN
+    
+    # Create temporary file for SAML cache
+    saml_cache="$(mktemp)"
+    trap "rm -f ''${saml_cache}" EXIT
+    
+    # Get list of roles
+    echo "Authenticating and getting SAML response..."
+    list_roles="$(${pkgs.saml2aws}/bin/saml2aws --disable-keychain --skip-prompt list-roles --cache-saml --cache-file "''${saml_cache}")"
+    
+    # Process each role
+    for role in $(echo "''${list_roles}" | grep "arn:aws:iam::" | cut -d' ' -f1); do
+      role_name="''${role##*/}"
+      echo "Processing role: ''${role_name}"
+      echo "Logging in to ''${role}..."
+      
+      # Use a separate shell to avoid AWS_SHARED_CREDENTIALS_FILE persisting
+      (
+        mkdir -p "''${CACHE_DIR}"
+        ${pkgs.saml2aws}/bin/saml2aws --disable-keychain --skip-prompt login \
+          --force \
+          --role "''${role}" \
+          --session-duration 43200 \
+          --cache-saml \
+          --cache-file "''${saml_cache}"
+        
+        # If login was successful, copy the credentials file to our destination
+        if [ $? -eq 0 ]; then
+          # Find the credentials file that was just created
+          if [ -f ~/.aws/credentials ]; then
+            echo "Copying credentials to ''${CACHE_DIR}/''${role_name}.credentials"
+            cp ~/.aws/credentials "''${CACHE_DIR}/''${role_name}.credentials"
+          else
+            echo "Could not find credentials file after login"
+          fi
+        else
+          echo "Login failed for ''${role}"
+        fi
+      )
+    done
+    
+    echo "All roles processed successfully."
   '';
+  
+  # Create the awsctx binary
+  awsctx = pkgs.writeShellScriptBin "awsctx" ''
+    #!/usr/bin/env bash
+    set -e
+    
+    # Get the context parameter
+    ctx="$1"
+    
+    if [ -z "$ctx" ]; then
+      echo "Usage: awsctx <context>"
+      exit 1
+    fi
+    
+    # Source XDG directories - this sets CONFIG_DIR and CACHE_DIR variables
+    eval "$(${getXdgDirs})"
+    
+    # Ensure directories exist
+    mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
+    
+    # Set environment variables
+    export AWSCTX="$ctx"
+    export AWS_SHARED_CREDENTIALS_FILE="$CACHE_DIR/$ctx.credentials"
+    export AWS_CONFIG_FILE="$CONFIG_DIR/profiles/$ctx.config"
+    
+    # Print the active context
+    echo "Activated AWS context: $ctx"
+    echo "Using credentials: $AWS_SHARED_CREDENTIALS_FILE"
+    echo "Using config: $AWS_CONFIG_FILE"
+    
+    # If a command was provided, execute it with the new environment
+    if [ $# -gt 1 ]; then
+      shift
+      exec "$@"
+    fi
+  '';
+  
+  # Create a completion script for bash that matches the original implementation
+  bashCompletion = pkgs.writeTextFile {
+    name = "awsctx-completion";
+    destination = "/share/bash-completion/completions/awsctx";
+    text = ''
+      #!/usr/bin/env bash
+      
+      function _awsctx_get_directory() {
+        local type="$1"
+
+        case "$(uname -s)" in
+          Darwin*)
+            [ -z "''${XDG_CONFIG_HOME}" ] && local XDG_CONFIG_HOME="''${HOME}/Library/Application Support"
+            [ -z "''${XDG_CACHE_HOME}" ] && local XDG_CACHE_HOME="''${HOME}/Library/Caches"
+            ;;
+          Linux*)
+            [ -z "''${XDG_CONFIG_HOME}" ] && local XDG_CONFIG_HOME="''${HOME}/.config"
+            [ -z "''${XDG_CACHE_HOME}" ] && local XDG_CACHE_HOME="''${HOME}/.cache"
+            ;;
+          *)
+            echo "Unsupported OS: $(uname -s)" >&2
+            return 1
+            ;;
+        esac
+
+        local CONFIG_DIR="''${XDG_CONFIG_HOME}/awsctx"
+        local CACHE_DIR="''${XDG_CACHE_HOME}/awsctx"
+
+        case "''${type}" in
+          config)
+            echo "''${CONFIG_DIR}"
+            ;;
+          cache)
+            echo "''${CACHE_DIR}"
+            ;;
+          *)
+            echo "Unsupported type: ''${type}" >&2
+            return 1
+            ;;
+        esac
+      }
+      
+      _awsctx() {
+        local CACHE_DIR=$(_awsctx_get_directory cache)
+        local current="''${COMP_WORDS[''${COMP_CWORD}]}"
+        local credential
+        
+        test "''${COMP_CWORD}" -gt 1 && return
+
+        mkdir -p "$CACHE_DIR" 2>/dev/null || true
+        
+        COMPREPLY=()
+        for credential in $(find "''${CACHE_DIR}" -name "''${current}*.credentials" 2>/dev/null); do
+          credential="''${credential##*/}"
+          COMPREPLY+=("''${credential%.credentials}")
+        done
+        
+        return 0
+      }
+      
+      complete -F _awsctx awsctx
+    '';
+  };
+  
+  # Create a completion script for zsh
+  zshCompletion = pkgs.writeTextFile {
+    name = "awsctx-zsh-completion";
+    destination = "/share/zsh/site-functions/_awsctx";
+    text = ''
+      #compdef awsctx
+      
+      _awsctx_get_directory() {
+        local type="$1"
+        
+        case "$(uname -s)" in
+          Darwin*)
+            [[ -z "$XDG_CONFIG_HOME" ]] && local XDG_CONFIG_HOME="$HOME/Library/Application Support"
+            [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/Library/Caches"
+            ;;
+          Linux*)
+            [[ -z "$XDG_CONFIG_HOME" ]] && local XDG_CONFIG_HOME="$HOME/.config"
+            [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/.cache"
+            ;;
+          *)
+            echo "Unsupported OS: $(uname -s)" >&2
+            return 1
+            ;;
+        esac
+        
+        local CONFIG_DIR="$XDG_CONFIG_HOME/awsctx"
+        local CACHE_DIR="$XDG_CACHE_HOME/awsctx"
+        
+        case "$type" in
+          config)
+            echo "$CONFIG_DIR"
+            ;;
+          cache)
+            echo "$CACHE_DIR"
+            ;;
+          *)
+            echo "Unsupported type: $type" >&2
+            return 1
+            ;;
+        esac
+      }
+      
+      _awsctx() {
+        local CACHE_DIR
+        CACHE_DIR=$(_awsctx_get_directory cache)
+        
+        mkdir -p "$CACHE_DIR" 2>/dev/null || true
+        
+        _files -W "$CACHE_DIR" -g "*.credentials(:r)"
+      }
+      
+      _awsctx "$@"
+    '';
+  };
+  
+  # Create a completion script for fish
+  fishCompletion = pkgs.writeTextFile {
+    name = "awsctx-fish-completion";
+    destination = "/share/fish/vendor_completions.d/awsctx.fish";
+    text = ''
+      function __awsctx_get_contexts
+        switch (uname -s)
+          case 'Darwin*'
+            test -z "$XDG_CONFIG_HOME"; and set -f XDG_CONFIG_HOME "$HOME/Library/Application Support"
+            test -z "$XDG_CACHE_HOME"; and set -f XDG_CACHE_HOME "$HOME/Library/Caches"
+          case 'Linux*'
+            test -z "$XDG_CONFIG_HOME"; and set -f XDG_CONFIG_HOME "$HOME/.config"
+            test -z "$XDG_CACHE_HOME"; and set -f XDG_CACHE_HOME "$HOME/.cache"
+          case '*'
+            echo "Unsupported OS: $(uname -s)"
+            return 1
+        end
+
+        set -f CONFIG_DIR "$XDG_CONFIG_HOME/awsctx"
+        set -f CACHE_DIR "$XDG_CACHE_HOME/awsctx"
+
+        mkdir -p "$CACHE_DIR" 2>/dev/null
+        
+        find $CACHE_DIR -name '*.credentials' 2>/dev/null | while read -l credential
+          set -l credential (string split -r -m1 -f2 / $credential)
+          string replace '.credentials' "" $credential
+        end
+      end
+
+      complete -c awsctx -x -a "(__awsctx_get_contexts)"
+    '';
+  };
+  
+  # Create a comprehensive package that includes all the tools
+  awsctxPackage = pkgs.symlinkJoin {
+    name = "awsctx";
+    paths = [
+      awsctx
+      awsLoginAll
+      bashCompletion
+      zshCompletion
+      fishCompletion
+    ];
+  };
 
 in
 {
@@ -87,27 +299,30 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Required dependencies
+    # Add the package to home.packages
     home.packages = [ 
-      awsLoginAll 
+      awsctxPackage
       pkgs.saml2aws
       pkgs.git
       pkgs.openssh
-      pkgs.coreutils # For timeout command
+      pkgs.coreutils
     ];
     
     # Clone the repository and set up symlinks during activation
     home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      CONFIG_DIR="$HOME/Library/Application Support/awsctx" 
-      CACHE_DIR="$HOME/Library/Caches/awsctx"
+      # Source the XDG directories
+      eval "$(${getXdgDirs})"
+      
+      # Log directories for debugging
+      log_nix "awsctx" "CONFIG_DIR: $CONFIG_DIR, CACHE_DIR: $CACHE_DIR"
       
       # Create the target directory for the repository if it doesn't exist
-      mkdir -p $(dirname "${repoPath}")
+      mkdir -p "$(dirname "${repoPath}")"
       
       # Check if SSH agent is running and start it if needed
       if ! ssh-add -l &>/dev/null; then
         # Start SSH agent silently
-        eval "$(${pkgs.openssh}/bin/ssh-agent -s)" > /dev/null 2>&1
+        eval "$(${pkgs.openssh}/bin/ssh-agent -s)" >/dev/null 2>&1
         log_nix "awsctx" "Started SSH agent for repository operations"
       fi
       
@@ -134,50 +349,22 @@ in
         fi
       fi
       
-      # Create symlink from workspace to Library/Application Support if needed
-      if [ ! -L "$CONFIG_DIR" ]; then
-        # If it's a directory, back it up
-        if [ -d "$CONFIG_DIR" ]; then
-          mv "$CONFIG_DIR" "$CONFIG_DIR.bak.$(date +%s)"
-        fi
+      # Create directories - use quotes to handle spaces in paths
+      mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
+      
+      # Create profiles directory if it doesn't exist
+      if [ -d "${repoPath}/profiles" ]; then
+        # Create a profiles subdirectory in the config dir
+        mkdir -p "$CONFIG_DIR/profiles"
         
-        # Create the symlink
-        ln -sfn "${repoPath}" "$CONFIG_DIR"
+        # Copy all config files
+        for config_file in "${repoPath}"/profiles/*.config; do
+          if [ -f "$config_file" ]; then
+            base_name=$(basename "$config_file")
+            cp -f "$config_file" "$CONFIG_DIR/profiles/$base_name"
+          fi
+        done
       fi
-      
-      # Always create the cache directory
-      mkdir -p "$CACHE_DIR"
-    '';
-    
-    # Direct shell function implementation
-    programs.zsh.initExtra = mkIf (config.programs.zsh.enable or false) ''
-      # Add bin directory to PATH for aws-login-all script
-      export PATH="${repoPath}/bin:$PATH"
-      
-      # awsctx function - direct implementation
-      function awsctx() {
-        local ctx="$1"
-        
-        # Set up directories
-        [[ -z "$XDG_CONFIG_HOME" ]] && local XDG_CONFIG_HOME="$HOME/Library/Application Support"
-        [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/Library/Caches"
-        
-        local CONFIG_DIR="$XDG_CONFIG_HOME/awsctx"
-        local CACHE_DIR="$XDG_CACHE_HOME/awsctx"
-        
-        # Set environment variables
-        export AWSCTX="$ctx"
-        export AWS_SHARED_CREDENTIALS_FILE="$CACHE_DIR/$ctx.credentials"
-        export AWS_CONFIG_FILE="$CONFIG_DIR/$ctx.config"
-      }
-      
-      # Completion function for awsctx
-      function _awsctx() {
-        [[ -z "$XDG_CACHE_HOME" ]] && local XDG_CACHE_HOME="$HOME/Library/Caches"
-        local CACHE_DIR="$XDG_CACHE_HOME/awsctx"
-        _files -W "$CACHE_DIR" -g "*.credentials(:r)"
-      }
-      compdef _awsctx awsctx
     '';
   };
 }

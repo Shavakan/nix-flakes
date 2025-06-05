@@ -50,6 +50,7 @@
     background_jobs         # presence of background jobs
     kubecontext             # current kubernetes context (https://kubernetes.io/)
     aws                     # aws profile (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
+    awsctx                  # AWS context from awsctx
     # =========================[ Line #2 ]=========================
     newline
     time                    # current time
@@ -179,6 +180,10 @@
   typeset -g POWERLEVEL9K_AWS_FOREGROUND=208
   typeset -g POWERLEVEL9K_AWS_BACKGROUND="none"
   
+  # AWSCTX - similar orange to AWS but slightly different for distinction
+  typeset -g POWERLEVEL9K_AWSCTX_FOREGROUND=214
+  typeset -g POWERLEVEL9K_AWSCTX_BACKGROUND="none"
+  
   # Prompt symbol
   typeset -g POWERLEVEL9K_PROMPT_CHAR_OK_VIINS_FOREGROUND=76
   typeset -g POWERLEVEL9K_PROMPT_CHAR_ERROR_VIINS_FOREGROUND=196
@@ -217,6 +222,14 @@
   # Hot reload allows you to change POWERLEVEL9K options after Powerlevel10k has been initialized.
   typeset -g POWERLEVEL9K_DISABLE_HOT_RELOAD=false
 
+  # Custom function for awsctx segment
+  function prompt_awsctx() {
+    # Only show if AWSCTX is set
+    if [[ -n "$AWSCTX" ]]; then
+      p10k segment -f 214 -i '☁️ ' -t "ctx:$AWSCTX"
+    fi
+  }
+  
   # If p10k is already loaded, reload configuration.
   (( ! $+functions[p10k] )) || p10k reload
 }

@@ -204,7 +204,7 @@ with lib;
       export GPG_TTY=$(tty)
       
       # Start SSH agent
-      eval "$(ssh-agent -s)"
+      eval "$(ssh-agent -s)" >/dev/null 2>&1
       
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"
