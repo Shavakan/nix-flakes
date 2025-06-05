@@ -203,10 +203,8 @@ with lib;
       # GPG configuration
       export GPG_TTY=$(tty)
       
-      # Use Apple's SSH agent instead of GPG for SSH authentication on macOS
-      # This provides better integration with macOS keychain
-      unset SSH_AUTH_SOCK
-      unset SSH_AGENT_PID
+      # Start SSH agent
+      eval "$(ssh-agent -s)"
       
       # Cargo/Rust
       export PATH="$PATH:$HOME/.cargo/bin"
