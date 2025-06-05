@@ -72,6 +72,32 @@
           "WakeReason" = 2; # Wake from any input
         };
       };
+      
+      # Additional trackpad gesture settings
+      "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
+        # Customize three-finger and four-finger gestures
+        "TrackpadThreeFingerHorizSwipeGesture" = 0; # Disable default three-finger swipe
+        "TrackpadThreeFingerVertSwipeGesture" = 0; # Disable default three-finger swipe
+        "TrackpadFourFingerHorizSwipeGesture" = 2; # Enable four-finger swipe for space switching
+        "TrackpadFourFingerVertSwipeGesture" = 2; # Enable four-finger swipe for Exposé
+        "TrackpadFourFingerPinchGesture" = 2; # Enable four-finger pinch for Launchpad
+        "TrackpadFiveFingerPinchGesture" = 2; # Enable five-finger pinch
+        "TrackpadThreeFingerDrag" = true; # Enable three-finger drag
+        
+        # Customize page swiping
+        "TrackpadTwoFingerFromRightEdgeSwipeGesture" = 0; # Disable two-finger swipe from edge
+        "TrackpadThreeFingerHorizSwipeGesture.page" = 1; # Enable three-finger page swipe
+        
+        # Set specific gesture mappings
+        "com.apple.trackpad.fourFingerVertSwipeGesture" = 2; # Mission Control
+        "com.apple.trackpad.fourFingerHorizSwipeGesture" = 2; # App Exposé
+        "com.apple.trackpad.threeFingerHorizSwipeGesture" = 1; # Page navigation
+      };
+      
+      # Apply same settings to Magic Mouse
+      "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
+        "MouseTwoFingerHorizSwipeGesture" = 1; # Enable two-finger swipe for page navigation
+      };
     };
   };
 
