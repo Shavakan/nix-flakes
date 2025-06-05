@@ -346,6 +346,17 @@
         "FocusModes" = 18; # Show in Control Center and menu bar
         "AirDrop" = 8; # Show in Control Center only
       };
+      
+      # Night Shift settings
+      "com.apple.CoreBrightness" = {
+        "CBColorAdaptationEnabled" = true;  # Enable Night Shift
+        "CBColorAdaptationNightShiftScheduleType" = 1;  # 1 = Custom schedule, 0 = Sunset to Sunrise
+        "CBColorAdaptationNightShiftManualBlueLightReduction" = 0.3;  # Blue light reduction amount (0.0 to 1.0)
+        "CBColorAdaptationNightShiftScheduledStartHour" = 22;  # Start hour (24-hour format)
+        "CBColorAdaptationNightShiftScheduledStartMinute" = 0;  # Start minute
+        "CBColorAdaptationNightShiftScheduledEndHour" = 7;  # End hour (24-hour format)
+        "CBColorAdaptationNightShiftScheduledEndMinute" = 0;  # End minute
+      };
     };
   };
 
