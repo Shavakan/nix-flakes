@@ -13,6 +13,7 @@
     ./modules/vscode
     ./modules/cargo
     ./modules/iterm2
+    ./modules/spotlight
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
