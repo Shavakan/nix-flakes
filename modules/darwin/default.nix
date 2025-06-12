@@ -21,6 +21,15 @@
     echo "To activate home-manager, run: 'LANG=en_US.UTF-8 home-manager switch --flake . --impure'"
   '';
 
+  # Configure network service order to prioritize Ethernet over Wi-Fi
+  networking.knownNetworkServices = [
+    "Ethernet"
+    "Wi-Fi"
+    "Thunderbolt Bridge"
+    "iPhone USB"
+    "vpn_infra"
+  ];
+
   # Allow unfree packages for vscode, etc.
   nixpkgs.config.allowUnfree = true;
 
