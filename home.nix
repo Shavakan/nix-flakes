@@ -67,6 +67,9 @@
       # Search tools
       ripgrep
 
+      # Data processing tools
+      yq
+
       # ZSH Enhancements
       zsh-powerlevel10k
 
