@@ -191,6 +191,14 @@
         createTargetDir = false;
         backupExisting = true;
       }
+      {
+        name = "claude-config";
+        sourcePath = "CLAUDE.md";
+        targetPath = "${config.home.homeDirectory}/.claude/CLAUDE.md";
+        permissions = "644";
+        createTargetDir = true;
+        backupExisting = true;
+      }
     ];
 
     # Environment variables for linked configurations
