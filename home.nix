@@ -55,6 +55,7 @@
       dotnet-sdk
       buf
       subversion
+      golangci-lint
 
       # Cloud tools
       kubectl

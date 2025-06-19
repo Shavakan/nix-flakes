@@ -3,11 +3,11 @@
 {
   programs.vscode = {
     profiles.default.userSettings = {
-      # Vim integration
-      "vim.disableAnnoyingNeovimMessage" = true;
-      "vim.neovimPath" = "/usr/local/bin/nvim";
-      "vim.vimrc.enable" = true;
-      "vim.vimrc.path" = "$HOME/.vimrc";
+      # Neovim integration
+      "vscode-neovim.neovimExecutablePaths.darwin" = "/usr/bin/env nvim";
+      "vscode-neovim.useWSL" = false;
+      "vscode-neovim.logLevel" = "warn";
+      "vscode-neovim.logOutputToConsole" = true;
       
       # Extension settings
       "extensions.ignoreRecommendations" = false;

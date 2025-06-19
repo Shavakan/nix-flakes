@@ -25,7 +25,7 @@
         ms-toolsai.jupyter # Jupyter notebooks
 
         # Editing experience
-        vscodevim.vim # Vim keybindings
+        asvetliakov.vscode-neovim # Neovim integration
         yzhang.markdown-all-in-one # Markdown support
         redhat.vscode-yaml # YAML support
         zxh404.vscode-proto3 # Protocol Buffers/gRPC support
