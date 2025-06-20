@@ -8,6 +8,7 @@
       "vscode-neovim.useWSL" = false;
       "vscode-neovim.logLevel" = "warn";
       "vscode-neovim.logOutputToConsole" = true;
+      "vscode-neovim.affinity" = "separate";
       
       # Extension settings
       "extensions.ignoreRecommendations" = false;
@@ -71,6 +72,10 @@
       };
       "[capnp]" = {
           "editor.tabSize" = 2;
+      };
+      "[proto3]" = {
+          "editor.tabSize" = 2;
+          "editor.insertSpaces" = true;
       };
       "[go]" = {
           "editor.snippetSuggestions" = "none";
