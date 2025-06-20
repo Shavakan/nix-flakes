@@ -4,7 +4,7 @@
   programs.vscode = {
     profiles.default.userSettings = {
       # Neovim integration
-      "vscode-neovim.neovimExecutablePaths.darwin" = "/usr/bin/env nvim";
+      "vscode-neovim.neovimExecutablePaths.darwin" = "/Users/shavakan/.nix-profile/bin/nvim";
       "vscode-neovim.useWSL" = false;
       "vscode-neovim.logLevel" = "warn";
       "vscode-neovim.logOutputToConsole" = true;
