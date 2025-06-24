@@ -184,6 +184,9 @@ with lib;
     .pnp.*
     .npm
     .yarn/
+    
+    # Claude
+    .claude/
 
     # Logs
     logs
