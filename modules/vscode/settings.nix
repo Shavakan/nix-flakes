@@ -55,15 +55,10 @@
       "python.linting.pycodestyleEnabled" = true;
       "python.linting.pycodestyleArgs" = [
           "--ignore=E501"
-          "--max-line-length=120"
       ];
-      "python.linting.pylintArgs" = [
-          "--max-line-length=120"
-      ];
+      "python.linting.pylintArgs" = [];
       "python.formatting.provider" = "autopep8";
-      "python.formatting.autopep8Args" = [
-          "--max-line-length=120"
-      ];
+      "python.formatting.autopep8Args" = [];
       
       # Language-specific settings
       "[terraform]" = {
@@ -76,6 +71,7 @@
       "[proto3]" = {
           "editor.tabSize" = 2;
           "editor.insertSpaces" = true;
+          "editor.wordWrap" = "off";
       };
       "[go]" = {
           "editor.snippetSuggestions" = "none";
@@ -125,7 +121,7 @@
       };
       
       # YAML settings
-      "yaml.format.enable" = false;
+      "yaml.format.enable" = true;
       
       # Jsonnet settings
       "jsonnet.libPaths" = [];
