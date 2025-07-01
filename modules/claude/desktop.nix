@@ -42,6 +42,22 @@ let
     exec /run/current-system/sw/bin/npx @modelcontextprotocol/server-filesystem "$@"
   '';
 
+  # File content for MCP GitHub wrapper
+  githubWrapperContent = ''
+    #!/bin/bash
+    # Set up the environment
+    export PATH="/run/current-system/sw/bin:$PATH"
+    
+    # Check if GITHUB_PERSONAL_ACCESS_TOKEN is set
+    if [ -z "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
+      echo "Error: GITHUB_PERSONAL_ACCESS_TOKEN environment variable is not set" >&2
+      exit 1
+    fi
+    
+    # Execute the GitHub MCP server
+    exec /run/current-system/sw/bin/podman run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN" ghcr.io/github/github-mcp-server "$@"
+  '';
+
   # Function to generate Claude desktop config based on paths
   mkClaudeDesktopConfig = paths: {
     mcpServers = {
@@ -54,6 +70,10 @@ let
         args = [
           "mcp-nixos"
         ];
+      };
+      github = {
+        command = "/Users/shavakan/Library/Application Support/Claude/mcp-github-wrapper.sh";
+        args = [];
       };
     };
   };
@@ -76,6 +96,18 @@ in
     # Move temporary file to final location and make executable
     $DRY_RUN_CMD mv "$TEMP_WRAPPER" "$WRAPPER_PATH"
     $DRY_RUN_CMD chmod 755 "$WRAPPER_PATH"
+    
+    # Create the MCP GitHub wrapper script
+    GITHUB_WRAPPER_PATH="$CLAUDE_DIR/mcp-github-wrapper.sh"
+    GITHUB_WRAPPER_CONTENT='${githubWrapperContent}'
+    
+    # Write GitHub wrapper script to temporary file first to avoid partial writes
+    TEMP_GITHUB_WRAPPER=$(mktemp)
+    $DRY_RUN_CMD echo "$GITHUB_WRAPPER_CONTENT" > "$TEMP_GITHUB_WRAPPER"
+    
+    # Move temporary file to final location and make executable
+    $DRY_RUN_CMD mv "$TEMP_GITHUB_WRAPPER" "$GITHUB_WRAPPER_PATH"
+    $DRY_RUN_CMD chmod 755 "$GITHUB_WRAPPER_PATH"
     
     # Detect hostname and machine type to determine accessible paths
     if [ -x /bin/hostname ]; then
@@ -109,6 +141,12 @@ in
     # Write config to temporary file first to avoid partial writes
     TEMP_CONFIG=$(mktemp)
     $DRY_RUN_CMD echo "$CONFIG_CONTENT" > "$TEMP_CONFIG"
+    
+    # Expand environment variables in the config file using envsubst
+    if [ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
+      $DRY_RUN_CMD envsubst < "$TEMP_CONFIG" > "$TEMP_CONFIG.tmp"
+      $DRY_RUN_CMD mv "$TEMP_CONFIG.tmp" "$TEMP_CONFIG"
+    fi
     
     # Move temporary file to final location
     $DRY_RUN_CMD mv "$TEMP_CONFIG" "$CONFIG_FILE"

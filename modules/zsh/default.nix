@@ -366,6 +366,9 @@ with lib;
       pp = "echo 'podman ps' && podman ps";
       psp = "echo 'podman system prune' && podman system prune";
       pc = "podman-compose";
+      
+      # Docker compatibility alias for podman
+      docker = "podman";
 
       # Terraform
       tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
