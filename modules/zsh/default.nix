@@ -11,45 +11,46 @@ with lib;
   # Generate a themed Powerlevel10k configuration
   home.file.".p10k.zsh" = {
     # Use text directly instead of a separate file
-    text = let
-      # Read the template file
-      templateContent = builtins.readFile ./p10k.zsh;
-      
-      # Get colors from the theme
-      dirColor = if selectedTheme != null then toString selectedTheme.p10kColors.directory else "33";
-      gitCleanColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitClean else "76";
-      gitModifiedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitModified else "214";
-      gitUntrackedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitUntracked else "39";
-      themeName = if selectedTheme != null then selectedTheme.name else "default";
-      
-      # Apply color replacements
-      withColorsContent = builtins.replaceStrings 
-        [
-          "typeset -g POWERLEVEL9K_DIR_FOREGROUND=33"
-          "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=82"
-          "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=220"
-          "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39"
-        ]
-        [
-          "typeset -g POWERLEVEL9K_DIR_FOREGROUND=${dirColor}"
-          "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=${gitCleanColor}"
-          "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=${gitModifiedColor}"
-          "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=${gitUntrackedColor}"
-        ]
-        templateContent;
-      
-      # Always show kubernetes context with a simpler approach
-      finalContent = builtins.replaceStrings 
-        ["typeset -g POWERLEVEL9K_KUBECONTEXT_SHOW_ON_COMMAND='kubectl|helm|kubens|kubectx|oc|istioctl|skaffold|stern|k'"]
-        ["# Always show kubernetes context regardless of command\ntypeset -g POWERLEVEL9K_KUBECONTEXT_ALWAYS_SHOW=true"]
-        withColorsContent;
-    in
+    text =
+      let
+        # Read the template file
+        templateContent = builtins.readFile ./p10k.zsh;
+
+        # Get colors from the theme
+        dirColor = if selectedTheme != null then toString selectedTheme.p10kColors.directory else "33";
+        gitCleanColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitClean else "76";
+        gitModifiedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitModified else "214";
+        gitUntrackedColor = if selectedTheme != null then toString selectedTheme.p10kColors.gitUntracked else "39";
+        themeName = if selectedTheme != null then selectedTheme.name else "default";
+
+        # Apply color replacements
+        withColorsContent = builtins.replaceStrings
+          [
+            "typeset -g POWERLEVEL9K_DIR_FOREGROUND=33"
+            "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=82"
+            "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=220"
+            "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=39"
+          ]
+          [
+            "typeset -g POWERLEVEL9K_DIR_FOREGROUND=${dirColor}"
+            "typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=${gitCleanColor}"
+            "typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=${gitModifiedColor}"
+            "typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=${gitUntrackedColor}"
+          ]
+          templateContent;
+
+        # Always show kubernetes context with a simpler approach
+        finalContent = builtins.replaceStrings
+          [ "typeset -g POWERLEVEL9K_KUBECONTEXT_SHOW_ON_COMMAND='kubectl|helm|kubens|kubectx|oc|istioctl|skaffold|stern|k'" ]
+          [ "# Always show kubernetes context regardless of command\ntypeset -g POWERLEVEL9K_KUBECONTEXT_ALWAYS_SHOW=true" ]
+          withColorsContent;
+      in
       ''${finalContent}
       
       # Current theme: ${themeName}
     '';
   };
-  
+
   # Create a separate file for Kubernetes context styling with additional formatting
   home.file.".p10k-k8s.zsh" = {
     text = ''
@@ -94,7 +95,7 @@ with lib;
         "kubectl"
         "fzf"
       ];
-      
+
       # We're using powerlevel10k directly, so no theme needed here
       theme = "";
     };
@@ -135,211 +136,211 @@ with lib;
         [ -f ~/.p10k-k8s.zsh ] && source ~/.p10k-k8s.zsh
       '')
       ''
-      # Force terminal to use colors
-      export TERM="xterm-256color"
-      export COLORTERM="truecolor"
+        # Force terminal to use colors
+        export TERM="xterm-256color"
+        export COLORTERM="truecolor"
       
-      # Enable colors
-      autoload -U colors && colors
+        # Enable colors
+        autoload -U colors && colors
       
-      # Display current theme function
-      show_current_theme() {
-        echo "Current theme: ${if selectedTheme != null then selectedTheme.name else "default"}"
-        echo "Theme can be changed in home.nix by setting 'themes.selected'"
-        echo "Available themes: nord, monokai, solarized-dark, solarized-light"
-      }
-      
-      # Ensure oh-my-zsh cache directory has proper permissions
-      if [ -d "$HOME/.cache/oh-my-zsh" ]; then
-        chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
-      else
-        mkdir -p "$HOME/.cache/oh-my-zsh"
-        chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
-      fi
-      
-      # Fix oh-my-zsh related issues
-      if command -v ripgrep >/dev/null 2>&1; then
-        # Create a symlink for ripgrep in case the plugin is missing
-        alias rg="ripgrep"
-      fi
-      
-      # Set ZSH completion to use LS_COLORS
-      zstyle ':completion:*' list-colors "$LS_COLORS"
-      
-      # Custom zsh settings
-      setopt AUTO_CD
-      setopt HIST_IGNORE_SPACE
-      setopt EXTENDED_HISTORY
-      setopt HIST_EXPIRE_DUPS_FIRST
-      setopt HIST_FIND_NO_DUPS
-      setopt HIST_REDUCE_BLANKS
-      setopt HIST_VERIFY
-      
-      # Path additions
-      export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
-      
-      # .NET Core SDK tools
-      export PATH="$PATH:$HOME/.dotnet/tools"
-      
-      # Go configuration
-      export GOPATH=$HOME/workspace/go
-      export GOBIN=$GOPATH/bin
-      export PATH="$PATH:$GOPATH:$GOBIN"
-      export GO111MODULE=on
-      
-      # SAML2AWS
-      export SAML2AWS_SESSION_DURATION=43200
-      export AWS_SDK_LOAD_CONFIG=1
-      
-      # Kubernetes
-      export KUBECONFIG=$HOME/.kube/config
-      export KUBE_CONFIG_PATH=$KUBECONFIG
-      # Simplified path to avoid ZSH-specific syntax
-      if [ -d "$HOME/.krew/bin" ]; then
-        export PATH="$HOME/.krew/bin:$PATH"
-      fi
-      
-      # GPG configuration
-      export GPG_TTY=$(tty)
-      
-      # Start SSH agent
-      eval "$(ssh-agent -s)" >/dev/null 2>&1
-      
-      # Cargo/Rust
-      export PATH="$PATH:$HOME/.cargo/bin"
-      
-      # Source the shared Devsisters script loader 
-      if [ -f "$HOME/.devsisters.sh" ]; then
-        source "$HOME/.devsisters.sh"
-      fi
-      
-      # Load fzf if installed
-      [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-      
-      # Python uv configuration
-      export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
-      
-      # Initialize uv for faster Python package management
-      if command -v uv > /dev/null; then
-        eval "$(uv generate-shell-completion zsh)"
-      fi
-      
-      # FZF configuration for better search experience
-      # Using direct path for fzf-share instead of ZSH array access
-      if command -v fzf-share > /dev/null 2>&1; then
-        source "$(fzf-share)/key-bindings.zsh"
-        source "$(fzf-share)/completion.zsh"
-      fi
-      
-      # Better kubectl completion and functions
-      if command -v kubectl >/dev/null; then
-        source <(kubectl completion zsh)
-        
-        # Kubernetes helper functions as direct functions (no aliases)
-        # Basic kubectl shortcuts as functions
-        function kgp() { kubectl get pods "$@"; }
-        function kgn() { kubectl get nodes "$@"; }
-        function kge() { kubectl get events "$@"; }
-        function kgs() { kubectl get services "$@"; }
-        function kgd() { kubectl get deployments "$@"; }
-        function kdp() { kubectl describe pods "$@"; }
-        function kdn() { kubectl describe nodes "$@"; }
-        
-        # Advanced kubectl functions
-        function kgpn() {
-          kubectl get pods | grep "$1"
+        # Display current theme function
+        show_current_theme() {
+          echo "Current theme: ${if selectedTheme != null then selectedTheme.name else "default"}"
+          echo "Theme can be changed in home.nix by setting 'themes.selected'"
+          echo "Available themes: nord, monokai, solarized-dark, solarized-light"
         }
+      
+        # Ensure oh-my-zsh cache directory has proper permissions
+        if [ -d "$HOME/.cache/oh-my-zsh" ]; then
+          chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
+        else
+          mkdir -p "$HOME/.cache/oh-my-zsh"
+          chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true
+        fi
+      
+        # Fix oh-my-zsh related issues
+        if command -v ripgrep >/dev/null 2>&1; then
+          # Create a symlink for ripgrep in case the plugin is missing
+          alias rg="ripgrep"
+        fi
+      
+        # Set ZSH completion to use LS_COLORS
+        zstyle ':completion:*' list-colors "$LS_COLORS"
+      
+        # Custom zsh settings
+        setopt AUTO_CD
+        setopt HIST_IGNORE_SPACE
+        setopt EXTENDED_HISTORY
+        setopt HIST_EXPIRE_DUPS_FIRST
+        setopt HIST_FIND_NO_DUPS
+        setopt HIST_REDUCE_BLANKS
+        setopt HIST_VERIFY
+      
+        # Path additions
+        export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
+      
+        # .NET Core SDK tools
+        export PATH="$PATH:$HOME/.dotnet/tools"
+      
+        # Go configuration
+        export GOPATH=$HOME/workspace/go
+        export GOBIN=$GOPATH/bin
+        export PATH="$PATH:$GOPATH:$GOBIN"
+        export GO111MODULE=on
+      
+        # SAML2AWS
+        export SAML2AWS_SESSION_DURATION=43200
+        export AWS_SDK_LOAD_CONFIG=1
+      
+        # Kubernetes
+        export KUBECONFIG=$HOME/.kube/config
+        export KUBE_CONFIG_PATH=$KUBECONFIG
+        # Simplified path to avoid ZSH-specific syntax
+        if [ -d "$HOME/.krew/bin" ]; then
+          export PATH="$HOME/.krew/bin:$PATH"
+        fi
+      
+        # GPG configuration
+        export GPG_TTY=$(tty)
+      
+        # Start SSH agent
+        eval "$(ssh-agent -s)" >/dev/null 2>&1
+      
+        # Cargo/Rust
+        export PATH="$PATH:$HOME/.cargo/bin"
+      
+        # Source the shared Devsisters script loader 
+        if [ -f "$HOME/.devsisters.sh" ]; then
+          source "$HOME/.devsisters.sh"
+        fi
+      
+        # Load fzf if installed
+        [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+      
+        # Python uv configuration
+        export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
+      
+        # Initialize uv for faster Python package management
+        if command -v uv > /dev/null; then
+          eval "$(uv generate-shell-completion zsh)"
+        fi
+      
+        # FZF configuration for better search experience
+        # Using direct path for fzf-share instead of ZSH array access
+        if command -v fzf-share > /dev/null 2>&1; then
+          source "$(fzf-share)/key-bindings.zsh"
+          source "$(fzf-share)/completion.zsh"
+        fi
+      
+        # Better kubectl completion and functions
+        if command -v kubectl >/dev/null; then
+          source <(kubectl completion zsh)
         
-        function kdpn() {
-          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
-          if [ -n "$POD" ]; then
-            kubectl describe pod "$POD"
-          else
-            echo "No pod found matching '$1'"
-          fi
-        }
+          # Kubernetes helper functions as direct functions (no aliases)
+          # Basic kubectl shortcuts as functions
+          function kgp() { kubectl get pods "$@"; }
+          function kgn() { kubectl get nodes "$@"; }
+          function kge() { kubectl get events "$@"; }
+          function kgs() { kubectl get services "$@"; }
+          function kgd() { kubectl get deployments "$@"; }
+          function kdp() { kubectl describe pods "$@"; }
+          function kdn() { kubectl describe nodes "$@"; }
         
-        function kln() {
-          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
-          if [ -n "$POD" ]; then
-            shift
-            kubectl logs -f "$POD" "$@"
-          else
-            echo "No pod found matching '$1'"
-          fi
-        }
+          # Advanced kubectl functions
+          function kgpn() {
+            kubectl get pods | grep "$1"
+          }
         
-        function ken() {
-          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
-          if [ -n "$POD" ]; then
-            shift
-            kubectl exec -it "$POD" "$@" -- /bin/sh
-          else
-            echo "No pod found matching '$1'"
-          fi
-        }
+          function kdpn() {
+            POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+            if [ -n "$POD" ]; then
+              kubectl describe pod "$POD"
+            else
+              echo "No pod found matching '$1'"
+            fi
+          }
         
-        function kpfn() {
-          if [ $# -lt 2 ]; then
-            echo "Usage: kpfn <pod-name> <local-port>:<remote-port>"
-            return 1
-          fi
+          function kln() {
+            POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+            if [ -n "$POD" ]; then
+              shift
+              kubectl logs -f "$POD" "$@"
+            else
+              echo "No pod found matching '$1'"
+            fi
+          }
+        
+          function ken() {
+            POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+            if [ -n "$POD" ]; then
+              shift
+              kubectl exec -it "$POD" "$@" -- /bin/sh
+            else
+              echo "No pod found matching '$1'"
+            fi
+          }
+        
+          function kpfn() {
+            if [ $# -lt 2 ]; then
+              echo "Usage: kpfn <pod-name> <local-port>:<remote-port>"
+              return 1
+            fi
           
-          POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
-          if [ -n "$POD" ]; then
-            shift
-            kubectl port-forward "$POD" "$@"
-          else
-            echo "No pod found matching '$1'"
-          fi
-        }
+            POD=$(kubectl get pods | grep "$1" | awk '{print $1}' | head -n 1)
+            if [ -n "$POD" ]; then
+              shift
+              kubectl port-forward "$POD" "$@"
+            else
+              echo "No pod found matching '$1'"
+            fi
+          }
         
-        function kresources() {
-          kubectl top pod "$@"
-        }
+          function kresources() {
+            kubectl top pod "$@"
+          }
         
-        function knode-resources() {
-          kubectl top node "$@"
-        }
+          function knode-resources() {
+            kubectl top node "$@"
+          }
         
-        function krestart() {
-          kubectl rollout restart deployment "$1"
-        }
+          function krestart() {
+            kubectl rollout restart deployment "$1"
+          }
         
-        function kwatch() {
-          watch kubectl get pods "$@"
-        }
+          function kwatch() {
+            watch kubectl get pods "$@"
+          }
         
-        function kapply() {
-          kubectl apply -f "$1" && kubectl get pods -w
-        }
+          function kapply() {
+            kubectl apply -f "$1" && kubectl get pods -w
+          }
         
-        function kenv() {
-          if [ $# -eq 2 ]; then
-            kubectl config use-context "$1" && kubectl config set-context --current --namespace="$2"
-            echo "Switched to context '$1' and namespace '$2'"
-          elif [ $# -eq 1 ]; then
-            kubectl config use-context "$1"
-            echo "Switched to context '$1'"
-          else
-            echo "Current context: $(kubectl config current-context)"
-            echo "Current namespace: $(kubectl config view --minify --output 'jsonpath={..namespace}')"
-            echo ""
-            echo "Available contexts:"
-            kubectl config get-contexts
-          fi
-        }
-      fi
-    ''
+          function kenv() {
+            if [ $# -eq 2 ]; then
+              kubectl config use-context "$1" && kubectl config set-context --current --namespace="$2"
+              echo "Switched to context '$1' and namespace '$2'"
+            elif [ $# -eq 1 ]; then
+              kubectl config use-context "$1"
+              echo "Switched to context '$1'"
+            else
+              echo "Current context: $(kubectl config current-context)"
+              echo "Current namespace: $(kubectl config view --minify --output 'jsonpath={..namespace}')"
+              echo ""
+              echo "Available contexts:"
+              kubectl config get-contexts
+            fi
+          }
+        fi
+      ''
     ];
 
     # Shell aliases
     shellAliases = {
       # ls aliases with color by default
-      ls = "ls --color=auto";  # GNU ls with colors
-      ll = "ls -la --color=auto";  # Long listing
-      la = "ls -A --color=auto";  # All files except . and ..
-      l = "ls -CF --color=auto";  # Columnar format with file indicators
+      ls = "ls --color=auto"; # GNU ls with colors
+      ll = "ls -la --color=auto"; # Long listing
+      la = "ls -A --color=auto"; # All files except . and ..
+      l = "ls -CF --color=auto"; # Columnar format with file indicators
       lh = "ls -lh --color=auto"; # Human-readable sizes
       lt = "ls -lt --color=auto"; # Sort by time, newest first
       # Directory navigation
@@ -366,7 +367,7 @@ with lib;
       pp = "echo 'podman ps' && podman ps";
       psp = "echo 'podman system prune' && podman system prune";
       pc = "podman-compose";
-      
+
       # Docker compatibility alias for podman
       docker = "podman";
 

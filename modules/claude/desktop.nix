@@ -73,7 +73,7 @@ let
       };
       github = {
         command = "/Users/shavakan/Library/Application Support/Claude/mcp-github-wrapper.sh";
-        args = [];
+        args = [ ];
       };
     };
   };
