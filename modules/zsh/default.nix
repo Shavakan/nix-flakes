@@ -220,6 +220,14 @@ with lib;
         # Python uv configuration
         export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
       
+        # Podman Docker-compatible socket for testcontainers
+        # Create a Unix socket proxy for testcontainers
+        PODMAN_SOCKET_PATH="/tmp/podman.sock"
+        export DOCKER_HOST=unix://$PODMAN_SOCKET_PATH
+        export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=$PODMAN_SOCKET_PATH
+        export TESTCONTAINERS_PODMAN_SOCKET_OVERRIDE=$PODMAN_SOCKET_PATH
+        export TESTCONTAINERS_RYUK_DISABLED=true
+      
         # Initialize uv for faster Python package management
         if command -v uv > /dev/null; then
           eval "$(uv generate-shell-completion zsh)"
@@ -367,6 +375,16 @@ with lib;
       pp = "echo 'podman ps' && podman ps";
       psp = "echo 'podman system prune' && podman system prune";
       pc = "podman-compose";
+      
+      # Podman machine management
+      podman-start = "podman machine start";
+      podman-stop = "podman machine stop";
+      podman-status = "podman machine list";
+      podman-socket-info = "podman system connection list";
+      
+      # Podman socket proxy for testcontainers
+      podman-socket-start = "rm -f /tmp/podman.sock && ssh -o StrictHostKeyChecking=no -i ~/.local/share/containers/podman/machine/machine -L /tmp/podman.sock:/run/user/504/podman/podman.sock -N core@127.0.0.1 -p 53608 &";
+      podman-socket-stop = "pkill -f 'ssh.*podman.sock' && rm -f /tmp/podman.sock";
 
       # Docker compatibility alias for podman
       docker = "podman";
