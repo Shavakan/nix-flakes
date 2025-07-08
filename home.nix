@@ -68,6 +68,9 @@
       # Search tools
       ripgrep
 
+      # Git tools
+      github-cli
+
       # Data processing tools
       yq
 
