@@ -58,6 +58,16 @@ let
     exec /run/current-system/sw/bin/podman run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN" ghcr.io/github/github-mcp-server "$@"
   '';
 
+  # File content for MCP Terraform wrapper
+  terraformWrapperContent = ''
+    #!/bin/bash
+    # Set up the environment
+    export PATH="/run/current-system/sw/bin:$PATH"
+    
+    # Execute the Terraform MCP server
+    exec /run/current-system/sw/bin/podman run -i --rm hashicorp/terraform-mcp-server "$@"
+  '';
+
   # Function to generate Claude desktop config based on paths
   mkClaudeDesktopConfig = paths: {
     mcpServers = {
@@ -73,6 +83,10 @@ let
       };
       github = {
         command = "/Users/shavakan/Library/Application Support/Claude/mcp-github-wrapper.sh";
+        args = [ ];
+      };
+      terraform = {
+        command = "/Users/shavakan/Library/Application Support/Claude/mcp-terraform-wrapper.sh";
         args = [ ];
       };
     };
@@ -108,6 +122,18 @@ in
     # Move temporary file to final location and make executable
     $DRY_RUN_CMD mv "$TEMP_GITHUB_WRAPPER" "$GITHUB_WRAPPER_PATH"
     $DRY_RUN_CMD chmod 755 "$GITHUB_WRAPPER_PATH"
+    
+    # Create the MCP Terraform wrapper script
+    TERRAFORM_WRAPPER_PATH="$CLAUDE_DIR/mcp-terraform-wrapper.sh"
+    TERRAFORM_WRAPPER_CONTENT='${terraformWrapperContent}'
+    
+    # Write Terraform wrapper script to temporary file first to avoid partial writes
+    TEMP_TERRAFORM_WRAPPER=$(mktemp)
+    $DRY_RUN_CMD echo "$TERRAFORM_WRAPPER_CONTENT" > "$TEMP_TERRAFORM_WRAPPER"
+    
+    # Move temporary file to final location and make executable
+    $DRY_RUN_CMD mv "$TEMP_TERRAFORM_WRAPPER" "$TERRAFORM_WRAPPER_PATH"
+    $DRY_RUN_CMD chmod 755 "$TERRAFORM_WRAPPER_PATH"
     
     # Detect hostname and machine type to determine accessible paths
     if [ -x /bin/hostname ]; then
