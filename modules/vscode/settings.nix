@@ -72,6 +72,13 @@
           "editor.tabSize" = 2;
           "editor.insertSpaces" = true;
           "editor.wordWrap" = "off";
+          "editor.formatOnSave" = false;
+      };
+      "[proto]" = {
+          "editor.tabSize" = 2;
+          "editor.insertSpaces" = true;
+          "editor.wordWrap" = "off";
+          "editor.formatOnSave" = false;
       };
       "[go]" = {
           "editor.snippetSuggestions" = "none";
