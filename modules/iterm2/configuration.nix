@@ -6,7 +6,7 @@
   programs.iterm2 = {
     enable = true;
     disablePromptOnQuit = true;
-    theme = "auto";
+    theme = "dark";
     tabsPosition = "top";
     windowStyle = "normal";
     enableSmartSelection = true;
@@ -38,15 +38,10 @@
 
     # Advanced preferences
     advancedPreferences = {
-      # Mouse behavior
       "AlternateMouseScroll" = true;
       "FocusFollowsMouse" = false;
-      
-      # Terminal behavior
       "AutoCommandHistory" = true;
       "SoundForEsc" = false;
-      
-      # UI preferences
       "HideScrollbar" = false;
       "DisableFullscreenTransparency" = false;
       "SplitPaneDimmingAmount" = 0.4;
@@ -55,10 +50,8 @@
       "HideMenuBarInFullscreen" = true;
       "SUEnableAutomaticChecks" = true;
       "DisableWindowSizeSnap" = false;
-      
-      # Tab styling
-      "TabStyleWithAutomaticOption" = 5; # Modern tab style
-      "TabViewType" = 0; # Tabs on top
+      "TabStyleWithAutomaticOption" = 5;
+      "TabViewType" = 0;
       "HideTab" = false;
       "ShowFullScreenTabBar" = true;
       "ShowPaneTitles" = true;
@@ -66,15 +59,18 @@
       "HideTabCloseButton" = false;
       "FlashTabBarInFullscreen" = true;
       "StretchTabsToFillBar" = true;
-      # Window size preferences
       "WindowStyle" = 0;
       "InitialWindowSize" = {
         Width = 1200;
         Height = 800;
       };
       "OpenNewWindowsHere" = true;
-      "QuitWhenAllWindowsClosed" = false; # Don't quit when windows close
-      "PromptOnQuit" = false; # Don't prompt on quit
+      "QuitWhenAllWindowsClosed" = false;
+      "PromptOnQuit" = false;
+      "ThemeFollowsSystemAppearance" = false;
+      "DisableMetalWhenUnplugged" = false;
+      "UseMetal" = true;
+      "MetalMaximumFramesPerSecond" = 60;
     };
 
     # Status bar configuration
