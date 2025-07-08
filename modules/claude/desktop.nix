@@ -54,8 +54,8 @@ let
       exit 1
     fi
     
-    # Execute the GitHub MCP server
-    exec /run/current-system/sw/bin/podman run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN" ghcr.io/github/github-mcp-server "$@"
+    # Execute the GitHub MCP server in stdio mode
+    exec /run/current-system/sw/bin/podman run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN="$GITHUB_PERSONAL_ACCESS_TOKEN" ghcr.io/github/github-mcp-server stdio
   '';
 
   # File content for MCP Terraform wrapper
@@ -64,8 +64,8 @@ let
     # Set up the environment
     export PATH="/run/current-system/sw/bin:$PATH"
     
-    # Execute the Terraform MCP server
-    exec /run/current-system/sw/bin/podman run -i --rm hashicorp/terraform-mcp-server "$@"
+    # Execute the Terraform MCP server in stdio mode
+    exec /run/current-system/sw/bin/podman run -i --rm hashicorp/terraform-mcp-server stdio
   '';
 
   # Function to generate Claude desktop config based on paths
