@@ -204,6 +204,22 @@
         createTargetDir = true;
         backupExisting = true;
       }
+      {
+        name = "claude-settings";
+        sourcePath = "claude-settings.json";
+        targetPath = "${config.home.homeDirectory}/.claude/settings.json";
+        permissions = "644";
+        createTargetDir = true;
+        backupExisting = true;
+      }
+      {
+        name = "claude-local-settings";
+        sourcePath = "claude-settings.local.json";
+        targetPath = "${config.home.homeDirectory}/.claude/settings.local.json";
+        permissions = "644";
+        createTargetDir = true;
+        backupExisting = true;
+      }
     ];
 
     # Environment variables for linked configurations
