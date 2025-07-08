@@ -89,6 +89,7 @@
       nixpkgs-fmt
       statix
 
+
       # Tools
       obsidian
       code-cursor

@@ -47,7 +47,6 @@
     # Package managers
     uv
 
-
     # System-level tools
     coreutils
     openssh
