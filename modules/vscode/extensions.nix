@@ -42,6 +42,9 @@
         ]
       )
       ++ (with pkgs.vscode-marketplace; [
+        # AI Assistant
+        anthropic.claude-code # Official Claude Code extension
+
         # Other Go extensions
         aleksandra.go-group-imports
         premparihar.gotestexplorer
