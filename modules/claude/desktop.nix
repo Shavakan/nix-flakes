@@ -195,7 +195,7 @@ in
     $DRY_RUN_CMD echo "$CONFIG_CONTENT" > "$TEMP_CONFIG"
     
     # Expand environment variables in the config file using envsubst
-    if [ -n "$GITHUB_PERSONAL_ACCESS_TOKEN" ]; then
+    if [ -n "''${GITHUB_PERSONAL_ACCESS_TOKEN:-}" ]; then
       $DRY_RUN_CMD envsubst < "$TEMP_CONFIG" > "$TEMP_CONFIG.tmp"
       $DRY_RUN_CMD mv "$TEMP_CONFIG.tmp" "$TEMP_CONFIG"
     fi
