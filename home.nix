@@ -14,6 +14,7 @@
     ./modules/cargo
     ./modules/iterm2
     ./modules/spotlight
+    ./modules/podman
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
