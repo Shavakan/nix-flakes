@@ -112,6 +112,7 @@
 
       # Misc
       direnv
+      codex
     ];
 
     # This value determines the Home Manager release compatibility
