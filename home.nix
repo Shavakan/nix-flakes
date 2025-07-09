@@ -198,7 +198,7 @@
       }
       {
         name = "claude-config";
-        sourcePath = "CLAUDE.md";
+        sourcePath = "claude/CLAUDE.md";
         targetPath = "${config.home.homeDirectory}/.claude/CLAUDE.md";
         permissions = "644";
         createTargetDir = true;
@@ -206,7 +206,7 @@
       }
       {
         name = "claude-settings";
-        sourcePath = "claude-settings.json";
+        sourcePath = "claude/claude-settings.json";
         targetPath = "${config.home.homeDirectory}/.claude/settings.json";
         permissions = "644";
         createTargetDir = true;
@@ -214,7 +214,7 @@
       }
       {
         name = "claude-local-settings";
-        sourcePath = "claude-settings.local.json";
+        sourcePath = "claude/claude-settings.local.json";
         targetPath = "${config.home.homeDirectory}/.claude/settings.local.json";
         permissions = "644";
         createTargetDir = true;

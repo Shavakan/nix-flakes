@@ -65,7 +65,17 @@ let
     export PATH="/run/current-system/sw/bin:$PATH"
     
     # Execute the Terraform MCP server in stdio mode
-    exec /run/current-system/sw/bin/podman run -i --rm hashicorp/terraform-mcp-server stdio
+    exec /run/current-system/sw/bin/podman run -i --rm hashicorp/terraform-mcp-server
+  '';
+
+  # File content for MCP Notion wrapper
+  notionWrapperContent = ''
+    #!/bin/bash
+    # Set up the environment
+    export PATH="/run/current-system/sw/bin:$PATH"
+    
+    # Execute the Notion MCP server
+    exec /run/current-system/sw/bin/npx @notionhq/notion-mcp-server
   '';
 
   # Function to generate Claude desktop config based on paths
@@ -87,6 +97,10 @@ let
       };
       terraform = {
         command = "/Users/shavakan/Library/Application Support/Claude/mcp-terraform-wrapper.sh";
+        args = [ ];
+      };
+      notion = {
+        command = "/Users/shavakan/Library/Application Support/Claude/mcp-notion-wrapper.sh";
         args = [ ];
       };
     };
@@ -134,6 +148,18 @@ in
     # Move temporary file to final location and make executable
     $DRY_RUN_CMD mv "$TEMP_TERRAFORM_WRAPPER" "$TERRAFORM_WRAPPER_PATH"
     $DRY_RUN_CMD chmod 755 "$TERRAFORM_WRAPPER_PATH"
+    
+    # Create the MCP Notion wrapper script
+    NOTION_WRAPPER_PATH="$CLAUDE_DIR/mcp-notion-wrapper.sh"
+    NOTION_WRAPPER_CONTENT='${notionWrapperContent}'
+    
+    # Write Notion wrapper script to temporary file first to avoid partial writes
+    TEMP_NOTION_WRAPPER=$(mktemp)
+    $DRY_RUN_CMD echo "$NOTION_WRAPPER_CONTENT" > "$TEMP_NOTION_WRAPPER"
+    
+    # Move temporary file to final location and make executable
+    $DRY_RUN_CMD mv "$TEMP_NOTION_WRAPPER" "$NOTION_WRAPPER_PATH"
+    $DRY_RUN_CMD chmod 755 "$NOTION_WRAPPER_PATH"
     
     # Detect hostname and machine type to determine accessible paths
     if [ -x /bin/hostname ]; then
