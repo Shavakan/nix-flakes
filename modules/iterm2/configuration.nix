@@ -67,7 +67,7 @@
       "OpenNewWindowsHere" = true;
       "QuitWhenAllWindowsClosed" = false;
       "PromptOnQuit" = false;
-      "ThemeFollowsSystemAppearance" = false;
+      "ThemeFollowsSystemAppearance" = true;
       "DisableMetalWhenUnplugged" = false;
       "UseMetal" = true;
       "MetalMaximumFramesPerSecond" = 60;
