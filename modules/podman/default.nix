@@ -17,19 +17,22 @@ let
       REMOTE_SOCKET="''${BASH_REMATCH[4]}"
       
       echo "Waiting for SSH to be ready..."
+      echo "Testing connection to $USER@$HOST:$PORT"
       
       # Wait for SSH to be ready (up to 10 seconds)
       SSH_READY=false
-      for i in {1..3}; do
-        if timeout 2 ssh -o StrictHostKeyChecking=no \
-            -o ConnectTimeout=2 \
+      for i in {1..5}; do
+        if timeout 3 ssh -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=3 \
+            -o UserKnownHostsFile=/dev/null \
+            -o LogLevel=ERROR \
             -i ~/.local/share/containers/podman/machine/machine \
             "$USER@$HOST" -p "$PORT" echo "SSH ready" >/dev/null 2>&1; then
           echo "SSH connection established"
           SSH_READY=true
           break
         fi
-        echo "SSH not ready, waiting... ($i/3)"
+        echo "SSH not ready, waiting... ($i/5)"
         sleep 2
       done
       
@@ -37,38 +40,80 @@ let
       if [ "$SSH_READY" = false ]; then
         echo "SSH connection failed, attempting network interface reset..."
         
-        # Try to reset network interface using podman machine ssh
-        if podman machine ssh -- 'sudo ip link set enp0s1 down && sudo ip link set enp0s1 up' >/dev/null 2>&1; then
-          echo "Reset network interface enp0s1"
-          sleep 3
-          
-          # Check if SSH is working now
-          if timeout 2 ssh -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=2 \
-              -i ~/.local/share/containers/podman/machine/machine \
-              "$USER@$HOST" -p "$PORT" echo "SSH ready" >/dev/null 2>&1; then
-            echo "SSH connection restored after network reset"
-            SSH_READY=true
+        # First, detect the network interface dynamically
+        NETWORK_INTERFACE=""
+        for iface in enp0s1 eth0 ens3 ens4; do
+          if podman machine ssh -- "ip link show $iface" >/dev/null 2>&1; then
+            NETWORK_INTERFACE="$iface"
+            echo "Detected network interface: $NETWORK_INTERFACE"
+            break
           fi
+        done
+        
+        # Try to reset network interface using podman machine ssh
+        if [ -n "$NETWORK_INTERFACE" ]; then
+          if podman machine ssh -- "sudo ip link set $NETWORK_INTERFACE down && sudo ip link set $NETWORK_INTERFACE up" >/dev/null 2>&1; then
+            echo "Reset network interface $NETWORK_INTERFACE"
+            sleep 3
+            
+            # Check if SSH is working now
+            if timeout 3 ssh -o StrictHostKeyChecking=no \
+                -o ConnectTimeout=3 \
+                -o UserKnownHostsFile=/dev/null \
+                -o LogLevel=ERROR \
+                -i ~/.local/share/containers/podman/machine/machine \
+                "$USER@$HOST" -p "$PORT" echo "SSH ready" >/dev/null 2>&1; then
+              echo "SSH connection restored after network reset"
+              SSH_READY=true
+            fi
+          fi
+        else
+          echo "Could not detect network interface to reset"
         fi
         
-        # If still not working, restart the machine as last resort
+        # If still not working, check machine status and restart if needed
         if [ "$SSH_READY" = false ]; then
-          echo "Network reset failed, restarting Podman machine..."
-          podman machine stop >/dev/null 2>&1 || true
-          sleep 3
-          podman machine start >/dev/null 2>&1
+          echo "Network reset failed, checking Podman machine status..."
+          
+          # Check if machine is running
+          MACHINE_STATUS=$(podman machine list --format '{{.Name}}\t{{.Running}}' | grep -E '\s+true$' || echo "")
+          
+          if [ -n "$MACHINE_STATUS" ]; then
+            echo "Machine is running but SSH is not working, attempting full restart..."
+            podman machine stop >/dev/null 2>&1 || true
+            sleep 3
+            podman machine start >/dev/null 2>&1
+          else
+            echo "Machine is not running, starting it..."
+            podman machine start >/dev/null 2>&1
+          fi
+          
           sleep 5
+          
+          # Update connection info after restart
+          CONNECTION_URI=$(podman system connection list --format='{{.URI}}' | head -1)
+          if [[ $CONNECTION_URI =~ ssh://([^@]+)@([^:]+):([0-9]+)(.*) ]]; then
+            USER="''${BASH_REMATCH[1]}"
+            HOST="''${BASH_REMATCH[2]}"
+            PORT="''${BASH_REMATCH[3]}"
+            REMOTE_SOCKET="''${BASH_REMATCH[4]}"
+          fi
           
           # Try SSH one more time after machine restart
           if timeout 5 ssh -o StrictHostKeyChecking=no \
               -o ConnectTimeout=5 \
+              -o UserKnownHostsFile=/dev/null \
+              -o LogLevel=ERROR \
               -i ~/.local/share/containers/podman/machine/machine \
               "$USER@$HOST" -p "$PORT" echo "SSH ready" >/dev/null 2>&1; then
             echo "SSH connection established after machine restart"
             SSH_READY=true
           else
             echo "SSH connection failed even after machine restart"
+            echo "Please check:"
+            echo "  1. Is podman machine initialized? Try: podman machine init"
+            echo "  2. Check podman machine status: podman machine list"
+            echo "  3. Try manually: podman machine start"
             exit 1
           fi
         fi
@@ -76,6 +121,8 @@ let
       
       echo "Starting socket tunnel..."
       ssh -o StrictHostKeyChecking=no \
+          -o UserKnownHostsFile=/dev/null \
+          -o LogLevel=ERROR \
           -o ControlPath=/tmp/podman-ssh-control \
           -o ControlMaster=yes \
           -i ~/.local/share/containers/podman/machine/machine \
