@@ -113,6 +113,7 @@
       # Misc
       direnv
       codex
+      gemini-cli
     ];
 
     # This value determines the Home Manager release compatibility

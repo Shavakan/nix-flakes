@@ -22,10 +22,13 @@ let
       # Wait for SSH to be ready (up to 10 seconds)
       SSH_READY=false
       for i in {1..5}; do
-        if timeout 3 ssh -o StrictHostKeyChecking=no \
+        # Use native SSH timeout instead of timeout command
+        if ssh -o StrictHostKeyChecking=no \
             -o ConnectTimeout=3 \
             -o UserKnownHostsFile=/dev/null \
             -o LogLevel=ERROR \
+            -o ServerAliveInterval=2 \
+            -o ServerAliveCountMax=1 \
             -i ~/.local/share/containers/podman/machine/machine \
             "$USER@$HOST" -p "$PORT" echo "SSH ready" >/dev/null 2>&1; then
           echo "SSH connection established"
