@@ -213,6 +213,50 @@ with lib;
         if [ -f "$HOME/.devsisters.sh" ]; then
           source "$HOME/.devsisters.sh"
         fi
+
+        # Mode Toggle System
+        export CURRENT_MODE="devsisters"  # Default to devsisters mode since devsisters.sh loads by default
+
+        # Mode command with subcommands
+        mode() {
+          case "$1" in
+            personal)
+              if [ -f "$HOME/.personal.sh" ]; then
+                echo "🏠 Switching to personal mode..."
+                source "$HOME/.personal.sh"
+                export CURRENT_MODE="personal"
+                echo "✓ Personal mode activated"
+              else
+                echo "❌ Personal script not found at $HOME/.personal.sh"
+                echo "Make sure your rclone mount is working and personal.sh exists in the cloud storage"
+              fi
+              ;;
+            devsisters)
+              if [ -f "$HOME/.devsisters.sh" ]; then
+                echo "💼 Switching to devsisters mode..."
+                # Reload shell to clear personal environment
+                exec zsh
+              else
+                echo "❌ Devsisters script not found at $HOME/.devsisters.sh"
+              fi
+              ;;
+            *)
+              echo "Current mode: $CURRENT_MODE"
+              if [ "$CURRENT_MODE" = "devsisters" ]; then
+                echo "📍 Devsisters environment is active"
+                echo "Use 'mode personal' to switch to personal mode"
+              elif [ "$CURRENT_MODE" = "personal" ]; then
+                echo "📍 Personal environment is active"
+                echo "Use 'mode devsisters' to switch back to devsisters mode"
+              fi
+              echo ""
+              echo "Available commands:"
+              echo "  mode           - Show current mode"
+              echo "  mode personal  - Switch to personal mode"
+              echo "  mode devsisters - Switch to devsisters mode"
+              ;;
+          esac
+        }
       
         # Load fzf if installed
         [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -385,7 +429,7 @@ with lib;
       docker = "podman";
 
       # Terraform
-      tpl = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=darwin_amd64 -platform=darwin_arm64";
+      tflock = "echo 'terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64' && terraform providers lock -platform=windows_amd64 -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_amd64 -platform=darwin_arm64";
 
       # Kubernetes - keeping only the simple ones that won't cause conflicts
       k = "kubectl";

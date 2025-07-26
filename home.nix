@@ -15,6 +15,8 @@
     ./modules/iterm2
     ./modules/spotlight
     ./modules/podman
+    # TODO: Re-enable once module is working
+    # ./modules/personal-interface
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -201,6 +203,14 @@
         backupExisting = true;
       }
       {
+        name = "personal-script";
+        sourcePath = "personal.sh";
+        targetPath = "${config.home.homeDirectory}/.personal.sh";
+        permissions = "755";
+        createTargetDir = false;
+        backupExisting = true;
+      }
+      {
         name = "claude-config";
         sourcePath = "claude/CLAUDE.md";
         targetPath = "${config.home.homeDirectory}/.claude/CLAUDE.md";
@@ -246,6 +256,7 @@
   };
 
   themes.selected = "nord";
+
 
   # Mac App Store applications
   services.mas = {
