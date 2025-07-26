@@ -100,11 +100,19 @@ The repository includes comprehensive logging and debug utilities for troublesho
 The repository includes a unified MCP (Model Context Protocol) server system that provides consistent tool access across Claude Code, Claude Desktop, and Gemini CLI.
 
 ### Available MCP Servers
+**Core Servers:**
 - **filesystem**: File system access for AI tools
 - **nixos**: NixOS package search and management  
 - **github**: GitHub repository and issue management
 - **terraform**: Terraform infrastructure management
 - **notion**: Notion workspace integration
+
+**Smithery Servers:**
+- **smithery-toolbox**: Enhanced AI capabilities and tools
+- **blockscout**: Blockchain explorer integration (personal mode only)
+- **sequential-thinking**: Sequential thinking and reference management
+- **taskmaster**: Task management and organization
+- **time**: Time management and scheduling utilities
 
 ### MCP Commands
 ```bash

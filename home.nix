@@ -341,6 +341,71 @@
           };
         };
       };
+
+      # Smithery MCP Servers
+      smithery-toolbox = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@smithery/toolbox" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Smithery toolbox for enhanced AI capabilities";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
+
+      blockscout = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@blockscout/mcp-server" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Blockscout blockchain explorer integration (personal only)";
+        environments = {
+          personal = { };
+          # Only available in personal mode
+        };
+      };
+
+      sequential-thinking = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@kiennd/reference-servers" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Sequential thinking and reference management";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
+
+      taskmaster = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@TanukiMCP/taskmaster" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Task management and organization";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
+
+      time = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@yokingma/time-mcp" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Time management and scheduling utilities";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
     };
   };
 
