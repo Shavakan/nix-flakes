@@ -223,37 +223,38 @@ with lib;
             personal)
               if [ -f "$HOME/.personal.sh" ]; then
                 echo "🏠 Switching to personal mode..."
-                source "$HOME/.personal.sh"
                 export CURRENT_MODE="personal"
+                source "$HOME/.personal.sh"
                 echo "✓ Personal mode activated"
+                echo "🔌 MCP servers will use personal environment variables"
               else
                 echo "❌ Personal script not found at $HOME/.personal.sh"
                 echo "Make sure your rclone mount is working and personal.sh exists in the cloud storage"
               fi
               ;;
             devsisters)
-              if [ -f "$HOME/.devsisters.sh" ]; then
-                echo "💼 Switching to devsisters mode..."
-                # Reload shell to clear personal environment
-                exec zsh
-              else
-                echo "❌ Devsisters script not found at $HOME/.devsisters.sh"
-              fi
+              echo "💼 Switching to devsisters mode..."
+              export CURRENT_MODE="devsisters"
+              # Reload shell to clear personal environment and restore devsisters
+              exec zsh
               ;;
             *)
               echo "Current mode: $CURRENT_MODE"
               if [ "$CURRENT_MODE" = "devsisters" ]; then
                 echo "📍 Devsisters environment is active"
+                echo "🔌 MCP servers using devsisters environment variables"
                 echo "Use 'mode personal' to switch to personal mode"
               elif [ "$CURRENT_MODE" = "personal" ]; then
                 echo "📍 Personal environment is active"
+                echo "🔌 MCP servers using personal environment variables"
                 echo "Use 'mode devsisters' to switch back to devsisters mode"
               fi
               echo ""
               echo "Available commands:"
-              echo "  mode           - Show current mode"
+              echo "  mode           - Show current mode and MCP status"
               echo "  mode personal  - Switch to personal mode"
               echo "  mode devsisters - Switch to devsisters mode"
+              echo "  mcp            - Manage MCP servers"
               ;;
           esac
         }
@@ -418,7 +419,7 @@ with lib;
       pp = "echo 'podman ps' && podman ps";
       psp = "echo 'podman system prune' && podman system prune";
       pc = "podman-compose";
-      
+
       # Podman machine management
       podman-start = "podman machine start";
       podman-stop = "podman machine stop";

@@ -34,7 +34,7 @@ in
   home.packages = [
     rustToolchain
   ];
-  
+
   # Additional Cargo environment variables added to ZSH
   programs.zsh.envExtra = ''
     # Cargo SSH authentication helpers

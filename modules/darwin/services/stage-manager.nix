@@ -5,7 +5,7 @@ with lib;
 
 let
   cfg = config.custom.stageManager;
-  
+
   # Create a small utility package to toggle Stage Manager
   stageManagerToggle = pkgs.writeScriptBin "toggle-stage-manager" ''
     #!/bin/bash
@@ -31,45 +31,47 @@ in
 {
   options.custom.stageManager = {
     enable = mkEnableOption "Stage Manager toggle support";
-    
+
     keyboard = {
       enableShortcuts = mkOption {
         type = types.bool;
         default = true;
         description = "Whether to enable keyboard shortcuts for toggling Stage Manager";
       };
-      
+
       shortcuts = mkOption {
         type = types.listOf types.str;
         default = [ "cmd + alt - s" "alt + shift - d" ];
         description = "skhd shortcuts for toggling Stage Manager";
       };
     };
-    
+
     createDesktopShortcut = mkOption {
       type = types.bool;
       default = true;
       description = "Whether to create a desktop shortcut for toggling Stage Manager";
     };
-    
+
     defaultEnabled = mkOption {
       type = types.bool;
       default = true;
       description = "Whether Stage Manager should be enabled by default";
     };
   };
-  
+
   config = mkIf cfg.enable {
     # Add our toggle script to system packages
     environment.systemPackages = [ stageManagerToggle ];
-    
+
     # Configure skhd when shortcuts are enabled
     services.skhd = mkIf cfg.keyboard.enableShortcuts {
       enable = true;
       package = pkgs.skhd;
-      skhdConfig = concatStringsSep "\n" (map (shortcut: 
-        "${shortcut} : ${stageManagerToggle}/bin/toggle-stage-manager"
-      ) cfg.keyboard.shortcuts);
+      skhdConfig = concatStringsSep "\n" (map
+        (shortcut:
+          "${shortcut} : ${stageManagerToggle}/bin/toggle-stage-manager"
+        )
+        cfg.keyboard.shortcuts);
     };
   };
 }

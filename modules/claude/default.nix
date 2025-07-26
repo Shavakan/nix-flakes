@@ -4,7 +4,8 @@
 {
   # Import both desktop and code configurations
   imports = [
-    ./desktop.nix  # Claude desktop app configuration
-    ./code.nix     # Claude Code terminal assistant
+    # Disabled old desktop.nix in favor of unified MCP server system
+    # ./desktop.nix  # Claude desktop app configuration
+    ./code.nix # Claude Code terminal assistant
   ];
 }

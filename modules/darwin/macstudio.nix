@@ -13,14 +13,14 @@
       # Different Dock settings for desktop Mac
       magnification = true;
     };
-    
+
     # Trackpad settings specific to this machine
     trackpad = {
       Clicking = true;
       TrackpadRightClick = true;
       TrackpadThreeFingerDrag = true; # Enable three-finger drag
     };
-    
+
     # Power management settings to help with USB devices after wake
     CustomUserPreferences = {
       # System-wide power management settings
@@ -31,13 +31,13 @@
         "ttyskeepawake" = 1; # Prevent sleep while SSH sessions are active
         "acwake" = 1; # Wake on AC power reconnect
         "lidwake" = 1; # Wake when lid is opened
-        
+
         # Don't power down USB controllers during sleep
         # This helps with device recognition after wake
         "IOPMEnableBluetoothWakeFromSleep" = 1; # Enable Bluetooth wake
         "UPSRestart" = 1; # Auto-restart after power loss
       };
-      
+
       # USB power management settings
       "com.apple.driver.AppleUSBMergeNub" = {
         "IOClass" = "AppleUSBMergeNub";
@@ -51,7 +51,7 @@
         "kUSBWakePortCurrentLimit" = 2100; # Increase wake current limit to 2100mA
         "kUSBWakePowerSupply" = 2100; # Increase wake power supply to 2100mA
       };
-      
+
       # IOKit USB settings for HID devices (keyboard, mouse)
       "com.apple.iokit.IOUSBFamily" = {
         "USBHIDWakeForeverEnabled" = true; # Keep HID devices awake
@@ -59,7 +59,7 @@
         "USBHIDPostResumeDelay" = 1000; # Wait 1 second after resume before accepting HID input
         "USBHIDPowerManagement" = 0; # Disable HID power management to prevent sleep issues
       };
-      
+
       # XHCI controller settings to prevent reset on wake
       "com.apple.driver.usb.AppleUSBXHCI" = {
         "IOCFPlugInTypes" = "";
@@ -70,26 +70,26 @@
           "WakeReason" = 2; # Wake from any input
         };
       };
-      
+
       # Additional trackpad gesture settings
       "com.apple.driver.AppleBluetoothMultitouch.trackpad" = {
         # Customize page swiping
         "TrackpadTwoFingerFromRightEdgeSwipeGesture" = 0; # Disable two-finger swipe from edge
-        
+
         # Set specific gesture mappings
         "TrackpadThreeFingerDrag" = true; # Enable three-finger drag
       };
-      
+
       # Apply same settings to Magic Mouse
       "com.apple.driver.AppleBluetoothMultitouch.mouse" = {
         "MouseTwoFingerHorizSwipeGesture" = 1; # Enable two-finger swipe for page navigation
       };
-      
+
       # Apple Watch unlock settings
       "com.apple.security.plist" = {
         "AutoUnlock" = true; # Enable Apple Watch unlock
       };
-      
+
       # Apple Watch auto unlock settings
       "com.apple.autounlock" = {
         "enabled" = 1; # Enable Apple Watch Auto Unlock
@@ -97,7 +97,7 @@
         "ShouldNotifyActivity" = 1; # Notify user of unlock activity
         "DeviceIsSupportedForAutoUnlock" = 1; # Mark this Mac as supported
       };
-      
+
       # Security & Privacy preferences to allow Apple Watch
       "com.apple.security" = {
         "AutoWake" = true; # Wake for network access

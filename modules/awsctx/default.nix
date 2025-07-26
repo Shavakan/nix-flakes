@@ -4,10 +4,10 @@ with lib;
 
 let
   cfg = config.services.awsctx;
-  
+
   # Define where the repo will be cloned
   repoPath = "${config.home.homeDirectory}/workspace/awsctx";
-  
+
   # Get the XDG directories based on OS
   getXdgDirs = pkgs.writeShellScript "get-xdg-dirs" ''
     os="$(uname -s)"
@@ -27,7 +27,7 @@ let
         ;;
     esac
   '';
-  
+
   # Create the aws-login-all script as a proper Nix package
   awsLoginAll = pkgs.writeShellScriptBin "aws-login-all" ''
     #!/usr/bin/env bash
@@ -86,7 +86,7 @@ let
     
     echo "All roles processed successfully."
   '';
-  
+
   # Create the awsctx binary
   awsctx = pkgs.writeShellScriptBin "awsctx" ''
     #!/usr/bin/env bash
@@ -122,7 +122,7 @@ let
       exec "$@"
     fi
   '';
-  
+
   # Create a completion script for bash that matches the original implementation
   bashCompletion = pkgs.writeTextFile {
     name = "awsctx-completion";
@@ -186,7 +186,7 @@ let
       complete -F _awsctx awsctx
     '';
   };
-  
+
   # Create a completion script for zsh
   zshCompletion = pkgs.writeTextFile {
     name = "awsctx-zsh-completion";
@@ -241,7 +241,7 @@ let
       _awsctx "$@"
     '';
   };
-  
+
   # Create a completion script for fish
   fishCompletion = pkgs.writeTextFile {
     name = "awsctx-fish-completion";
@@ -274,7 +274,7 @@ let
       complete -c awsctx -x -a "(__awsctx_get_contexts)"
     '';
   };
-  
+
   # Create a comprehensive package that includes all the tools
   awsctxPackage = pkgs.symlinkJoin {
     name = "awsctx";
@@ -300,14 +300,14 @@ in
 
   config = mkIf cfg.enable {
     # Add the package to home.packages
-    home.packages = [ 
+    home.packages = [
       awsctxPackage
       pkgs.saml2aws
       pkgs.git
       pkgs.openssh
       pkgs.coreutils
     ];
-    
+
     # Clone the repository and set up symlinks during activation
     home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       # Source the XDG directories

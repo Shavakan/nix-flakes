@@ -25,7 +25,7 @@ in
       ProgramArguments = [ "${resetUsbScript}" ];
       RunAtLoad = false;
       StartOnMount = false;
-      
+
       # Run when system wakes from sleep
       WatchPaths = [ "/Library/Preferences/SystemConfiguration/com.apple.PowerManagement.plist" ];
     };

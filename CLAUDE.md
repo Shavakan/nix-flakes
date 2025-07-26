@@ -94,3 +94,28 @@ Uses agenix for encrypted secrets stored in `modules/agenix/`. Secrets are decry
 5. Format code with `nixpkgs-fmt` and lint with `statix check`
 
 The repository includes comprehensive logging and debug utilities for troubleshooting service issues, particularly for the rclone mounting system.
+
+## MCP Server Management
+
+The repository includes a unified MCP (Model Context Protocol) server system that provides consistent tool access across Claude Code, Claude Desktop, and Gemini CLI.
+
+### Available MCP Servers
+- **filesystem**: File system access for AI tools
+- **nixos**: NixOS package search and management  
+- **github**: GitHub repository and issue management
+- **terraform**: Terraform infrastructure management
+- **notion**: Notion workspace integration
+
+### MCP Commands
+```bash
+mcp list           # List all available MCP servers
+mcp status         # Show running MCP servers  
+mcp test <server>  # Test a specific MCP server
+```
+
+### Mode-Aware MCP Servers
+MCP servers automatically use different environment variables based on your current mode:
+- **devsisters mode**: Uses work-specific API keys and configurations
+- **personal mode**: Uses personal API keys and configurations
+
+The servers are defined in `modules/mcp-servers/default.nix` with mode-specific environment variables.
