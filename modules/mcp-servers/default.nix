@@ -7,10 +7,7 @@ let
 
   # Helper function to get mode-specific environment variables
   getModeEnv = server: mode:
-    if server.environments ? ${mode} then
-      server.environments.${mode}
-    else
-      server.environments.default or { };
+    server.environments.${mode} or (server.environments.default or { });
 
   # Create wrapper script derivation for an MCP server
   mkMcpWrapper = name: server: pkgs.writeShellScriptBin "${name}-mcp-wrapper" ''
@@ -47,26 +44,358 @@ let
   # Create all MCP wrapper scripts
   mcpWrappers = mapAttrs mkMcpWrapper cfg.servers;
 
-  # MCP management CLI tool
+  # Enhanced MCP management CLI tool with profiles and project support
   mcpManager = pkgs.writeShellScriptBin "mcp" ''
     #!/bin/bash
     
-    # MCP Server Management CLI
+    # Configuration paths
+    PROFILES_DIR="$HOME/.config/mcp/profiles"
+    PROJECT_CONFIG=".mcp-config"
+    
+    # Ensure profiles directory exists
+    mkdir -p "$PROFILES_DIR"
+    
+    # Helper functions
+    show_help() {
+      echo "🔌 MCP Server Management"
+      echo ""
+      echo "Server Information:"
+      echo "  mcp list                    - List enabled servers for this project"
+      echo "  mcp list all                - List all available servers"
+      echo ""
+      echo "Project Management (current directory):"
+      echo "  mcp enable <servers...>     - Enable servers for this project"
+      echo "  mcp disable <servers...>    - Disable servers from this project"
+      echo "  mcp current                 - Show active servers in this project"
+      echo "  mcp status                  - Show project MCP status"
+      echo ""
+      echo "Profile Management (global):"
+      echo "  mcp profile create <name>             - Create empty profile"
+      echo "  mcp profile add <name> <servers...>   - Add servers to profile"
+      echo "  mcp profile remove <name> <servers...> - Remove servers from profile"
+      echo "  mcp profile list                      - Show all profiles"
+      echo "  mcp profile show <name>               - Show servers in profile"
+      echo ""
+      echo "Legacy Commands:"
+      echo "  mcp test <server>           - Test a specific server"
+      echo ""
+      echo "Available servers: ${concatStringsSep ", " (attrNames cfg.servers)}"
+    }
+    
+    list_all_servers() {
+      echo "🔌 Available MCP Servers:"
+      echo ""
+      ${concatStringsSep "\n" (mapAttrsToList (name: server: ''
+        printf "  📦 %-20s %s\n" "${name}" "${server.description}"
+      '') cfg.servers)}
+    }
+    
+    list_project_servers() {
+      local servers=$(get_project_servers)
+      if [ -n "$servers" ]; then
+        echo "🔌 Enabled MCP Servers (this project):"
+        echo ""
+        for server in $servers; do
+          # Get description for this server
+          case "$server" in
+            ${concatStringsSep "\n            " (mapAttrsToList (name: server: ''
+              ${name}) printf "  ✅ %-20s %s\n" "${name}" "${server.description}" ;;''
+            ) cfg.servers)}
+            *) printf "  ✅ %-20s %s\n" "$server" "(unknown server)" ;;
+          esac
+        done
+      else
+        echo "🔌 No MCP servers enabled for this project"
+        echo ""
+        echo "💡 Use 'mcp enable <server>' to enable servers"
+        echo "💡 Use 'mcp list all' to see available servers"
+      fi
+    }
+    
+    get_project_servers() {
+      if [ -f "$PROJECT_CONFIG" ]; then
+        cat "$PROJECT_CONFIG" | tr '\n' ' '
+      fi
+    }
+    
+    generate_claude_config() {
+      local servers="$1"
+      local config="{\n  \"mcpServers\": {\n"
+      local first=true
+      
+      for server in $servers; do
+        if [ "$first" = true ]; then
+          first=false
+        else
+          config="$config,\n"
+        fi
+        # Get wrapper path for this server
+        case "$server" in
+          ${concatStringsSep "\n          " (mapAttrsToList (name: wrapper: ''
+            ${name}) wrapper_path="${wrapper}/bin/${name}-mcp-wrapper" ;;''
+          ) mcpWrappers)}
+          *) wrapper_path="unknown" ;;
+        esac
+        config="$config    \"$server\": {\n"
+        config="$config      \"type\": \"stdio\",\n"
+        config="$config      \"command\": \"$wrapper_path\",\n"
+        config="$config      \"args\": [],\n"
+        config="$config      \"env\": {}\n"
+        config="$config    }"
+      done
+      
+      config="$config\n  }\n}"
+      echo -e "$config" > .mcp.json
+    }
+    
+    generate_gemini_config() {
+      local servers="$1"
+      local config="{\n  \"mcpServers\": {\n"
+      local first=true
+      
+      for server in $servers; do
+        if [ "$first" = true ]; then
+          first=false
+        else
+          config="$config,\n"
+        fi
+        # Get wrapper path for this server
+        case "$server" in
+          ${concatStringsSep "\n          " (mapAttrsToList (name: wrapper: ''
+            ${name}) wrapper_path="${wrapper}/bin/${name}-mcp-wrapper" ;;''
+          ) mcpWrappers)}
+          *) wrapper_path="unknown" ;;
+        esac
+        config="$config    \"$server\": {\n"
+        config="$config      \"type\": \"stdio\",\n"
+        config="$config      \"command\": \"$wrapper_path\",\n"
+        config="$config      \"args\": [],\n"
+        config="$config      \"env\": {}\n"
+        config="$config    }"
+      done
+      
+      config="$config\n  }\n}"
+      echo -e "$config" > .gemini-mcp.json
+    }
+    
+    update_project_configs() {
+      local servers=$(get_project_servers)
+      if [ -n "$servers" ]; then
+        generate_claude_config "$servers"
+        generate_gemini_config "$servers"
+        echo "✓ Updated .mcp.json and .gemini-mcp.json"
+      else
+        rm -f .mcp.json .gemini-mcp.json
+        echo "✓ Removed MCP configuration files"
+      fi
+    }
+    
+    # Main command handling
     case "$1" in
       list)
-        echo "🔌 Available MCP Servers:"
-        ${concatStringsSep "\n" (mapAttrsToList (name: server: ''
-          echo "  ${name}: ${server.description}"
-          echo "    Clients: ${concatStringsSep ", " server.clients}"
-          echo "    Wrapper: ${mcpWrappers.${name}}/bin/${name}-mcp-wrapper"
-          echo ""
-        '') cfg.servers)}
+        if [ "$2" = "all" ]; then
+          list_all_servers
+        else
+          list_project_servers
+        fi
         ;;
+        
+      enable)
+        if [ -z "$2" ]; then
+          echo "Usage: mcp enable <server1> [server2] ..."
+          exit 1
+        fi
+        shift
+        current_servers=$(get_project_servers)
+        for server in "$@"; do
+          # Validate server exists
+          case "$server" in
+            ${concatStringsSep "|" (attrNames cfg.servers)})
+              if ! echo "$current_servers" | grep -q "$server"; then
+                echo "$server" >> "$PROJECT_CONFIG"
+                echo "✓ Enabled $server for this project"
+              else
+                echo "⚠️  $server already enabled"
+              fi
+              ;;
+            *)
+              echo "❌ Unknown server: $server"
+              echo "Available: ${concatStringsSep ", " (attrNames cfg.servers)}"
+              ;;
+          esac
+        done
+        update_project_configs
+        ;;
+        
+      disable)
+        if [ -z "$2" ]; then
+          echo "Usage: mcp disable <server1> [server2] ..."
+          exit 1
+        fi
+        if [ ! -f "$PROJECT_CONFIG" ]; then
+          echo "No MCP servers enabled for this project"
+          exit 0
+        fi
+        shift
+        for server in "$@"; do
+          if grep -q "^$server$" "$PROJECT_CONFIG"; then
+            grep -v "^$server$" "$PROJECT_CONFIG" > "$PROJECT_CONFIG.tmp"
+            mv "$PROJECT_CONFIG.tmp" "$PROJECT_CONFIG"
+            echo "✓ Disabled $server for this project"
+          else
+            echo "⚠️  $server not enabled for this project"
+          fi
+        done
+        # Clean up empty config file
+        if [ ! -s "$PROJECT_CONFIG" ]; then
+          rm -f "$PROJECT_CONFIG"
+        fi
+        update_project_configs
+        ;;
+        
+      current)
+        servers=$(get_project_servers)
+        if [ -n "$servers" ]; then
+          echo "📍 Active MCP servers for this project:"
+          for server in $servers; do
+            echo "  • $server"
+          done
+        else
+          echo "No MCP servers enabled for this project"
+        fi
+        ;;
+        
       status)
-        echo "📊 MCP Server Status (Mode: ''${CURRENT_MODE:-devsisters}):"
-        # Show running MCP processes
-        ps aux | grep -E "(mcp|${concatStringsSep "|" (attrNames cfg.servers)})" | grep -v grep || echo "  No MCP servers currently running"
+        echo "📊 Project MCP Status:"
+        servers=$(get_project_servers)
+        if [ -n "$servers" ]; then
+          echo "Enabled servers: $servers"
+          echo "Mode: ''${CURRENT_MODE:-devsisters}"
+          if [ -f ".mcp.json" ]; then
+            echo "✓ .mcp.json exists"
+          fi
+          if [ -f ".gemini-mcp.json" ]; then
+            echo "✓ .gemini-mcp.json exists"
+          fi
+        else
+          echo "No servers enabled for this project"
+        fi
         ;;
+        
+      profile)
+        case "$2" in
+          create)
+            if [ -z "$3" ]; then
+              echo "Usage: mcp profile create <name>"
+              exit 1
+            fi
+            profile_file="$PROFILES_DIR/$3"
+            if [ -f "$profile_file" ]; then
+              echo "❌ Profile '$3' already exists"
+              exit 1
+            fi
+            touch "$profile_file"
+            echo "✓ Created profile '$3'"
+            ;;
+            
+          add)
+            if [ -z "$3" ] || [ -z "$4" ]; then
+              echo "Usage: mcp profile add <name> <server1> [server2] ..."
+              exit 1
+            fi
+            profile_name="$3"
+            profile_file="$PROFILES_DIR/$profile_name"
+            if [ ! -f "$profile_file" ]; then
+              echo "❌ Profile '$profile_name' doesn't exist. Create it first."
+              exit 1
+            fi
+            shift 3
+            for server in "$@"; do
+              case "$server" in
+                ${concatStringsSep "|" (attrNames cfg.servers)})
+                  if ! grep -q "^$server$" "$profile_file"; then
+                    echo "$server" >> "$profile_file"
+                    echo "✓ Added $server to profile '$profile_name'"
+                  else
+                    echo "⚠️  $server already in profile '$profile_name'"
+                  fi
+                  ;;
+                *)
+                  echo "❌ Unknown server: $server"
+                  ;;
+              esac
+            done
+            ;;
+            
+          remove)
+            if [ -z "$3" ] || [ -z "$4" ]; then
+              echo "Usage: mcp profile remove <name> <server1> [server2] ..."
+              exit 1
+            fi
+            profile_name="$3"
+            profile_file="$PROFILES_DIR/$profile_name"
+            if [ ! -f "$profile_file" ]; then
+              echo "❌ Profile '$profile_name' doesn't exist"
+              exit 1
+            fi
+            shift 3
+            for server in "$@"; do
+              if grep -q "^$server$" "$profile_file"; then
+                grep -v "^$server$" "$profile_file" > "$profile_file.tmp"
+                mv "$profile_file.tmp" "$profile_file"
+                echo "✓ Removed $server from profile '$profile_name'"
+              else
+                echo "⚠️  $server not in profile '$profile_name'"
+              fi
+            done
+            ;;
+            
+          list)
+            echo "📋 Available Profiles:"
+            if [ -d "$PROFILES_DIR" ] && [ "$(ls -A "$PROFILES_DIR" 2>/dev/null)" ]; then
+              for profile in "$PROFILES_DIR"/*; do
+                if [ -f "$profile" ]; then
+                  name=$(basename "$profile")
+                  count=$(wc -l < "$profile" 2>/dev/null || echo 0)
+                  echo "  $name ($count servers)"
+                fi
+              done
+            else
+              echo "  No profiles created yet"
+            fi
+            ;;
+            
+          show)
+            if [ -z "$3" ]; then
+              echo "Usage: mcp profile show <name>"
+              exit 1
+            fi
+            profile_file="$PROFILES_DIR/$3"
+            if [ ! -f "$profile_file" ]; then
+              echo "❌ Profile '$3' doesn't exist"
+              exit 1
+            fi
+            echo "📋 Profile '$3':"
+            if [ -s "$profile_file" ]; then
+              while read -r server; do
+                echo "  • $server"
+              done < "$profile_file"
+            else
+              echo "  (empty)"
+            fi
+            ;;
+            
+          *)
+            echo "Profile commands:"
+            echo "  mcp profile create <name>             - Create empty profile"
+            echo "  mcp profile add <name> <servers...>   - Add servers to profile"
+            echo "  mcp profile remove <name> <servers...> - Remove servers from profile"
+            echo "  mcp profile list                      - Show all profiles"
+            echo "  mcp profile show <name>               - Show servers in profile"
+            ;;
+        esac
+        ;;
+        
       test)
         if [ -z "$2" ]; then
           echo "Usage: mcp test <server_name>"
@@ -93,16 +422,9 @@ let
             ;;
         esac
         ;;
+        
       *)
-        echo "🔌 MCP Server Management"
-        echo ""
-        echo "Commands:"
-        echo "  mcp list         - List all available MCP servers"
-        echo "  mcp status       - Show running MCP servers"
-        echo "  mcp test <server> - Test a specific MCP server"
-        echo ""
-        echo "Current mode: ''${CURRENT_MODE:-devsisters}"
-        echo "Available servers: ${concatStringsSep ", " (attrNames cfg.servers)}"
+        show_help
         ;;
     esac
   '';
