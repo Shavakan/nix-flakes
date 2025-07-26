@@ -4,7 +4,7 @@ with lib;
 
 let
   # Create a custom rust toolchain with the components we need
-  rustToolchain = fenix.packages.${pkgs.system}.latest.withComponents [
+  rustToolchain = fenix.packages.${pkgs.system}.stable.withComponents [
     "cargo"
     "clippy"
     "rust-src"
@@ -30,7 +30,7 @@ in
     '';
   };
 
-  # Install Rust nightly toolchain via fenix
+  # Install Rust stable toolchain via fenix
   home.packages = [
     rustToolchain
   ];

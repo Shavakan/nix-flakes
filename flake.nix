@@ -278,8 +278,8 @@
 
           # Use fenix for the Rust toolchain
           packages = [
-            # Use the same toolchain definition as in the cargo module
-            (fenix.packages.${pkgs.system}.latest.withComponents [
+            # Use stable toolchain instead of latest due to build issues
+            (fenix.packages.${pkgs.system}.stable.withComponents [
               "cargo"
               "clippy"
               "rust-src"

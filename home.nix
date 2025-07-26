@@ -109,7 +109,7 @@
       jetbrains.rider
       jetbrains.goland
       jetbrains.pycharm-professional
-      jetbrains.idea-ultimate
+      # jetbrains.idea-ultimate  # Temporarily disabled due to build failure
       jetbrains.datagrip
 
       # Misc
