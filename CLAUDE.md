@@ -97,7 +97,7 @@ The repository includes comprehensive logging and debug utilities for troublesho
 
 ## MCP Server Management
 
-The repository includes a unified MCP (Model Context Protocol) server system that provides consistent tool access across Claude Code, Claude Desktop, and Gemini CLI.
+The repository includes a unified MCP (Model Context Protocol) server system with an asdf/tfswitch-style management interface. This provides project-specific server control with global profile convenience across Claude Code, Claude Desktop, and Gemini CLI.
 
 ### Available MCP Servers
 **Core Servers:**
@@ -114,16 +114,57 @@ The repository includes a unified MCP (Model Context Protocol) server system tha
 - **taskmaster**: Task management and organization
 - **time**: Time management and scheduling utilities
 
-### MCP Commands
+### Project Management Commands
+Control which MCP servers are active in the current project directory:
+
 ```bash
-mcp list           # List all available MCP servers
-mcp status         # Show running MCP servers  
-mcp test <server>  # Test a specific MCP server
+# Server discovery and status
+mcp list                    # Show enabled servers for current project
+mcp list all               # Show all available servers
+mcp current                # Show active servers (alias for mcp list)
+mcp status                 # Show project MCP status with mode info
+
+# Server activation
+mcp enable <servers...>    # Enable servers for this project
+mcp disable <servers...>   # Disable servers from this project
+
+# Example workflow
+mcp list all              # Discover available servers
+mcp enable filesystem nixos github  # Enable servers for development
+mcp list                  # Verify enabled servers
 ```
 
-### Mode-Aware MCP Servers
-MCP servers automatically use different environment variables based on your current mode:
-- **devsisters mode**: Uses work-specific API keys and configurations
-- **personal mode**: Uses personal API keys and configurations
+### Profile Management Commands (Optional)
+Create reusable server collections for convenience:
 
-The servers are defined in `modules/mcp-servers/default.nix` with mode-specific environment variables.
+```bash
+# Profile creation and management
+mcp profile create <name>              # Create empty profile
+mcp profile add <name> <servers...>    # Add servers to profile
+mcp profile remove <name> <servers...> # Remove servers from profile
+mcp profile list                       # Show all profiles
+mcp profile show <name>                # Show servers in profile
+
+# Example workflow
+mcp profile create development
+mcp profile add development filesystem nixos github
+mcp profile show development
+```
+
+### How It Works
+- **Project-scoped**: Each directory can have different enabled servers via `.mcp-config` file
+- **Auto-generation**: Creates `.mcp.json` (Claude Code) and `.gemini-mcp.json` (Gemini CLI) automatically
+- **Mode-aware**: Uses different environment variables based on current mode (personal/devsisters)
+- **Directory isolation**: Servers enabled in one project don't affect others
+- **Two dimensions**: Profiles (global convenience) and Projects (local activation) are independent
+
+### Integration
+- **Claude Code**: Automatically discovers project-scoped `.mcp.json` files
+- **Claude Desktop**: Uses global configuration from unified system
+- **Gemini CLI**: Uses project-scoped `.gemini-mcp.json` files
+- **Mode system**: Respects `mode personal` / `mode devsisters` environment variables
+
+### Legacy Commands
+```bash
+mcp test <server>  # Test a specific MCP server (troubleshooting)
+```
