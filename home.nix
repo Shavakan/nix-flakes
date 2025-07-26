@@ -65,6 +65,7 @@
       kubernetes-helm
       awscli2
       google-cloud-sdk
+      gemini-cli
 
       # Search tools
       ripgrep
