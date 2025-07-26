@@ -406,6 +406,19 @@
           devsisters = { };
         };
       };
+
+      astrotask = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@astrotask/mcp" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "Astrotask local-first task management platform";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
     };
   };
 
