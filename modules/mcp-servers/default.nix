@@ -541,6 +541,7 @@ in
           (name: server: {
             command = "/bin/sh";
             args = [ "-c" "CURRENT_MODE=\${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec ${server.command} ${concatStringsSep " " server.args}" ];
+            env = server.environments.devsisters or (server.environments.default or { });
           })
           (getServersForClient "claude-desktop");
       };
@@ -606,6 +607,7 @@ in
           (name: server: {
             command = "/bin/sh";
             args = [ "-c" "CURRENT_MODE=\${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec ${server.command} ${concatStringsSep " " server.args}" ];
+            env = server.environments.devsisters or (server.environments.default or { });
           })
           (getServersForClient "gemini-cli");
       };
