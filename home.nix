@@ -419,6 +419,19 @@
           devsisters = { };
         };
       };
+
+      claude-task-master = {
+        enable = true;
+        command = "/run/current-system/sw/bin/npx";
+        args = [ "@smithery/cli" "run" "@eyaltoledano/claude-task-master" ];
+        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        description = "AI-powered comprehensive task management system";
+        environments = {
+          default = { };
+          personal = { };
+          devsisters = { };
+        };
+      };
     };
   };
 

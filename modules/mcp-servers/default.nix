@@ -9,40 +9,7 @@ let
   getModeEnv = server: mode:
     server.environments.${mode} or (server.environments.default or { });
 
-  # Create wrapper script derivation for an MCP server
-  mkMcpWrapper = name: server: pkgs.writeShellScriptBin "${name}-mcp-wrapper" ''
-    #!/bin/bash
-    # MCP Server: ${name}
-    # Description: ${server.description}
-
-    # Set up environment based on current mode
-    CURRENT_MODE=''${CURRENT_MODE:-"devsisters"}
-
-    # Default environment variables
-    ${concatStringsSep "\n" (mapAttrsToList (key: value: 
-      "export ${key}=\"${value}\""
-    ) (server.environments.default or {}))}
-
-    # Mode-specific environment variables
-    case "$CURRENT_MODE" in
-      personal)
-        ${concatStringsSep "\n" (mapAttrsToList (key: value: 
-          "export ${key}=\"${value}\""
-        ) (server.environments.personal or {}))}
-        ;;
-      devsisters)
-        ${concatStringsSep "\n" (mapAttrsToList (key: value: 
-          "export ${key}=\"${value}\""
-        ) (server.environments.devsisters or {}))}
-        ;;
-    esac
-
-    # Execute the MCP server
-    exec ${server.command} ${concatStringsSep " " server.args}
-  '';
-
-  # Create all MCP wrapper scripts
-  mcpWrappers = mapAttrs mkMcpWrapper cfg.servers;
+  # No longer need wrapper scripts - using direct shell commands
 
   # Enhanced MCP management CLI tool with profiles and project support
   mcpManager = pkgs.writeShellScriptBin "mcp" ''
@@ -76,8 +43,9 @@ let
       echo "  mcp profile list                      - Show all profiles"
       echo "  mcp profile show <name>               - Show servers in profile"
       echo ""
-      echo "Legacy Commands:"
+      echo "Debugging Commands:"
       echo "  mcp test <server>           - Test a specific server"
+      echo "  mcp debug                   - Show debugging information and log locations"
       echo ""
       echo "Available servers: ${concatStringsSep ", " (attrNames cfg.servers)}"
     }
@@ -129,17 +97,27 @@ let
         else
           config="$config,\n"
         fi
-        # Get wrapper path for this server
+        # Get server command and args directly
         case "$server" in
-          ${concatStringsSep "\n          " (mapAttrsToList (name: wrapper: ''
-            ${name}) wrapper_path="${wrapper}/bin/${name}-mcp-wrapper" ;;''
-          ) mcpWrappers)}
-          *) wrapper_path="unknown" ;;
+          ${concatStringsSep "\n          " (mapAttrsToList (name: server: ''
+            ${name}) 
+              server_cmd="${server.command}"
+              server_args="${concatStringsSep " " server.args}"
+              ;;''
+          ) cfg.servers)}
+          *) 
+            server_cmd="unknown"
+            server_args=""
+            ;;
         esac
+        
+        # Build shell command with environment setup
+        local shell_cmd="CURRENT_MODE=\''${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec $server_cmd $server_args"
+        
         config="$config    \"$server\": {\n"
         config="$config      \"type\": \"stdio\",\n"
-        config="$config      \"command\": \"$wrapper_path\",\n"
-        config="$config      \"args\": [],\n"
+        config="$config      \"command\": \"/bin/sh\",\n"
+        config="$config      \"args\": [\"-c\", \"$shell_cmd\"],\n"
         config="$config      \"env\": {}\n"
         config="$config    }"
       done
@@ -159,17 +137,27 @@ let
         else
           config="$config,\n"
         fi
-        # Get wrapper path for this server
+        # Get server command and args directly
         case "$server" in
-          ${concatStringsSep "\n          " (mapAttrsToList (name: wrapper: ''
-            ${name}) wrapper_path="${wrapper}/bin/${name}-mcp-wrapper" ;;''
-          ) mcpWrappers)}
-          *) wrapper_path="unknown" ;;
+          ${concatStringsSep "\n          " (mapAttrsToList (name: server: ''
+            ${name}) 
+              server_cmd="${server.command}"
+              server_args="${concatStringsSep " " server.args}"
+              ;;''
+          ) cfg.servers)}
+          *) 
+            server_cmd="unknown"
+            server_args=""
+            ;;
         esac
+        
+        # Build shell command with environment setup
+        local shell_cmd="CURRENT_MODE=\''${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec $server_cmd $server_args"
+        
         config="$config    \"$server\": {\n"
         config="$config      \"type\": \"stdio\",\n"
-        config="$config      \"command\": \"$wrapper_path\",\n"
-        config="$config      \"args\": [],\n"
+        config="$config      \"command\": \"/bin/sh\",\n"
+        config="$config      \"args\": [\"-c\", \"$shell_cmd\"],\n"
         config="$config      \"env\": {}\n"
         config="$config    }"
       done
@@ -406,12 +394,12 @@ let
           ${concatStringsSep "\n          " (mapAttrsToList (name: server: ''
             ${name})
               echo "🧪 Testing MCP server: ${name}"
-              echo "Wrapper: ${mcpWrappers.${name}}/bin/${name}-mcp-wrapper"
+              echo "Command: ${server.command} ${concatStringsSep " " server.args}"
               echo "Description: ${server.description}"
-              if [ -x "${mcpWrappers.${name}}/bin/${name}-mcp-wrapper" ]; then
-                echo "✓ Wrapper script is executable"
+              if [ -x "${server.command}" ]; then
+                echo "✓ Command is executable"
               else
-                echo "❌ Wrapper script is not executable"
+                echo "❌ Command not found or not executable"
               fi
               ;;''
           ) cfg.servers)}
@@ -421,6 +409,43 @@ let
             exit 1
             ;;
         esac
+        ;;
+        
+      debug)
+        echo "🔍 MCP Debugging Information"
+        echo ""
+        echo "📁 Log Locations:"
+        echo "  Claude Desktop: ~/Library/Logs/Claude/mcp*.log"
+        echo "  Claude Code: Check terminal output when running 'claude mcp list'"
+        echo ""
+        echo "🔧 Environment:"
+        echo "  Current Mode: ''${CURRENT_MODE:-devsisters}"
+        echo "  NPX Command: /run/current-system/sw/bin/npx"
+        echo "  Shell PATH: $PATH"
+        echo ""
+        echo "📊 Project Status:"
+        servers=$(get_project_servers)
+        if [ -n "$servers" ]; then
+          echo "  Enabled Servers: $servers"
+          echo "  Config Files:"
+          if [ -f ".mcp.json" ]; then
+            echo "    ✓ .mcp.json exists ($(wc -c < .mcp.json) bytes)"
+          else
+            echo "    ❌ .mcp.json missing"
+          fi
+          if [ -f ".gemini-mcp.json" ]; then
+            echo "    ✓ .gemini-mcp.json exists ($(wc -c < .gemini-mcp.json) bytes)"
+          else
+            echo "    ❌ .gemini-mcp.json missing"
+          fi
+        else
+          echo "  No servers enabled for this project"
+        fi
+        echo ""
+        echo "🧪 Quick Tests:"
+        echo "  Test NPX: /run/current-system/sw/bin/npx --version"
+        /run/current-system/sw/bin/npx --version 2>/dev/null || echo "  ❌ NPX not available"
+        echo "  Test Claude MCP: claude mcp list"
         ;;
         
       *)
@@ -507,15 +532,15 @@ in
 
   config = mkIf cfg.enable {
     # Install the MCP management CLI tool
-    home.packages = [ mcpManager ] ++ (attrValues mcpWrappers);
+    home.packages = [ mcpManager ];
 
     # Claude Desktop configuration
     home.file."Library/Application Support/Claude/claude_desktop_config.json" = mkIf (cfg.servers != { }) {
       text = builtins.toJSON {
         mcpServers = mapAttrs
           (name: server: {
-            command = "${mcpWrappers.${name}}/bin/${name}-mcp-wrapper";
-            args = [ ];
+            command = "/bin/sh";
+            args = [ "-c" "CURRENT_MODE=\${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec ${server.command} ${concatStringsSep " " server.args}" ];
           })
           (getServersForClient "claude-desktop");
       };
@@ -579,8 +604,8 @@ in
       text = builtins.toJSON {
         mcpServers = mapAttrs
           (name: server: {
-            command = "${mcpWrappers.${name}}/bin/${name}-mcp-wrapper";
-            args = [ ];
+            command = "/bin/sh";
+            args = [ "-c" "CURRENT_MODE=\${CURRENT_MODE:-devsisters}; PATH=/run/current-system/sw/bin:\$PATH; exec ${server.command} ${concatStringsSep " " server.args}" ];
           })
           (getServersForClient "gemini-cli");
       };
