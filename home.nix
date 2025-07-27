@@ -111,6 +111,7 @@
       jetbrains.pycharm-professional
       # jetbrains.idea-ultimate  # Temporarily disabled due to build failure
       jetbrains.datagrip
+      jetbrains.rust-rover
 
       # Misc
       direnv
@@ -384,13 +385,22 @@
       taskmaster = {
         enable = true;
         command = "/run/current-system/sw/bin/npx";
-        args = [ "@smithery/cli" "run" "@TanukiMCP/taskmaster" ];
+        args = [ "-y" "--package=task-master-ai" "task-master-ai" ];
         clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
         description = "Task management and organization";
         environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
+          default = {
+            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
+            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
+          };
+          personal = {
+            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
+            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
+          };
+          devsisters = {
+            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
+            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
+          };
         };
       };
 
