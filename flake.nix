@@ -2,8 +2,8 @@
   description = "Nix flake with nix-darwin and standalone home-manager";
 
   inputs = {
-    # Package sources - use nixpkgs-unstable for compatibility
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # Package sources - use nixpkgs-unstable for latest packages
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # Custom saml2aws build from devsisters fork
     saml2aws = {
