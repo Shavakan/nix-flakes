@@ -177,7 +177,7 @@ with lib;
         setopt HIST_VERIFY
       
         # Path additions
-        export PATH="$HOME/.nix-profile/bin:$HOME/.local/bin:$PATH"
+        export PATH="$PATH:$HOME/.nix-profile/bin:$HOME/.local/bin"
       
         # .NET Core SDK tools
         export PATH="$PATH:$HOME/.dotnet/tools"

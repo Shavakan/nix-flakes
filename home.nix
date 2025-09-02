@@ -117,6 +117,7 @@
       direnv
       codex
       gemini-cli
+      teleport
     ];
 
     # This value determines the Home Manager release compatibility
