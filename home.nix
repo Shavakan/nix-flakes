@@ -491,8 +491,17 @@
   # Configure SSH with proper agent setup
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false;
 
     matchBlocks = {
+      "*" = {
+        identityFile = [
+          "~/.ssh/id_rsa"
+          "~/.ssh/id_ecdsa"
+          "~/.ssh/id_ed25519"
+        ];
+      };
+      
       "github.com" = {
         hostname = "ssh.github.com";
         port = 443;
