@@ -58,6 +58,7 @@
       buf
       subversion
       golangci-lint
+      ruby
 
       # Cloud tools
       kubectl

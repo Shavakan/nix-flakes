@@ -277,6 +277,19 @@ with lib;
           eval "$(uv generate-shell-completion zsh)"
         fi
       
+        # Setup Ruby gem path and auto-install ecl if using nix ruby
+        if command -v ruby >/dev/null 2>&1 && [[ "$(which ruby)" == *"nix"* ]]; then
+          # Add gem bin directory to PATH
+          export GEM_HOME="$HOME/.gem/ruby/3.3.0"
+          export PATH="$GEM_HOME/bin:$PATH"
+          
+          # Auto-install ecl gem if not found
+          if ! command -v ecl >/dev/null 2>&1; then
+            echo "📦 Installing ecl gem..."
+            gem install ecl >/dev/null 2>&1 && echo "✓ ecl installed successfully" || echo "⚠️ Failed to install ecl"
+          fi
+        fi
+      
         # FZF configuration for better search experience
         # Using direct path for fzf-share instead of ZSH array access
         if command -v fzf-share > /dev/null 2>&1; then
