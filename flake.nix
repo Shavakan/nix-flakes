@@ -125,6 +125,28 @@
           (final: prev: {
             saml2aws = saml2aws.packages.${darwinSystem}.default;
           })
+          # Fix lsprotocol compatibility issues
+          # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
+          # Remove when issue is resolved upstream
+          # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
+          # (final: prev: {
+          #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+          #     (python-final: python-prev: {
+          #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
+          #         # Disable tests to avoid compatibility issues with lsprotocol
+          #         doCheck = false;
+          #         checkPhase = "true";
+          #         dontUsePytestCheck = true;
+          #       });
+          #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
+          #         # Disable tests to avoid compatibility issues with lsprotocol
+          #         doCheck = false;
+          #         checkPhase = "true";
+          #         dontUsePytestCheck = true;
+          #       });
+          #     })
+          #   ];
+          # })
           # Add nix-vscode-extensions overlay
           nix-vscode-extensions.overlays.default
         ];
@@ -159,6 +181,28 @@
                 (final: prev: {
                   saml2aws = saml2aws.packages.${darwinSystem}.default;
                 })
+                # Fix lsprotocol compatibility issues
+                # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
+                # Remove when issue is resolved upstream
+                # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
+                # (final: prev: {
+                #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+                #     (python-final: python-prev: {
+                #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
+                #         # Disable tests to avoid compatibility issues with lsprotocol
+                #         doCheck = false;
+                #         checkPhase = "true";
+                #         dontUsePytestCheck = true;
+                #       });
+                #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
+                #         # Disable tests to avoid compatibility issues with lsprotocol
+                #         doCheck = false;
+                #         checkPhase = "true";
+                #         dontUsePytestCheck = true;
+                #       });
+                #     })
+                #   ];
+                # })
                 # Add nix-vscode-extensions overlay
                 nix-vscode-extensions.overlays.default
               ];
@@ -195,6 +239,28 @@
                 (final: prev: {
                   saml2aws = saml2aws.packages.${darwinSystem}.default;
                 })
+                # Fix lsprotocol compatibility issues
+                # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
+                # Remove when issue is resolved upstream
+                # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
+                # (final: prev: {
+                #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+                #     (python-final: python-prev: {
+                #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
+                #         # Disable tests to avoid compatibility issues with lsprotocol
+                #         doCheck = false;
+                #         checkPhase = "true";
+                #         dontUsePytestCheck = true;
+                #       });
+                #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
+                #         # Disable tests to avoid compatibility issues with lsprotocol
+                #         doCheck = false;
+                #         checkPhase = "true";
+                #         dontUsePytestCheck = true;
+                #       });
+                #     })
+                #   ];
+                # })
                 # Add nix-vscode-extensions overlay
                 nix-vscode-extensions.overlays.default
               ];

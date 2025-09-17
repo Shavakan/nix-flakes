@@ -7,7 +7,6 @@ let
   rustToolchain = fenix.packages.${pkgs.system}.stable.withComponents [
     "cargo"
     "clippy"
-    "rust-src"
     "rustc"
     "rustfmt"
     "rust-analyzer"
