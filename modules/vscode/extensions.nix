@@ -1,54 +1,47 @@
-{ config, lib, pkgs, ... }@inputs:
+{ config, lib, pkgs, nix-vscode-extensions, ... }@inputs:
 
 {
   programs.vscode = {
     profiles.default.extensions =
-      # Extensions available in nixpkgs (prefer these when available)
+      # Extensions curated in nixpkgs (most stable)
       (with pkgs.vscode-extensions; [
         # Nix support
         bbenoist.nix
 
         # Git integration
-        eamodio.gitlens # Enhanced Git functionality
-        github.vscode-pull-request-github # GitHub PR integration
+        eamodio.gitlens
+        github.vscode-pull-request-github
 
         # AI coding assistant
-        github.copilot # GitHub Copilot
-        github.copilot-chat # GitHub Copilot Chat
+        github.copilot
+        github.copilot-chat
 
         # Languages
-        golang.go # Go language support
-        ms-python.python # Python language support
+        golang.go
+        ms-python.python
+        ms-python.vscode-pylance
+        ms-python.debugpy
 
         # Tools
-        ms-azuretools.vscode-docker # Docker integration
-        ms-toolsai.jupyter # Jupyter notebooks
-
-        # Editing experience
-        asvetliakov.vscode-neovim # Neovim integration
-        yzhang.markdown-all-in-one # Markdown support
-        redhat.vscode-yaml # YAML support
-        zxh404.vscode-proto3 # Protocol Buffers/gRPC support
-      ])
-
-      # Extensions from nix-vscode-extensions (confirmed available)
-      ++ (with pkgs.vscode-extensions; [
-        # Core tools
-        ms-python.vscode-pylance
-        ms-python.python
-        ms-python.debugpy
-        ms-python.flake8
-        ms-python.isort
-        ms-python.pylint
+        ms-azuretools.vscode-docker
+        ms-toolsai.jupyter
         hashicorp.terraform
         ms-kubernetes-tools.vscode-kubernetes-tools
         ms-vscode-remote.remote-containers
+
+        # Editing experience
+        asvetliakov.vscode-neovim
+        yzhang.markdown-all-in-one
+        redhat.vscode-yaml
+        zxh404.vscode-proto3
       ])
 
-      # Additional verified extensions from nix-vscode-extensions
-      ++ (with pkgs.vscode-extensions; [
-        # Only use confirmed working extensions for now
-        # TODO: Add custom extensions when we can determine proper access pattern
+      # Extensions from VS Code Marketplace (via nix-vscode-extensions)
+      ++ (with nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace; [
+        # Additional Python tools not in nixpkgs
+        ms-python.flake8
+        ms-python.isort
+        ms-python.pylint
       ]);
   };
 }

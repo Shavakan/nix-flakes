@@ -168,3 +168,96 @@ mcp profile show development
 ```bash
 mcp test <server>  # Test a specific MCP server (troubleshooting)
 ```
+
+## VSCode Extension Management
+
+The repository uses nix-vscode-extensions for declarative extension management. This requires specific patterns for proper functionality.
+
+### Extension Sources and Patterns
+
+**Available Extension Sources:**
+- `pkgs.vscode-extensions.*`: Curated extensions from nixpkgs (most reliable)
+- `nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace.*`: Extensions from VS Code Marketplace
+- `nix-vscode-extensions.extensions.${pkgs.system}.open-vsx.*`: Extensions from Open VSX Registry
+- Custom builds using `pkgs.vscode-utils.buildVscodeMarketplaceExtension`
+
+**Configuration Location:** `modules/vscode/extensions.nix`
+
+### Troubleshooting VSCode Extensions
+
+**When extensions fail to build, follow this systematic approach:**
+
+1. **Documentation First**
+   - Read nix-vscode-extensions documentation before making changes
+   - Understand available attribute sets: `vscode-marketplace`, `open-vsx`, etc.
+   - Check which extensions are actually available in curated repositories
+
+2. **Systematic Diagnosis**
+   ```bash
+   # Check available extension attributes
+   nix eval --impure --expr 'let pkgs = import <nixpkgs> { overlays = [(import (builtins.fetchTarball "https://github.com/nix-community/nix-vscode-extensions/archive/master.tar.gz")).overlays.default]; }; in builtins.attrNames pkgs.vscode-extensions'
+   
+   # Check specific extension availability
+   nix eval --impure --expr 'let pkgs = import <nixpkgs> { overlays = [...]; }; in builtins.hasAttr "publisher-name" pkgs.vscode-extensions'
+   ```
+
+3. **Incremental Testing**
+   - Start with minimal extension list that works
+   - Add one extension at a time
+   - Test each addition with `home-manager build --flake . --impure`
+   - Only apply with `make home` after confirming build succeeds
+
+4. **Cache Management**
+   - If seeing stale/cached errors, run `nix-collect-garbage` 
+   - Nix can cache evaluations of configurations that no longer exist
+
+5. **Extension Source Strategy**
+   - **First**: Try extensions from `pkgs.vscode-extensions` (nixpkgs curated)
+   - **Second**: Try from `nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace`
+   - **Third**: Try from `nix-vscode-extensions.extensions.${pkgs.system}.open-vsx`
+   - **Last resort**: Build custom extensions with proper utilities
+
+### Custom Extension Pattern
+
+For extensions not in curated repositories:
+
+```nix
+# Use buildVscodeMarketplaceExtension for missing extensions
+(pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+  mktplcRef = {
+    name = "extension-name";
+    publisher = "publisher-name";
+    version = "1.0.0";
+    sha256 = "sha256-hash-here";
+  };
+})
+```
+
+**Get proper hashes:**
+```bash
+# Will show correct hash in error message
+nix-prefetch-url "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/PUBLISHER/vsextensions/NAME/VERSION/vspackage"
+```
+
+### Common Pitfalls to Avoid
+
+- **Don't** make multiple rapid changes without testing each one
+- **Don't** assume marketplace URLs work - they frequently return 500 errors
+- **Don't** mix incompatible extension source patterns in same configuration
+- **Don't** ignore build failures - they indicate real configuration issues
+- **Do** verify extension availability before adding to configuration
+- **Do** use minimal reproducing cases when debugging
+- **Do** clean Nix cache when seeing inconsistent behavior
+
+### Working Extension Configuration
+
+Current working pattern in `modules/vscode/extensions.nix`:
+- **nixpkgs block**: Curated extensions from `pkgs.vscode-extensions` (most stable)
+- **marketplace block**: Fresh extensions from `nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace`
+- **Function signature**: Must include `nix-vscode-extensions` parameter
+- Custom extensions only when absolutely necessary and properly implemented
+
+**Required Function Signature:**
+```nix
+{ config, lib, pkgs, nix-vscode-extensions, ... }@inputs:
+```
