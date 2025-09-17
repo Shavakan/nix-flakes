@@ -63,15 +63,8 @@ in
     # Add our toggle script to system packages
     environment.systemPackages = [ stageManagerToggle ];
 
-    # Configure skhd when shortcuts are enabled
-    services.skhd = mkIf cfg.keyboard.enableShortcuts {
-      enable = true;
-      package = pkgs.skhd;
-      skhdConfig = concatStringsSep "\n" (map
-        (shortcut:
-          "${shortcut} : ${stageManagerToggle}/bin/toggle-stage-manager"
-        )
-        cfg.keyboard.shortcuts);
-    };
+    # Note: skhd configuration is now handled by the centralized skhd module
+    # The stage-manager shortcuts will be automatically included when
+    # cfg.keyboard.enableShortcuts is true
   };
 }
