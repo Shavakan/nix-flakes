@@ -16,6 +16,7 @@
         github.copilot
         github.copilot-chat
 
+
         # Languages
         golang.go
         ms-python.python
@@ -42,6 +43,9 @@
         ms-python.flake8
         ms-python.isort
         ms-python.pylint
+
+        # Claude Code integration  
+        pkgs.vscode-extensions.anthropic.claude-code
       ]);
   };
 }
