@@ -119,6 +119,7 @@
       codex
       gemini-cli
       teleport
+      task-master-ai
     ];
 
     # This value determines the Home Manager release compatibility
@@ -501,7 +502,7 @@
           "~/.ssh/id_ed25519"
         ];
       };
-      
+
       "github.com" = {
         hostname = "ssh.github.com";
         port = 443;
