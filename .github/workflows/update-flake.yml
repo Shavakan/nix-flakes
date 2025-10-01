@@ -1,0 +1,46 @@
+name: Update Flake Dependencies
+
+on:
+  schedule:
+    # Run every Sunday at 8 PM UTC (cron: minute hour day-of-month month day-of-week)
+    - cron: '0 20 * * 0'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-flake:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Nix
+      uses: cachix/install-nix-action@v25
+      with:
+        github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Configure git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Update flake dependencies
+      run: make update
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if git diff --quiet HEAD flake.lock; then
+          echo "changed=false" >> $GITHUB_OUTPUT
+        else
+          echo "changed=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit and push changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      run: |
+        git add flake.lock
+        git commit -m "chore: automated update of flake dependencies"
+        git push
