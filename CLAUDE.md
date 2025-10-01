@@ -4,10 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Development Commands
 
+**IMPORTANT**: Always run `make home` and `make update` in background to avoid timing out during long builds.
+
 ```bash
-# Apply home-manager configuration changes
+# Apply home-manager configuration changes (ALWAYS run in background)
 home-manager switch --flake . --impure
-make home  # equivalent shortcut
+make home  # equivalent shortcut - RUN IN BACKGROUND
 
 # Build without applying (test changes)
 home-manager build --flake . --impure
@@ -16,9 +18,9 @@ home-manager build --flake . --impure
 darwin-rebuild switch --flake .#$(hostname) --impure
 make darwin  # equivalent shortcut
 
-# Update flake inputs
+# Update flake inputs (ALWAYS run in background)
 nix flake update
-make update  # equivalent shortcut
+make update  # equivalent shortcut - RUN IN BACKGROUND
 
 # Clean up old generations and optimize store
 nix-collect-garbage -d
