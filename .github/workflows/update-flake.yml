@@ -26,8 +26,39 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
 
-    - name: Update flake dependencies
-      run: make update
+    - name: Sync with remote and update flake dependencies
+      run: |
+        git fetch origin
+
+        # Try to rebase first
+        if git rebase origin/main; then
+          echo "Clean rebase successful"
+        else
+          # Check if conflicts are only in flake.lock
+          if git status --porcelain | grep -q "^UU.*flake.lock" && ! git status --porcelain | grep -q "^UU" | grep -v "flake.lock"; then
+            echo "Auto-resolving flake.lock conflicts by regenerating..."
+            git rebase --abort
+            git merge origin/main || true  # Allow merge to create conflict state
+
+            # Resolve by regenerating flake.lock with latest dependencies
+            git checkout HEAD -- flake.nix  # Ensure latest flake.nix
+            rm -f flake.lock
+            make update  # Use make update as defined in project
+            git add flake.lock
+
+            # Complete the merge if there were conflicts
+            if git status --porcelain | grep -q "^AA\|^DD\|^UA\|^AU\|^DU\|^UD\|^UU"; then
+              git commit -m "resolve: regenerate flake.lock after merge conflict"
+            fi
+          else
+            echo "Non-flake.lock conflicts detected, aborting"
+            git rebase --abort
+            exit 1
+          fi
+        fi
+
+        # Always run update to ensure we have the latest
+        make update
 
     - name: Check for changes
       id: verify-changed-files
