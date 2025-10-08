@@ -165,21 +165,32 @@ let
     echo "Podman socket stopped"
   '';
 
-  # Podman socket restart script
+  # Podman socket restart script - uses native Podman socket instead of custom SSH tunnel
   podmanSocketRestart = pkgs.writeShellScriptBin "podman-socket-restart" ''
     #!/usr/bin/env bash
     set -e
-    
-    echo "Restarting Podman socket..."
-    
-    # Stop the socket
-    ${podmanSocketStop}/bin/podman-socket-stop
-    
-    # Wait a moment for cleanup
+
+    echo "Restarting Podman machine to restore native socket..."
+
+    # Podman creates /tmp/podman.sock automatically on machine start
+    # This is the preferred method - testcontainers-go auto-detects it
+    # No need for DOCKER_HOST environment variable
+
+    podman machine stop
+    sleep 3
+    podman machine start
+
+    # Verify the native socket exists
     sleep 2
-    
-    # Start the socket
-    ${podmanSocketStart}/bin/podman-socket-start
+    if [ -S /tmp/podman.sock ]; then
+      echo "✓ Podman native socket is available at /tmp/podman.sock"
+      echo "  Testcontainers will automatically detect it (no DOCKER_HOST needed)"
+    else
+      echo "✗ Warning: /tmp/podman.sock not created"
+      echo "  Checking if machine is running..."
+      podman machine list
+      exit 1
+    fi
   '';
 
   # Podman socket status script
