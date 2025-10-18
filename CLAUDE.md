@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **IMPORTANT**: Always run `make home` and `make update` in background to avoid timing out during long builds.
 
+**Background Command Monitoring**: When checking output of background commands like `make home` or `make update`, wait at least 10 seconds between BashOutput checks. These are long-running builds that don't need frequent polling. Use `sleep 10` or `sleep 15` between checks to avoid excessive polling.
+
 ```bash
 # Apply home-manager configuration changes (ALWAYS run in background)
 home-manager switch --flake . --impure

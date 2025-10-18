@@ -265,11 +265,13 @@ with lib;
         # Python uv configuration
         export UV_SYSTEM_PYTHON=1  # Allow uv to find system Python installations
       
-        # Podman Docker-compatible socket for testcontainers
         if command -v podman >/dev/null 2>&1; then
-          export DOCKER_HOST="unix:///tmp/podman.sock"
-          export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE="/tmp/podman.sock"
-          export TESTCONTAINERS_RYUK_DISABLED=true
+          PODMAN_SOCKET=$(find /var/folders -name "podman-machine-*-api.sock" -type s 2>/dev/null | head -1)
+          if [[ -n "$PODMAN_SOCKET" ]]; then
+            export DOCKER_HOST="unix://$PODMAN_SOCKET"
+          elif [[ -S "/tmp/podman.sock" ]]; then
+            export DOCKER_HOST="unix:///tmp/podman.sock"
+          fi
         fi
       
         # Initialize uv for faster Python package management
