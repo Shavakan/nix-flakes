@@ -142,14 +142,7 @@ with lib;
       
         # Enable colors
         autoload -U colors && colors
-      
-        # Display current theme function
-        show_current_theme() {
-          echo "Current theme: ${if selectedTheme != null then selectedTheme.name else "default"}"
-          echo "Theme can be changed in home.nix by setting 'themes.selected'"
-          echo "Available themes: nord, monokai, solarized-dark, solarized-light"
-        }
-      
+
         # Ensure oh-my-zsh cache directory has proper permissions
         if [ -d "$HOME/.cache/oh-my-zsh" ]; then
           chmod -R 755 "$HOME/.cache/oh-my-zsh" 2>/dev/null || true

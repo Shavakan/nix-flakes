@@ -27,5 +27,3 @@ To change themes, modify the `themes.selected` option in your home.nix:
   themes.selected = "nord"; # Options: nord, monokai, solarized-dark, solarized-light
 }
 ```
-
-To view the current theme information, use the `show_current_theme` function in your shell.

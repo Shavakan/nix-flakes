@@ -32,7 +32,3 @@ Add this module to your `home.nix` and set your preferred theme:
 }
 ```
 
-## Theme Information
-
-To view your current theme configuration, use the `show_current_theme` function in your ZSH shell.
-

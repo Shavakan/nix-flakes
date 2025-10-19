@@ -35,9 +35,6 @@ make update            # nix flake update
 # Cleanup
 make clean             # nix-collect-garbage + optimize
 
-# Theme
-show_current_theme     # Display active theme
-
 # MCP management
 mcp list              # Show enabled servers for project
 mcp enable <servers>  # Enable servers (creates .mcp-config)
