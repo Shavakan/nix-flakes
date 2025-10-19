@@ -116,13 +116,42 @@ mcp status            # Show mode and active servers
 })
 ```
 
+## Testing Strategy
+
+**Fast iteration (seconds, no builds):**
+```bash
+# 1. Flake structure validation
+nix flake check
+
+# 2. Evaluate specific config without building
+nix eval --impure .#homeConfigurations.shavakan.config.home.packages --apply 'x: builtins.length x'
+
+# 3. Test VSCode extensions evaluation
+nix eval --impure .#homeConfigurations.shavakan.config.programs.vscode.profiles.default.extensions --apply 'x: builtins.length x'
+
+# 4. Dry-run to see what would be built
+nix build --dry-run --impure .#homeConfigurations.shavakan.activationPackage
+```
+
+**Full build test (minutes, before apply):**
+```bash
+home-manager build --flake . --impure
+```
+
+**When to use:**
+- Config changes → fast eval tests first
+- VSCode extension changes → specific extension eval test
+- Before applying → full build test mandatory
+- Stale errors after removing packages → `nix-collect-garbage -d`
+
 ## Workflow
 
 1. Edit modules in `modules/`
-2. **Test**: `home-manager build --flake . --impure`
-3. **Apply**: `make home` (in background) OR `make darwin` (system)
-4. **Format**: `nixpkgs-fmt **/*.nix`
-5. **Lint**: `statix check`
+2. **Fast test**: `nix flake check` or eval tests above
+3. **Build test**: `home-manager build --flake . --impure`
+4. **Apply**: `make home` (in background) OR `make darwin` (system)
+5. **Format**: `nixpkgs-fmt **/*.nix`
+6. **Lint**: `statix check`
 
 ## Development Shells
 

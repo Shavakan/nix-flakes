@@ -43,9 +43,12 @@
         ms-python.flake8
         ms-python.isort
         ms-python.pylint
+      ])
 
-        # Claude Code integration  
-        pkgs.vscode-extensions.anthropic.claude-code
+      # Additional extensions from nixpkgs
+      ++ (with pkgs.vscode-extensions; [
+        # Claude Code integration
+        anthropic.claude-code
       ]);
   };
 }
