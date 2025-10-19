@@ -186,7 +186,7 @@ with lib;
     .yarn/
     
     # Claude
-    .claude/
+    .claude/settings.local.json
 
     # Logs
     logs
