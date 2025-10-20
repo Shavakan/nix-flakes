@@ -6,6 +6,8 @@ This file provides guidance to Claude Code when working with this nix-flakes rep
 
 **Long-running builds**: ALWAYS run `make home` and `make update` in background - they can take 5-10 minutes. Wait 10-15 seconds between BashOutput checks to avoid excessive polling.
 
+**Complete before reporting**: When running multi-step operations (update → build → apply), wait for ALL steps to complete and verify success before reporting back to user. Do not provide interim updates to CLAUDE.md or other documentation until the entire workflow finishes successfully.
+
 **Build testing**: NEVER apply without testing first. Always `home-manager build --flake . --impure` before `make home`.
 
 **Impure flag required**: All home-manager and darwin-rebuild commands need `--impure` due to runtime machine detection.
