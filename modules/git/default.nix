@@ -6,8 +6,6 @@ with lib;
   # Declaratively configure Git using home-manager's built-in support
   programs.git = {
     enable = true;
-    userName = "ChangWon Lee";
-    userEmail = "cs.changwon.lee@gmail.com";
 
     # Note: We're not setting signing here since it's handled by the host-config activation script
 
@@ -15,7 +13,11 @@ with lib;
     lfs.enable = true;
 
     # All Git configuration in one place
-    extraConfig = {
+    settings = {
+      user = {
+        name = "ChangWon Lee";
+        email = "cs.changwon.lee@gmail.com";
+      };
       core = {
         editor = "nvim";
         excludesfile = "~/.gitignore_global";
@@ -99,28 +101,29 @@ with lib;
         defaultBranch = "main";
       };
     };
+  };
 
-    # Delta for better diffs with improved color visibility
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        light = false;
-        side-by-side = true;
-        line-numbers = true;
-        syntax-theme = "Dracula"; # Better visibility than Nord in dark mode
-        # Custom color settings for better visibility
-        plus-style = "syntax #2A5A2A"; # Brighter green for additions
-        minus-style = "syntax #5A2A2A"; # Brighter red for deletions
-        plus-emph-style = "syntax #3A6A3A"; # Even brighter green for emphasized additions
-        minus-emph-style = "syntax #6A3A3A"; # Even brighter red for emphasized deletions
-        line-numbers-plus-style = "#3A7A3A"; # Brighter green for line numbers in additions
-        line-numbers-minus-style = "#7A3A3A"; # Brighter red for line numbers in deletions
-        # High contrast theme options
-        hunk-header-style = "syntax bold"; # Make hunk headers bold
-        file-style = "yellow bold"; # Bright yellow for file names
-        file-decoration-style = "yellow ul"; # Underline file names
-      };
+  # Delta for better diffs with improved color visibility
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      light = false;
+      side-by-side = true;
+      line-numbers = true;
+      syntax-theme = "Dracula"; # Better visibility than Nord in dark mode
+      # Custom color settings for better visibility
+      plus-style = "syntax #2A5A2A"; # Brighter green for additions
+      minus-style = "syntax #5A2A2A"; # Brighter red for deletions
+      plus-emph-style = "syntax #3A6A3A"; # Even brighter green for emphasized additions
+      minus-emph-style = "syntax #6A3A3A"; # Even brighter red for emphasized deletions
+      line-numbers-plus-style = "#3A7A3A"; # Brighter green for line numbers in additions
+      line-numbers-minus-style = "#7A3A3A"; # Brighter red for line numbers in deletions
+      # High contrast theme options
+      hunk-header-style = "syntax bold"; # Make hunk headers bold
+      file-style = "yellow bold"; # Bright yellow for file names
+      file-decoration-style = "yellow ul"; # Underline file names
     };
   };
 
