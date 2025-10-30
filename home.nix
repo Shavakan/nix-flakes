@@ -261,11 +261,6 @@
     };
   };
 
-  # Enable the rclone-launchd service last to avoid circular dependencies
-  services.rclone-launchd = {
-    enable = true;
-  };
-
   themes.selected = "nord";
 
   # Unified MCP Server Configuration

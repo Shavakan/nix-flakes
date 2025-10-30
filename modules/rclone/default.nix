@@ -9,7 +9,6 @@ in
   # Import submodules in the correct dependency order
   imports = [
     ./mount.nix
-    ./launchd.nix
     ./cd-rclone
   ];
 
