@@ -276,7 +276,7 @@
         enable = true;
         command = "/run/current-system/sw/bin/npx";
         args = [ "@modelcontextprotocol/server-filesystem" "/Users/shavakan/Desktop" "/Users/shavakan/Downloads" "/Users/shavakan/nix-flakes" "/Users/shavakan/workspace" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        clients = [ "claude-desktop" "gemini-cli" ];
         description = "Provides filesystem access to AI tools";
         environments = {
           default = { };
@@ -354,32 +354,6 @@
         };
       };
 
-      # Smithery MCP Servers
-      smithery-toolbox = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@smithery/cli" "run" "@smithery/toolbox" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "Smithery toolbox for enhanced AI capabilities";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-      blockscout = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@smithery/cli" "run" "@blockscout/mcp-server" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "Blockscout blockchain explorer integration (personal only)";
-        environments = {
-          personal = { };
-          # Only available in personal mode
-        };
-      };
-
       sequential-thinking = {
         enable = true;
         command = "/run/current-system/sw/bin/npx";
@@ -397,7 +371,7 @@
         enable = true;
         command = "/run/current-system/sw/bin/npx";
         args = [ "-y" "--package=task-master-ai" "task-master-ai" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
+        clients = [ "claude-code" "gemini-cli" ];
         description = "Task management and organization";
         environments = {
           default = {
@@ -416,37 +390,11 @@
       };
 
       time = {
-        enable = true;
+        enable = false;
         command = "/run/current-system/sw/bin/npx";
         args = [ "time-mcp" ];
         clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
         description = "Time management and scheduling utilities";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-      astrotask = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@astrotask/mcp" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "Astrotask local-first task management platform";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-      claude-task-master = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@smithery/cli" "run" "@eyaltoledano/claude-task-master" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "AI-powered comprehensive task management system";
         environments = {
           default = { };
           personal = { };
