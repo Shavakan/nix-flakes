@@ -69,6 +69,9 @@
       google-cloud-sdk
       gemini-cli
 
+      # Network tools
+      wireguard-tools
+
       # Search tools
       ripgrep
 
