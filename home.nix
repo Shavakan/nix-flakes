@@ -240,14 +240,6 @@
         createTargetDir = true;
         backupExisting = true;
       }
-      {
-        name = "claude-skills";
-        sourcePath = "claude/skills";
-        targetPath = "${config.home.homeDirectory}/.claude/skills";
-        permissions = "755";
-        createTargetDir = false;
-        backupExisting = true;
-      }
     ];
 
     # Environment variables for linked configurations
