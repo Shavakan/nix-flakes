@@ -4,7 +4,7 @@ with lib;
 
 let
   # Create a custom rust toolchain with the components we need
-  rustToolchain = fenix.packages.${pkgs.system}.stable.withComponents [
+  rustToolchain = fenix.packages.${pkgs.stdenv.hostPlatform.system}.stable.withComponents [
     "cargo"
     "clippy"
     "rustc"

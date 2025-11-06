@@ -38,7 +38,7 @@
       ])
 
       # Extensions from VS Code Marketplace (via nix-vscode-extensions)
-      ++ (with nix-vscode-extensions.extensions.${pkgs.system}.vscode-marketplace; [
+      ++ (with nix-vscode-extensions.extensions.${pkgs.stdenv.hostPlatform.system}.vscode-marketplace; [
         # Additional Python tools not in nixpkgs
         ms-python.flake8
         ms-python.isort

@@ -12,6 +12,9 @@
   };
 
   home.activation.installClaudePlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    # Ensure SSH agent is available for git operations
+    export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null || echo "")}"
+
     if ! ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "anthropics/skills"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin marketplace add anthropics/skills || true
     fi
