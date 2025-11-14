@@ -38,5 +38,8 @@
     if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-commands@shavakan"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-commands@shavakan >/dev/null 2>&1 || true
     fi
+    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-agents@shavakan"; then
+      $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-agents@shavakan >/dev/null 2>&1 || true
+    fi
   '';
 }
