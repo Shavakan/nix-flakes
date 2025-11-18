@@ -1,0 +1,156 @@
+name: Claude CI Fixer
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: 'GitHub Actions run ID to debug (leave empty for latest failed run)'
+        required: false
+        type: string
+      branch:
+        description: 'Branch to create fix on'
+        required: false
+        default: 'claude-ci-fix'
+        type: string
+      max_attempts:
+        description: 'Max fix attempts (cost control)'
+        required: false
+        default: '3'
+        type: string
+
+jobs:
+  claude-fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30  # Cost control: max 30 minutes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v25
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Install Claude Code CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Get failure logs
+        id: logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ inputs.run_id }}"
+
+          # If no run_id provided, get latest failed run
+          if [ -z "$RUN_ID" ]; then
+            echo "Fetching latest failed run..."
+            RUN_ID=$(gh run list --limit 5 --json databaseId,conclusion \
+              --jq '.[] | select(.conclusion=="failure") | .databaseId' | head -1)
+          fi
+
+          if [ -z "$RUN_ID" ]; then
+            echo "No failed run found"
+            exit 1
+          fi
+
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+
+          # Get failure logs
+          gh run view $RUN_ID --log-failed > /tmp/ci-failure.log || true
+
+          # Show summary
+          echo "## Failed Run: $RUN_ID" >> $GITHUB_STEP_SUMMARY
+          gh run view $RUN_ID >> $GITHUB_STEP_SUMMARY || true
+
+      - name: Create fix branch
+        run: |
+          BRANCH="${{ inputs.branch }}"
+          git config user.name "Claude CI Bot"
+          git config user.email "claude-ci@users.noreply.github.com"
+
+          # Delete branch if exists
+          git branch -D "$BRANCH" 2>/dev/null || true
+          git push origin --delete "$BRANCH" 2>/dev/null || true
+
+          # Create fresh branch
+          git checkout -b "$BRANCH"
+
+      - name: Run Claude fix
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MAX_ATTEMPTS: ${{ inputs.max_attempts }}
+          RUN_ID: ${{ steps.logs.outputs.run_id }}
+        run: |
+          # Run the fix script
+          bash scripts/claude-fix-ci.sh
+
+      - name: Push fixes
+        if: success()
+        run: |
+          BRANCH="${{ inputs.branch }}"
+
+          # Check if there are commits
+          if git diff --quiet origin/main; then
+            echo "No changes made by Claude"
+            exit 0
+          fi
+
+          git push -u origin "$BRANCH" --force
+
+      - name: Create PR
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ inputs.branch }}"
+
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' || echo "")
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR already exists: #$EXISTING_PR"
+            gh pr view $EXISTING_PR
+          else
+            # Create new PR
+            gh pr create \
+              --draft \
+              --head "$BRANCH" \
+              --title "fix(ci): Claude auto-fix for run #${{ steps.logs.outputs.run_id }}" \
+              --body "$(cat <<EOF
+## Automated Fix by Claude
+
+**Original failed run:** https://github.com/${{ github.repository }}/actions/runs/${{ steps.logs.outputs.run_id }}
+
+### Changes Made
+
+$(git log --oneline origin/main..$BRANCH)
+
+### Review Required
+
+- [ ] Verify technical correctness of changes
+- [ ] Check that tests pass
+- [ ] Ensure no secrets/sensitive data exposed
+- [ ] Validate cost was reasonable
+
+---
+*This PR was automatically created by Claude Code CI automation*
+EOF
+              )"
+          fi
+
+      - name: Cost report
+        if: always()
+        run: |
+          echo "## Cost Control Report" >> $GITHUB_STEP_SUMMARY
+          echo "- Max attempts allowed: ${{ inputs.max_attempts }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Timeout limit: 30 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- Estimated cost: \$0.10-\$0.50 per run" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** Review Anthropic usage dashboard for actual costs" >> $GITHUB_STEP_SUMMARY
