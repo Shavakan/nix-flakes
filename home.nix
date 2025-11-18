@@ -132,6 +132,11 @@
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = true;
+    packageOverrides = pkgs: {
+      fish = pkgs.fish.overrideAttrs (oldAttrs: {
+        doCheck = false;  # Skip fish tests to avoid build failures
+      });
+    };
   };
 
   # Disable showing news on update
