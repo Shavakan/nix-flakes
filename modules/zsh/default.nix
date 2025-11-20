@@ -465,12 +465,6 @@ with lib;
 
   # Enable other shell integrations
 
-  # Remove the custom K8s context display activation script since we're using a file approach
-  # home.activation.addKubernetesContextStyles = lib.hm.dag.entryAfter ["writeBoundary"] ''
-  #   # This has been replaced with a direct file approach
-  # '';
-
-
   # fzf for fuzzy finding
   programs.fzf = {
     enable = true;
