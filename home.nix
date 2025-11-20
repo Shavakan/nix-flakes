@@ -113,14 +113,12 @@
       jetbrains.rider
       jetbrains.goland
       jetbrains.pycharm-professional
-      # jetbrains.idea-ultimate  # Temporarily disabled due to build failure
       jetbrains.datagrip
       jetbrains.rust-rover
 
       # Misc
       direnv
       codex
-      gemini-cli
       teleport
       task-master-ai
     ];

@@ -104,52 +104,32 @@
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
 
+      # Common overlays used across all configurations
+      commonOverlays = [
+        # Add unstable channel
+        (final: prev: {
+          unstable = import nixpkgs {
+            system = darwinSystem;
+            config.allowUnfree = true;
+          };
+        })
+        # Add agenix to pkgs
+        (final: prev: {
+          agenix = agenix.packages.${darwinSystem}.default;
+        })
+        # Add custom saml2aws
+        (final: prev: {
+          saml2aws = saml2aws.packages.${darwinSystem}.default;
+        })
+        # Add nix-vscode-extensions overlay
+        nix-vscode-extensions.overlays.default
+      ];
+
       # Import nixpkgs
       pkgs = import nixpkgs {
         system = darwinSystem;
         config.allowUnfree = true;
-        # Add overlays
-        overlays = [
-          # Add unstable channel
-          (final: prev: {
-            unstable = import nixpkgs {
-              system = darwinSystem;
-              config.allowUnfree = true;
-            };
-          })
-          # Add agenix to pkgs
-          (final: prev: {
-            agenix = agenix.packages.${darwinSystem}.default;
-          })
-          # Add custom saml2aws
-          (final: prev: {
-            saml2aws = saml2aws.packages.${darwinSystem}.default;
-          })
-          # Fix lsprotocol compatibility issues
-          # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
-          # Remove when issue is resolved upstream
-          # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
-          # (final: prev: {
-          #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-          #     (python-final: python-prev: {
-          #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
-          #         # Disable tests to avoid compatibility issues with lsprotocol
-          #         doCheck = false;
-          #         checkPhase = "true";
-          #         dontUsePytestCheck = true;
-          #       });
-          #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
-          #         # Disable tests to avoid compatibility issues with lsprotocol
-          #         doCheck = false;
-          #         checkPhase = "true";
-          #         dontUsePytestCheck = true;
-          #       });
-          #     })
-          #   ];
-          # })
-          # Add nix-vscode-extensions overlay
-          nix-vscode-extensions.overlays.default
-        ];
+        overlays = commonOverlays;
       };
 
       # Username
@@ -165,47 +145,7 @@
             # Configure nixpkgs with overlays
             {
               nixpkgs.config.allowUnfree = true;
-              nixpkgs.overlays = [
-                # Add unstable channel
-                (final: prev: {
-                  unstable = import nixpkgs {
-                    system = darwinSystem;
-                    config.allowUnfree = true;
-                  };
-                })
-                # Add agenix to pkgs
-                (final: prev: {
-                  agenix = agenix.packages.${darwinSystem}.default;
-                })
-                # Add custom saml2aws
-                (final: prev: {
-                  saml2aws = saml2aws.packages.${darwinSystem}.default;
-                })
-                # Fix lsprotocol compatibility issues
-                # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
-                # Remove when issue is resolved upstream
-                # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
-                # (final: prev: {
-                #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-                #     (python-final: python-prev: {
-                #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
-                #         # Disable tests to avoid compatibility issues with lsprotocol
-                #         doCheck = false;
-                #         checkPhase = "true";
-                #         dontUsePytestCheck = true;
-                #       });
-                #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
-                #         # Disable tests to avoid compatibility issues with lsprotocol
-                #         doCheck = false;
-                #         checkPhase = "true";
-                #         dontUsePytestCheck = true;
-                #       });
-                #     })
-                #   ];
-                # })
-                # Add nix-vscode-extensions overlay
-                nix-vscode-extensions.overlays.default
-              ];
+              nixpkgs.overlays = commonOverlays;
             }
             # Main darwin configuration
             ./modules/darwin
@@ -223,47 +163,7 @@
             # Configure nixpkgs with overlays
             {
               nixpkgs.config.allowUnfree = true;
-              nixpkgs.overlays = [
-                # Add unstable channel
-                (final: prev: {
-                  unstable = import nixpkgs {
-                    system = darwinSystem;
-                    config.allowUnfree = true;
-                  };
-                })
-                # Add agenix to pkgs
-                (final: prev: {
-                  agenix = agenix.packages.${darwinSystem}.default;
-                })
-                # Add custom saml2aws
-                (final: prev: {
-                  saml2aws = saml2aws.packages.${darwinSystem}.default;
-                })
-                # Fix lsprotocol compatibility issues
-                # Tracking: https://github.com/NixOS/nixpkgs/issues/437024
-                # Remove when issue is resolved upstream
-                # COMMENTED OUT FOR TESTING - UNCOMMENT IF BUILD FAILS
-                # (final: prev: {
-                #   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-                #     (python-final: python-prev: {
-                #       pygls = python-prev.pygls.overrideAttrs (oldAttrs: {
-                #         # Disable tests to avoid compatibility issues with lsprotocol
-                #         doCheck = false;
-                #         checkPhase = "true";
-                #         dontUsePytestCheck = true;
-                #       });
-                #       jedi-language-server = python-prev.jedi-language-server.overrideAttrs (oldAttrs: {
-                #         # Disable tests to avoid compatibility issues with lsprotocol
-                #         doCheck = false;
-                #         checkPhase = "true";
-                #         dontUsePytestCheck = true;
-                #       });
-                #     })
-                #   ];
-                # })
-                # Add nix-vscode-extensions overlay
-                nix-vscode-extensions.overlays.default
-              ];
+              nixpkgs.overlays = commonOverlays;
             }
             # Main darwin configuration
             ./modules/darwin
