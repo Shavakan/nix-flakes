@@ -9,7 +9,7 @@
         bbenoist.nix
 
         # Git integration
-        eamodio.gitlens
+        # eamodio.gitlens  # Disabled - marketplace unavailable (17.7.1 timeout, 17.6.3/15.9.1 404)
         github.vscode-pull-request-github
 
         # AI coding assistant

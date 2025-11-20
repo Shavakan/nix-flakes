@@ -35,9 +35,9 @@
       # HTML settings
       "html.autoClosingTags" = true;
 
-      # GitLens settings
-      "gitlens.keymap" = "alternate";
-      "gitlens.showWelcomeOnInstall" = false;
+      # GitLens settings (disabled - marketplace unavailable)
+      # "gitlens.keymap" = "alternate";
+      # "gitlens.showWelcomeOnInstall" = false;
 
       # Python settings
       "python.linting.pycodestyleEnabled" = true;
