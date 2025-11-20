@@ -5,10 +5,8 @@ with lib;
 let
   cfg = config.services.awsctx;
 
-  # Define where the repo will be cloned
   repoPath = "${config.home.homeDirectory}/workspace/awsctx";
 
-  # Get the XDG directories based on OS
   getXdgDirs = pkgs.writeShellScript "get-xdg-dirs" ''
     os="$(uname -s)"
     
@@ -28,28 +26,22 @@ let
     esac
   '';
 
-  # Create the aws-login-all script as a proper Nix package
   awsLoginAll = pkgs.writeShellScriptBin "aws-login-all" ''
     #!/usr/bin/env bash
     set -e
-    
-    # Source XDG directories
+
     eval "$(${getXdgDirs})"
-    
-    # Create necessary directories
+
     mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
-    
-    # Get credentials
+
     if [ -z "''${SAML2AWS_PASSWORD}" ]; then
       read -s -p "Password: " SAML2AWS_PASSWORD; export SAML2AWS_PASSWORD; echo
     fi
     read -p "OTP: " SAML2AWS_MFA_TOKEN; export SAML2AWS_MFA_TOKEN
-    
-    # Create temporary file for SAML cache
+
     saml_cache="$(mktemp)"
     trap "rm -f ''${saml_cache}" EXIT
-    
-    # Get list of roles
+
     echo "Authenticating and getting SAML response..."
     list_roles="$(${pkgs.saml2aws}/bin/saml2aws --disable-keychain --skip-prompt list-roles --cache-saml --cache-file "''${saml_cache}")"
     
@@ -87,43 +79,36 @@ let
     echo "All roles processed successfully."
   '';
 
-  # Create the awsctx binary
   awsctx = pkgs.writeShellScriptBin "awsctx" ''
     #!/usr/bin/env bash
     set -e
-    
-    # Get the context parameter
+
     ctx="$1"
-    
+
     if [ -z "$ctx" ]; then
       echo "Usage: awsctx <context>"
       exit 1
     fi
-    
+
     # Source XDG directories - this sets CONFIG_DIR and CACHE_DIR variables
     eval "$(${getXdgDirs})"
-    
-    # Ensure directories exist
+
     mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
-    
-    # Set environment variables
+
     export AWSCTX="$ctx"
     export AWS_SHARED_CREDENTIALS_FILE="$CACHE_DIR/$ctx.credentials"
     export AWS_CONFIG_FILE="$CONFIG_DIR/profiles/$ctx.config"
-    
-    # Print the active context
+
     echo "Activated AWS context: $ctx"
     echo "Using credentials: $AWS_SHARED_CREDENTIALS_FILE"
     echo "Using config: $AWS_CONFIG_FILE"
-    
-    # If a command was provided, execute it with the new environment
+
     if [ $# -gt 1 ]; then
       shift
       exec "$@"
     fi
   '';
 
-  # Create a completion script for bash that matches the original implementation
   bashCompletion = pkgs.writeTextFile {
     name = "awsctx-completion";
     destination = "/share/bash-completion/completions/awsctx";
@@ -299,7 +284,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Add the package to home.packages
     home.packages = [
       awsctxPackage
       pkgs.saml2aws
@@ -310,54 +294,43 @@ in
 
     # Clone the repository and set up symlinks during activation
     home.activation.setupAwsctx = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      # Source the XDG directories
       eval "$(${getXdgDirs})"
-      
-      # Log directories for debugging
+
       log_nix "awsctx" "CONFIG_DIR: $CONFIG_DIR, CACHE_DIR: $CACHE_DIR"
-      
-      # Create the target directory for the repository if it doesn't exist
+
       mkdir -p "$(dirname "${repoPath}")"
-      
+
       # Check if SSH agent is running and start it if needed
       if ! ssh-add -l &>/dev/null; then
-        # Start SSH agent silently
         eval "$(${pkgs.openssh}/bin/ssh-agent -s)" >/dev/null 2>&1
         log_nix "awsctx" "Started SSH agent for repository operations"
       fi
-      
-      # Clone the repository if it doesn't exist
+
       if [ ! -d "${repoPath}" ]; then
         # Create the directory first to ensure we have something to work with
         # even if the clone fails
         mkdir -p "${repoPath}"
-        
-        # Use explicit path to SSH
+
         export GIT_SSH="${pkgs.openssh}/bin/ssh"
-        
+
         # Remove the directory so git can create it
         rmdir "${repoPath}" 2>/dev/null || true
-        
-        # Try to clone silently, redirecting output to avoid noise
+
         if ! ${pkgs.git}/bin/git clone ${cfg.repo} "${repoPath}" > /dev/null 2>&1; then
           log_nix "awsctx" "Failed to clone repository automatically. This is normal if SSH keys aren't loaded."
-          
-          # Recreate the directory
+
           mkdir -p "${repoPath}"
         else
           log_nix "awsctx" "Successfully cloned repository to ${repoPath}"
         fi
       fi
-      
-      # Create directories - use quotes to handle spaces in paths
+
+      # Use quotes to handle spaces in paths
       mkdir -p "$CONFIG_DIR" "$CACHE_DIR"
-      
-      # Create profiles directory if it doesn't exist
+
       if [ -d "${repoPath}/profiles" ]; then
-        # Create a profiles subdirectory in the config dir
         mkdir -p "$CONFIG_DIR/profiles"
-        
-        # Copy all config files
+
         for config_file in "${repoPath}"/profiles/*.config; do
           if [ -f "$config_file" ]; then
             base_name=$(basename "$config_file")
