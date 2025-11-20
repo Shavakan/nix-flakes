@@ -48,7 +48,6 @@
 
     # Packages to install to the user profile
     packages = with pkgs; [
-      # System utilities
       coreutils
       findutils
 
@@ -93,20 +92,14 @@
       _1password-cli
       _1password-gui
 
-      # System utilities
       watch
       pre-commit
       nixpkgs-fmt
       statix
 
-
-      # Tools
       obsidian
       code-cursor
 
-      # Terminal
-
-      # Communication
       slack
 
       # JetBrains IDEs
@@ -132,7 +125,7 @@
     allowBroken = true;
     packageOverrides = pkgs: {
       fish = pkgs.fish.overrideAttrs (oldAttrs: {
-        doCheck = false;  # Skip fish tests to avoid build failures
+        doCheck = false; # Skip fish tests to avoid build failures
       });
     };
   };
@@ -157,7 +150,6 @@
     newSession = true;
 
     extraConfig = ''
-      # Additional tmux configuration
       set -g status-style "bg=black,fg=white"
 
       # Synchronize panes
