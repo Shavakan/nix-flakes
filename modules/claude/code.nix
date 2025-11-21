@@ -12,39 +12,41 @@
   };
 
   home.activation.installClaudePlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    # Ensure SSH agent is available for git operations
     export SSH_AUTH_SOCK="''${SSH_AUTH_SOCK:-$(launchctl getenv SSH_AUTH_SOCK 2>/dev/null || echo "")}"
 
+    INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
 
     if ! ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "anthropics/skills"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin marketplace add anthropics/skills >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "document-skills@anthropic-agent-skills"; then
+    if ! grep -q "document-skills@anthropic-agent-skills" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install document-skills@anthropic-agent-skills >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "example-skills@anthropic-agent-skills"; then
+    if ! grep -q "example-skills@anthropic-agent-skills" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install example-skills@anthropic-agent-skills >/dev/null 2>&1 || true
     fi
 
     if ! ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "Shavakan/claude-marketplace"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin marketplace add Shavakan/claude-marketplace >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-skills@shavakan"; then
+    if ! grep -q "shavakan-skills@shavakan" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-skills@shavakan >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-hooks@shavakan"; then
+    if ! grep -q "shavakan-hooks@shavakan" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-hooks@shavakan >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-commands@shavakan"; then
+    if ! grep -q "shavakan-commands@shavakan" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-commands@shavakan >/dev/null 2>&1 || true
     fi
-    if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-agents@shavakan"; then
+    if ! grep -q "shavakan-agents@shavakan" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-agents@shavakan >/dev/null 2>&1 || true
     fi
 
     if ! ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "perplexityai/modelcontextprotocol"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin marketplace add perplexityai/modelcontextprotocol >/dev/null 2>&1 || true
     fi
-    $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install perplexity >/dev/null 2>&1 || true
+    if ! grep -q "perplexity@perplexity-mcp-server" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install perplexity >/dev/null 2>&1 || true
+    fi
   '';
 }
