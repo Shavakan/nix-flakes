@@ -548,35 +548,55 @@ in
     };
 
     # Activation script to merge MCP settings with existing Claude settings
-    home.activation.mergeClaudeSettings = lib.hm.dag.entryAfter [ "linkMountConfigurations" ] ''
+    home.activation.mergeClaudeSettings = lib.hm.dag.entryAfter [ "linkMountConfigurations" "installClaudePlugins" ] ''
       # Only proceed if MCP servers are enabled
       if [ "${if cfg.enable then "true" else "false"}" = "true" ] && [ ${toString (length (attrNames cfg.servers))} -gt 0 ]; then
         CLAUDE_SETTINGS="$HOME/.claude/settings.json"
-        
-        # Wait for rclone mount to be available (up to 10 seconds)
-        for i in {1..10}; do
+
+        # Wait for rclone mount and plugin installation to complete (up to 15 seconds)
+        for i in {1..15}; do
           if [ -f "$CLAUDE_SETTINGS" ]; then
             break
           fi
           sleep 1
         done
-        
+
         if [ -f "$CLAUDE_SETTINGS" ]; then
+          # Additional small delay to ensure plugin installation writes are complete
+          sleep 2
+
           # Read existing settings
           EXISTING_SETTINGS=$(cat "$CLAUDE_SETTINGS")
-          
-          # Create merged settings with jq
+
+          # Validate JSON before processing
           if command -v jq >/dev/null 2>&1; then
-            # Use jq to merge settings, preserving existing content
-            MERGED_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq '. + {
-              "enableAllProjectMcpServers": true
-            }')
-            
-            # Write merged settings back
-            echo "$MERGED_SETTINGS" > "$CLAUDE_SETTINGS"
-            
-            if [ -n "$NIX_LOG_DIR" ]; then
-              log_nix "mcp-servers" "Merged MCP settings with existing Claude settings"
+            if echo "$EXISTING_SETTINGS" | jq empty 2>/dev/null; then
+              # Use jq to merge settings, preserving existing content
+              MERGED_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq '. + {
+                "enableAllProjectMcpServers": true
+              }')
+
+              # Atomic write: write to temp file, then move
+              TEMP_FILE=$(mktemp)
+              echo "$MERGED_SETTINGS" > "$TEMP_FILE"
+
+              # Verify the temp file is valid JSON before replacing
+              if jq empty < "$TEMP_FILE" 2>/dev/null; then
+                mv -f "$TEMP_FILE" "$CLAUDE_SETTINGS"
+
+                if [ -n "$NIX_LOG_DIR" ]; then
+                  log_nix "mcp-servers" "Merged MCP settings with existing Claude settings"
+                fi
+              else
+                rm -f "$TEMP_FILE"
+                if [ -n "$NIX_LOG_DIR" ]; then
+                  log_nix "mcp-servers" "Failed to create valid merged settings, skipping"
+                fi
+              fi
+            else
+              if [ -n "$NIX_LOG_DIR" ]; then
+                log_nix "mcp-servers" "Existing settings.json is invalid JSON, skipping merge to preserve file"
+              fi
             fi
           else
             if [ -n "$NIX_LOG_DIR" ]; then
