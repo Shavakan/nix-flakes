@@ -41,5 +41,10 @@
     if ! ${pkgs.claude-code}/bin/claude plugin list 2>/dev/null | grep -q "shavakan-agents@shavakan"; then
       $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install shavakan-agents@shavakan >/dev/null 2>&1 || true
     fi
+
+    if ! ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "perplexityai/modelcontextprotocol"; then
+      $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin marketplace add perplexityai/modelcontextprotocol >/dev/null 2>&1 || true
+    fi
+    $DRY_RUN_CMD ${pkgs.claude-code}/bin/claude plugin install perplexity >/dev/null 2>&1 || true
   '';
 }
