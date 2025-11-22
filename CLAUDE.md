@@ -36,11 +36,6 @@ make update            # nix flake update
 
 # Cleanup
 make clean             # nix-collect-garbage + optimize
-
-# MCP management
-mcp list              # Show enabled servers for project
-mcp enable <servers>  # Enable servers (creates .mcp-config)
-mcp status            # Show mode and active servers
 ```
 
 ## Architecture
@@ -75,15 +70,13 @@ mcp status            # Show mode and active servers
 
 ## MCP Server System
 
-**Project-scoped configuration:**
-- Each directory has independent server list via `.mcp-config`
-- Auto-generates `.mcp.json` (Claude Code) and `.gemini-mcp.json` (Gemini CLI)
+**Configuration:**
+- MCP servers configured in `modules/mcp-servers/default.nix`
+- Claude Desktop config: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- Gemini CLI config: `~/.config/gemini-cli/settings.json`
 - Mode-aware: uses different env vars for personal/devsisters modes
-- Commands: `mcp list`, `mcp enable <servers>`, `mcp disable <servers>`
 
 **Available servers:** filesystem, nixos, github, terraform, notion, smithery-toolbox, blockscout (personal only), sequential-thinking, taskmaster, time
-
-**Profiles are optional:** Global convenience collections, independent of project activation.
 
 ## VSCode Extensions
 

@@ -66,7 +66,10 @@
       kubernetes-helm
       awscli2
       google-cloud-sdk
+
+      # AI CLI tools
       gemini-cli
+      openai
 
       # Network tools
       wireguard-tools
