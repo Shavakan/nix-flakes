@@ -9,7 +9,6 @@
         bbenoist.nix
 
         # Git integration
-        # eamodio.gitlens  # Disabled - marketplace unavailable (17.7.1 timeout, 17.6.3/15.9.1 404)
         github.vscode-pull-request-github
 
         # AI coding assistant
@@ -39,6 +38,9 @@
 
       # Extensions from VS Code Marketplace (via nix-vscode-extensions)
       ++ (with nix-vscode-extensions.extensions.${pkgs.stdenv.hostPlatform.system}.vscode-marketplace; [
+        # Git tools
+        eamodio.gitlens
+
         # Additional Python tools not in nixpkgs
         ms-python.flake8
         ms-python.isort
