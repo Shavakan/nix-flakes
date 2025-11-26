@@ -47,10 +47,16 @@
         ms-python.pylint
       ])
 
-      # Additional extensions from nixpkgs
-      ++ (with pkgs.vscode-extensions; [
-        # Claude Code integration
-        anthropic.claude-code
-      ]);
+      # Custom extensions (when nixpkgs versions have issues)
+      ++ [
+        (pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+          mktplcRef = {
+            name = "claude-code";
+            publisher = "anthropic";
+            version = "2.0.50";
+            sha256 = "sha256-Pd4rRLS613/zSn8Pvr/cozaIAqrG06lmUC6IxHm97XQ=";
+          };
+        })
+      ];
   };
 }
