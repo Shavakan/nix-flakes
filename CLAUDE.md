@@ -35,7 +35,8 @@ make darwin            # darwin-rebuild switch --flake .#$(hostname) --impure
 make update            # nix flake update
 
 # Cleanup
-make clean             # nix-collect-garbage + optimize
+make clean             # Expire generations + gc + optimize
+                       # NOTE: macOS SIP blocks .app deletion - gc may show "0 paths deleted"
 ```
 
 ## Architecture
