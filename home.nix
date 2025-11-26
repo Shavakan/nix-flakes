@@ -101,7 +101,6 @@
       statix
 
       obsidian
-      code-cursor
 
       slack
 
