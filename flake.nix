@@ -107,6 +107,12 @@
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
 
+      # Import nixpkgs-master with unfree allowed
+      pkgs-master = import nixpkgs-master {
+        system = darwinSystem;
+        config.allowUnfree = true;
+      };
+
       # Common overlays used across all configurations
       commonOverlays = [
         # Add unstable channel
@@ -126,7 +132,7 @@
         })
         # Override claude-code with master version
         (final: prev: {
-          claude-code = nixpkgs-master.legacyPackages.${darwinSystem}.claude-code;
+          claude-code = pkgs-master.claude-code;
         })
         # Add nix-vscode-extensions overlay
         nix-vscode-extensions.overlays.default
