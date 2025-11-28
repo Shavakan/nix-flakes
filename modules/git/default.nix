@@ -190,6 +190,7 @@ with lib;
     
     # Claude
     **/.claude/settings.local.json
+    **/CLAUDE.local.md
 
     # Logs
     logs
