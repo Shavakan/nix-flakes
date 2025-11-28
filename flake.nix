@@ -5,6 +5,9 @@
     # Package sources - use nixpkgs-unstable for latest packages
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    # nixpkgs-master for bleeding-edge packages (claude-code)
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+
     # Custom saml2aws build from devsisters fork
     saml2aws = {
       url = "github:devsisters/saml2aws";
@@ -99,7 +102,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, ... }@ inputs:
+  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -120,6 +123,10 @@
         # Add custom saml2aws
         (final: prev: {
           saml2aws = saml2aws.packages.${darwinSystem}.default;
+        })
+        # Override claude-code with master version
+        (final: prev: {
+          claude-code = nixpkgs-master.legacyPackages.${darwinSystem}.claude-code;
         })
         # Add nix-vscode-extensions overlay
         nix-vscode-extensions.overlays.default
