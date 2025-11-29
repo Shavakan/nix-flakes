@@ -49,5 +49,12 @@
     if ! grep -q "perplexity@perplexity-mcp-server" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install perplexity >/dev/null 2>&1 || true
     fi
+
+    if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "anthropics/claude-code"; then
+      $DRY_RUN_CMD $TIMEOUT 10s ${pkgs.claude-code}/bin/claude plugin marketplace add anthropics/claude-code >/dev/null 2>&1 || true
+    fi
+    if ! grep -q "frontend-design@claude-code-plugins" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install frontend-design@claude-code-plugins >/dev/null 2>&1 || true
+    fi
   '';
 }
