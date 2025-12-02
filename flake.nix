@@ -100,9 +100,15 @@
       url = "github:fatih/vim-go";
       flake = false;
     };
+
+    # kubectl-snack - Kubernetes node pricing visualization
+    kubectl-snack = {
+      url = "git+ssh://git@github.com/devsisters/kubectl-snack.git";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, ... }@ inputs:
+  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -136,6 +142,20 @@
         })
         # Add nix-vscode-extensions overlay
         nix-vscode-extensions.overlays.default
+        # Add kubectl-snack
+        (final: prev: {
+          kubectl-snack = final.buildGoModule {
+            pname = "kubectl-snack";
+            version = "0.1.0";
+            src = kubectl-snack;
+            vendorHash = "sha256-yNwGJM/dyYlVJSwl408ACcNt8jC1HYbysCNyPpYctxU=";
+            subPackages = [ "cmd/kubectl-snack" ];
+            meta = {
+              description = "kubectl plugin to display Kubernetes node info with AWS pricing";
+              mainProgram = "kubectl-snack";
+            };
+          };
+        })
       ];
 
       # Import nixpkgs

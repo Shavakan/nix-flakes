@@ -163,6 +163,22 @@
         "type": "github"
       }
     },
+    "kubectl-snack": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1764654586,
+        "narHash": "sha256-fR/OoYKO2thFIkud7gqItI2Df0zJFDJZcf1eTZXRbBA=",
+        "ref": "refs/heads/main",
+        "rev": "3db6558d8ddb390146bc6833543ed627825c3cee",
+        "revCount": 11,
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/kubectl-snack.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/kubectl-snack.git"
+      }
+    },
     "nix-vscode-extensions": {
       "inputs": {
         "nixpkgs": [
@@ -222,6 +238,7 @@
         "fenix": "fenix",
         "fzf-vim": "fzf-vim",
         "home-manager": "home-manager_2",
+        "kubectl-snack": "kubectl-snack",
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs",
         "nixpkgs-master": "nixpkgs-master",
