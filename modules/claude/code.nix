@@ -56,5 +56,12 @@
     if ! grep -q "frontend-design@claude-code-plugins" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install frontend-design@claude-code-plugins >/dev/null 2>&1 || true
     fi
+
+    if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "anthropics/claude-plugins-official"; then
+      $DRY_RUN_CMD $TIMEOUT 10s ${pkgs.claude-code}/bin/claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 || true
+    fi
+    if ! grep -q "playwright@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install playwright@claude-plugins-official >/dev/null 2>&1 || true
+    fi
   '';
 }
