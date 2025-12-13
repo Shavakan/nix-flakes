@@ -138,7 +138,7 @@
         })
         # Override claude-code with master version
         (final: prev: {
-          claude-code = pkgs-master.claude-code;
+          inherit (pkgs-master) claude-code;
         })
         # Add nix-vscode-extensions overlay
         nix-vscode-extensions.overlays.default
@@ -148,7 +148,7 @@
             pname = "kubectl-snack";
             version = "0.1.0";
             src = kubectl-snack;
-            vendorHash = "sha256-yNwGJM/dyYlVJSwl408ACcNt8jC1HYbysCNyPpYctxU=";
+            vendorHash = "sha256-jVlLxT0wE6y0RpE8MW9eUIAS510zGONKAcK7ytbEDdo=";
             subPackages = [ "cmd/kubectl-snack" ];
             meta = {
               description = "kubectl plugin to display Kubernetes node info with AWS pricing";
