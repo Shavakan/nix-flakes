@@ -33,6 +33,12 @@ jobs:
         # Public inputs only (skip private repos: kubectl-snack, saml2aws)
         PUBLIC_INPUTS="nixpkgs agenix darwin fenix home-manager nix-vscode-extensions fzf-vim vim-commentary vim-easy-align vim-fugitive vim-go vim-nix vim-nord vim-surround vim-terraform zsh-autopair zsh-powerlevel10k"
 
+        # Build --update-input flags for nix flake lock
+        UPDATE_FLAGS=""
+        for input in $PUBLIC_INPUTS; do
+          UPDATE_FLAGS="$UPDATE_FLAGS --update-input $input"
+        done
+
         # Try to rebase first
         if git rebase origin/main; then
           echo "Clean rebase successful"
@@ -46,7 +52,7 @@ jobs:
             # Resolve by regenerating flake.lock with latest dependencies
             git checkout HEAD -- flake.nix  # Ensure latest flake.nix
             rm -f flake.lock
-            nix flake update $PUBLIC_INPUTS
+            nix flake lock $UPDATE_FLAGS
             git add flake.lock
 
             # Complete the merge if there were conflicts
@@ -61,7 +67,7 @@ jobs:
         fi
 
         # Update only public inputs (CI lacks SSH keys for private repos)
-        nix flake update $PUBLIC_INPUTS
+        nix flake lock $UPDATE_FLAGS
 
     - name: Check for changes
       id: verify-changed-files

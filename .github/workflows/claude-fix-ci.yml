@@ -70,8 +70,9 @@ jobs:
           gh run view $RUN_ID >> $GITHUB_STEP_SUMMARY || true
 
       - name: Create fix branch
+        env:
+          BRANCH: ${{ inputs.branch }}
         run: |
-          BRANCH="${{ inputs.branch }}"
           git config user.name "Claude CI Bot"
           git config user.email "claude-ci@users.noreply.github.com"
 
@@ -93,9 +94,9 @@ jobs:
 
       - name: Push fixes
         if: success()
+        env:
+          BRANCH: ${{ inputs.branch }}
         run: |
-          BRANCH="${{ inputs.branch }}"
-
           # Check if there are commits
           if git diff --quiet origin/main; then
             echo "No changes made by Claude"
@@ -108,9 +109,10 @@ jobs:
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ inputs.branch }}
+          RUN_ID: ${{ steps.logs.outputs.run_id }}
+          REPO: ${{ github.repository }}
         run: |
-          BRANCH="${{ inputs.branch }}"
-
           # Check if PR already exists
           EXISTING_PR=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' || echo "")
 
@@ -118,19 +120,15 @@ jobs:
             echo "PR already exists: #$EXISTING_PR"
             gh pr view $EXISTING_PR
           else
-            # Create new PR
-            gh pr create \
-              --draft \
-              --head "$BRANCH" \
-              --title "fix(ci): Claude auto-fix for run #${{ steps.logs.outputs.run_id }}" \
-              --body "$(cat <<EOF
-## Automated Fix by Claude
+            # Build PR body
+            CHANGES=$(git log --oneline origin/main..$BRANCH)
+            PR_BODY="## Automated Fix by Claude
 
-**Original failed run:** https://github.com/${{ github.repository }}/actions/runs/${{ steps.logs.outputs.run_id }}
+**Original failed run:** https://github.com/${REPO}/actions/runs/${RUN_ID}
 
 ### Changes Made
 
-$(git log --oneline origin/main..$BRANCH)
+${CHANGES}
 
 ### Review Required
 
@@ -140,9 +138,14 @@ $(git log --oneline origin/main..$BRANCH)
 - [ ] Validate cost was reasonable
 
 ---
-*This PR was automatically created by Claude Code CI automation*
-EOF
-              )"
+*This PR was automatically created by Claude Code CI automation*"
+
+            # Create new PR
+            gh pr create \
+              --draft \
+              --head "$BRANCH" \
+              --title "fix(ci): Claude auto-fix for run #${RUN_ID}" \
+              --body "$PR_BODY"
           fi
 
       - name: Cost report
