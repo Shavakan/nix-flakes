@@ -116,7 +116,6 @@
       direnv
       codex
       teleport
-      task-master-ai
     ];
 
     # This value determines the Home Manager release compatibility
@@ -355,27 +354,6 @@
         };
       };
 
-      taskmaster = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "-y" "--package=task-master-ai" "task-master-ai" ];
-        clients = [ "claude-code" "gemini-cli" ];
-        description = "Task management and organization";
-        environments = {
-          default = {
-            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
-            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
-          };
-          personal = {
-            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
-            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
-          };
-          devsisters = {
-            ANTHROPIC_API_KEY = "\${ANTHROPIC_API_KEY}";
-            OPENAI_API_KEY = "\${OPENAI_API_KEY}";
-          };
-        };
-      };
 
       time = {
         enable = false;
