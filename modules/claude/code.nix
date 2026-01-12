@@ -63,5 +63,12 @@
     if ! grep -q "playwright@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install playwright@claude-plugins-official >/dev/null 2>&1 || true
     fi
+
+    if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "rami-code-review/claude-code-marketplace"; then
+      $DRY_RUN_CMD $TIMEOUT 10s ${pkgs.claude-code}/bin/claude plugin marketplace add rami-code-review/claude-code-marketplace >/dev/null 2>&1 || true
+    fi
+    if ! grep -q "rami@rami-code-review" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install rami@rami-code-review >/dev/null 2>&1 || true
+    fi
   '';
 }
