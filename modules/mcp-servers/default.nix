@@ -108,19 +108,28 @@ in
         done
 
         if [ -f "$CLAUDE_SETTINGS" ]; then
-          # Additional small delay to ensure plugin installation writes are complete
-          sleep 2
-
           # Read existing settings
           EXISTING_SETTINGS=$(cat "$CLAUDE_SETTINGS")
 
           # Validate JSON before processing
           if command -v jq >/dev/null 2>&1; then
             if echo "$EXISTING_SETTINGS" | jq empty 2>/dev/null; then
-              # Use jq to merge settings, preserving existing content
-              MERGED_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq '. + {
-                "enableAllProjectMcpServers": true
-              }')
+              # Use jq to merge settings, preserving existing content and ensuring plugins are enabled
+              MERGED_SETTINGS=$(echo "$EXISTING_SETTINGS" | jq '
+                .enableAllProjectMcpServers = true |
+                .enabledPlugins = (.enabledPlugins // {}) + {
+                  "document-skills@anthropic-agent-skills": true,
+                  "example-skills@anthropic-agent-skills": true,
+                  "shavakan-skills@shavakan": true,
+                  "shavakan-hooks@shavakan": true,
+                  "shavakan-commands@shavakan": true,
+                  "shavakan-agents@shavakan": true,
+                  "perplexity@perplexity-mcp-server": true,
+                  "frontend-design@claude-code-plugins": true,
+                  "playwright@claude-plugins-official": true,
+                  "rami@rami-code-review": true
+                }
+              ')
 
               # Atomic write: write to temp file, then move
               TEMP_FILE=$(mktemp)
