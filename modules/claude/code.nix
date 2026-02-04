@@ -81,5 +81,8 @@
     if ! grep -q "rami@rami-code-review" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install rami@rami-code-review >/dev/null 2>&1 || true
     fi
+    if ! grep -q "gopls-lsp@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install gopls-lsp@claude-plugins-official >/dev/null 2>&1 || true
+    fi
   '';
 }
