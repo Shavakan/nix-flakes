@@ -108,7 +108,7 @@
       # JetBrains IDEs
       jetbrains.rider
       jetbrains.goland
-      jetbrains.pycharm-professional
+      jetbrains.pycharm
       jetbrains.datagrip
       jetbrains.rust-rover
 
