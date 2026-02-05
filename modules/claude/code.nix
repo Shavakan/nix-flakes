@@ -84,5 +84,10 @@
     if ! grep -q "gopls-lsp@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install gopls-lsp@claude-plugins-official >/dev/null 2>&1 || true
     fi
+
+    # Remote MCP servers (streamable HTTP)
+    if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude mcp list 2>/dev/null | grep -q "sentry"; then
+      $DRY_RUN_CMD $TIMEOUT 10s ${pkgs.claude-code}/bin/claude mcp add -s user --transport http sentry https://mcp.sentry.dev/mcp >/dev/null 2>&1 || true
+    fi
   '';
 }
