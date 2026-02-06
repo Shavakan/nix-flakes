@@ -9,6 +9,8 @@
   home.sessionVariables = {
     CLAUDE_CODE_MCP_ENABLED = "true";
     CLAUDE_CODE_ALLOWED_PATHS = "/Users/shavakan/Desktop:/Users/shavakan/Downloads:/Users/shavakan/workspace:/Users/shavakan/dotfiles:/Users/shavakan/nix-flakes";
+    # Point Playwright to browsers installed by home-manager activation
+    PLAYWRIGHT_BROWSERS_PATH = "$HOME/.playwright-setup/node_modules/playwright-core/.local-browsers";
   };
 
   home.activation.installClaudePlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -88,6 +90,47 @@
     # Remote MCP servers (streamable HTTP)
     if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude mcp list 2>/dev/null | grep -q "sentry"; then
       $DRY_RUN_CMD $TIMEOUT 10s ${pkgs.claude-code}/bin/claude mcp add -s user --transport http sentry https://mcp.sentry.dev/mcp >/dev/null 2>&1 || true
+    fi
+  '';
+
+  # Install Playwright browsers for the playwright plugin
+  home.activation.installPlaywrightBrowsers = lib.hm.dag.entryAfter [ "installClaudePlugins" ] ''
+    PLAYWRIGHT_DIR="$HOME/.playwright-setup"
+    PLAYWRIGHT_MARKER="$PLAYWRIGHT_DIR/.browsers-installed"
+
+    # Only install if not already done (don't block activation on failure)
+    if [ ! -f "$PLAYWRIGHT_MARKER" ]; then
+      echo "Installing Playwright browsers (one-time setup)..."
+
+      # Add nodejs to PATH for npx subprocess
+      export PATH="${pkgs.nodejs}/bin:$PATH"
+      # Install browsers locally to the project directory
+      export PLAYWRIGHT_BROWSERS_PATH=0
+
+      # Create persistent directory for playwright
+      mkdir -p "$PLAYWRIGHT_DIR"
+      cd "$PLAYWRIGHT_DIR"
+
+      # Initialize package.json if needed
+      if [ ! -f "package.json" ]; then
+        echo '{"name":"playwright-setup","private":true}' > package.json
+      fi
+
+      # Install @playwright/test if not already installed
+      if [ ! -d "node_modules/@playwright" ]; then
+        npm install @playwright/test 2>&1
+      fi
+
+      # Install chromium browser (PLAYWRIGHT_BROWSERS_PATH=0 installs locally)
+      if npx playwright install chromium 2>&1; then
+        touch "$PLAYWRIGHT_MARKER"
+        echo "Playwright browsers installed successfully."
+      else
+        echo ""
+        echo "Note: Playwright browsers not installed automatically."
+        echo "Run manually: cd ~/.playwright-setup && PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install chromium"
+        echo ""
+      fi
     fi
   '';
 }
