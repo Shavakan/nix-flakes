@@ -122,7 +122,6 @@
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = true;
-    allowUnsupportedSystem = true; # Required for JetBrains IDEs with lttng-ust dep
     packageOverrides = pkgs: {
       fish = pkgs.fish.overrideAttrs (oldAttrs: {
         doCheck = false; # Skip fish tests to avoid build failures

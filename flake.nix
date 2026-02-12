@@ -156,6 +156,14 @@
             };
           };
         })
+        # Fix JetBrains packages on Darwin - nixpkgs bug: musl incorrectly added as dependency
+        (final: prev: {
+          jetbrains = prev.jetbrains // {
+            pycharm = prev.jetbrains.pycharm.overrideAttrs (old: {
+              buildInputs = builtins.filter (p: p.pname or "" != "musl") (old.buildInputs or [ ]);
+            });
+          };
+        })
       ];
 
       # Import nixpkgs
