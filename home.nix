@@ -53,9 +53,7 @@
 
       # Development languages and tools
       terraform
-      dotnet-sdk
       buf
-      subversion
       golangci-lint
       ruby
 
@@ -106,7 +104,6 @@
       slack
 
       # JetBrains IDEs
-      jetbrains.rider
       jetbrains.goland
       jetbrains.pycharm
       jetbrains.datagrip
@@ -125,6 +122,7 @@
   nixpkgs.config = {
     allowUnfree = true;
     allowBroken = true;
+    allowUnsupportedSystem = true; # Required for JetBrains IDEs with lttng-ust dep
     packageOverrides = pkgs: {
       fish = pkgs.fish.overrideAttrs (oldAttrs: {
         doCheck = false; # Skip fish tests to avoid build failures
