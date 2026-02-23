@@ -64,6 +64,7 @@
       k9s
       kubernetes-helm
       awscli2
+      ssm-session-manager-plugin
       google-cloud-sdk
 
       # AI CLI tools
