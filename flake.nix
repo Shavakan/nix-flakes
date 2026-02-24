@@ -101,6 +101,12 @@
       flake = false;
     };
 
+    # codex-cli-nix - OpenAI Codex CLI (native binary, hourly updates)
+    codex-cli-nix = {
+      url = "github:sadjow/codex-cli-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # kubectl-snack - Kubernetes node pricing visualization
     kubectl-snack = {
       url = "git+ssh://git@github.com/devsisters/kubectl-snack.git";
@@ -108,7 +114,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, ... }@ inputs:
+  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -140,6 +146,8 @@
         (final: prev: {
           inherit (pkgs-master) claude-code;
         })
+        # Add codex-cli-nix overlay (native binary from GitHub releases)
+        codex-cli-nix.overlays.default
         # Add nix-vscode-extensions overlay
         nix-vscode-extensions.overlays.default
         # Add kubectl-snack
