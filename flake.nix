@@ -5,8 +5,11 @@
     # Package sources - use nixpkgs-unstable for latest packages
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # nixpkgs-master for bleeding-edge packages (claude-code)
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+    # claude-code-nix - always up-to-date Claude Code (hourly updates)
+    claude-code-nix = {
+      url = "github:sadjow/claude-code-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Custom saml2aws build from devsisters fork
     saml2aws = {
@@ -114,16 +117,10 @@
     };
   };
 
-  outputs = { self, nixpkgs, nixpkgs-master, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, ... }@ inputs:
+  outputs = { self, nixpkgs, claude-code-nix, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
-
-      # Import nixpkgs-master with unfree allowed
-      pkgs-master = import nixpkgs-master {
-        system = darwinSystem;
-        config.allowUnfree = true;
-      };
 
       # Common overlays used across all configurations
       commonOverlays = [
@@ -142,9 +139,9 @@
         (final: prev: {
           saml2aws = saml2aws.packages.${darwinSystem}.default;
         })
-        # Override claude-code with master version
+        # Override claude-code with claude-code-nix (hourly npm updates)
         (final: prev: {
-          inherit (pkgs-master) claude-code;
+          claude-code = claude-code-nix.packages.${darwinSystem}.default;
         })
         # Add codex-cli-nix overlay (native binary from GitHub releases)
         codex-cli-nix.overlays.default

@@ -7,7 +7,7 @@ with lib;
   programs.git = {
     enable = true;
 
-    # Note: We're not setting signing here since it's handled by the host-config activation script
+    signing.format = "openpgp";
 
     # Enable git-lfs
     lfs.enable = true;
