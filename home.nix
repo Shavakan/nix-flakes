@@ -116,6 +116,12 @@
       teleport
     ];
 
+    file.".terraformrc" = {
+      text = ''
+        plugin_cache_dir = "$HOME/.cache/terraform/plugin-cache"
+      '';
+    };
+
     # This value determines the Home Manager release compatibility
     stateVersion = "24.11";
   };
