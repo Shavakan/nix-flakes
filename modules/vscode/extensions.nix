@@ -13,8 +13,6 @@
 
         # AI coding assistant
         github.copilot
-        github.copilot-chat
-
 
         # Languages
         golang.go
@@ -33,7 +31,6 @@
         asvetliakov.vscode-neovim
         yzhang.markdown-all-in-one
         redhat.vscode-yaml
-        zxh404.vscode-proto3
       ])
 
       # Extensions from VS Code Marketplace (via nix-vscode-extensions)
@@ -51,10 +48,18 @@
       ++ [
         (pkgs.vscode-utils.buildVscodeMarketplaceExtension {
           mktplcRef = {
+            name = "copilot-chat";
+            publisher = "github";
+            version = "0.43.2026040705";
+            sha256 = "sha256-iXfRR96wPTmzkvYXSxMWe9PkW/Er5Mx24k9zRF9U1pg=";
+          };
+        })
+        (pkgs.vscode-utils.buildVscodeMarketplaceExtension {
+          mktplcRef = {
             name = "claude-code";
             publisher = "anthropic";
-            version = "2.0.50";
-            sha256 = "sha256-Pd4rRLS613/zSn8Pvr/cozaIAqrG06lmUC6IxHm97XQ=";
+            version = "2.1.96";
+            sha256 = "sha256-9WVCySGmohmyzTzcskzGCHk6ZFX+/HwkpmX2yudVar8=";
           };
         })
       ];
