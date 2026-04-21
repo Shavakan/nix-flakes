@@ -12,6 +12,9 @@ with lib;
     # Enable Python support
     withPython3 = true;
 
+    # Disable Ruby provider (no Ruby plugins in use)
+    withRuby = false;
+
     # Additional Python packages for Neovim
     extraPython3Packages = ps: with ps; [
       pynvim # Python client for neovim
