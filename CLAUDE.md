@@ -69,16 +69,6 @@ make clean             # Expire generations + gc + optimize
 
 **Secrets**: agenix encrypts `modules/agenix/` files, decrypted during activation before dependent services start.
 
-## MCP Server System
-
-**Configuration:**
-- MCP servers configured in `modules/mcp-servers/default.nix`
-- Claude Desktop config: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Gemini CLI config: `~/.config/gemini-cli/settings.json`
-- Mode-aware: uses different env vars for personal/devsisters modes
-
-**Available servers:** filesystem, nixos, github, terraform, notion, smithery-toolbox, blockscout (personal only), sequential-thinking, taskmaster, time
-
 ## VSCode Extensions
 
 **Location:** `modules/vscode/extensions.nix`

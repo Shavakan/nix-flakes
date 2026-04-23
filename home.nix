@@ -15,7 +15,6 @@
     ./modules/iterm2
     ./modules/spotlight
     ./modules/podman
-    ./modules/mcp-servers
   ];
 
   # Home Manager needs a bit of information about you and the paths it should manage
@@ -258,122 +257,6 @@
   };
 
   themes.selected = "nord";
-
-  # Unified MCP Server Configuration
-  services.mcp-servers = {
-    enable = true;
-    servers = {
-      filesystem = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@modelcontextprotocol/server-filesystem" "/Users/shavakan/Desktop" "/Users/shavakan/Downloads" "/Users/shavakan/nix-flakes" "/Users/shavakan/workspace" ];
-        clients = [ "claude-desktop" "gemini-cli" ];
-        description = "Provides filesystem access to AI tools";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-      nixos = {
-        enable = true;
-        command = "/run/current-system/sw/bin/uvx";
-        args = [ "mcp-nixos" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "NixOS package search and management";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-      github = {
-        enable = true;
-        command = "/run/current-system/sw/bin/podman";
-        args = [ "run" "-i" "--rm" "-e" "GITHUB_PERSONAL_ACCESS_TOKEN" "ghcr.io/github/github-mcp-server" "stdio" ];
-        clients = [ "claude-desktop" "gemini-cli" ];
-        description = "GitHub repository and issue management";
-        environments = {
-          default = {
-            GITHUB_PERSONAL_ACCESS_TOKEN = "$GITHUB_PERSONAL_ACCESS_TOKEN";
-          };
-          personal = {
-            GITHUB_PERSONAL_ACCESS_TOKEN = "$GITHUB_PERSONAL_ACCESS_TOKEN";
-          };
-          devsisters = {
-            GITHUB_PERSONAL_ACCESS_TOKEN = "$GITHUB_WORK_ACCESS_TOKEN";
-          };
-        };
-      };
-
-      terraform = {
-        enable = true;
-        command = "/run/current-system/sw/bin/podman";
-        args = [ "run" "-i" "--rm" "hashicorp/terraform-mcp-server" ];
-        clients = [ "claude-desktop" "gemini-cli" ];
-        description = "Terraform infrastructure management";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = {
-            TF_VAR_environment = "production";
-            AWS_PROFILE = "saml";
-          };
-        };
-      };
-
-      notion = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@notionhq/notion-mcp-server" ];
-        clients = [ "claude-desktop" "gemini-cli" ];
-        description = "Notion workspace integration";
-        environments = {
-          default = {
-            NOTION_API_KEY = "$NOTION_API_KEY";
-          };
-          personal = {
-            NOTION_API_KEY = "$NOTION_PERSONAL_API_KEY";
-            NOTION_DATABASE_ID = "$NOTION_PERSONAL_DATABASE_ID";
-          };
-          devsisters = {
-            NOTION_API_KEY = "$NOTION_WORK_API_KEY";
-            NOTION_DATABASE_ID = "$NOTION_WORK_DATABASE_ID";
-          };
-        };
-      };
-
-      sequential-thinking = {
-        enable = true;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "@modelcontextprotocol/server-sequential-thinking" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "Sequential thinking and reference management";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-
-
-      time = {
-        enable = false;
-        command = "/run/current-system/sw/bin/npx";
-        args = [ "time-mcp" ];
-        clients = [ "claude-code" "claude-desktop" "gemini-cli" ];
-        description = "Time management and scheduling utilities";
-        environments = {
-          default = { };
-          personal = { };
-          devsisters = { };
-        };
-      };
-    };
-  };
-
 
   # Mac App Store applications
   services.mas = {
