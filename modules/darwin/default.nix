@@ -117,6 +117,15 @@
     ];
   };
 
+  # Weekly garbage collection — matches the 30-day retention used by `make clean`.
+  # Note: macOS SIP blocks deletion of .app bundles in /nix/store, so `make clean`
+  # (run as root) is still needed periodically to fully reclaim space.
+  nix.gc = {
+    automatic = true;
+    interval = { Weekday = 0; Hour = 3; Minute = 15; };
+    options = "--delete-older-than 30d";
+  };
+
   # Enable font management and make all fonts available to applications
   fonts = {
     # Make fonts available to all applications
@@ -269,61 +278,10 @@
         "AMSUserInterface_ShowSubscribedContent" = true;
       };
 
-      # Apple TV
-      "com.apple.tv" = {
-        "WatchlistEnabled" = true;
-      };
-
-      # Apple Pay and Wallet
-      "com.apple.PassKit" = {
-        # Apple Pay
-        "ApplePayEnabled" = true;
-        "ApplePayPreferred" = true;
-      };
-
-      # iMessage and FaceTime
-      "com.apple.iMessage" = {
-        "MessageSyncEnabled" = true;
-        "SMSRelayEnabled" = true;
-      };
-
-      "com.apple.FaceTime" = {
-        "FaceTimeRecentMax" = 30; # Number of recent calls to store
-      };
-
-      # iWork Suite
-      "com.apple.iWork.Pages" = {
-        "IWAutomaticallySyncToiCloud" = true;
-      };
-
-      "com.apple.iWork.Numbers" = {
-        "IWAutomaticallySyncToiCloud" = true;
-      };
-
-      "com.apple.iWork.Keynote" = {
-        "IWAutomaticallySyncToiCloud" = true;
-      };
-
-      # Other Apple Services
-      "com.apple.Photos" = {
-        "IPXPCPhotosMigrationEnabled" = true;
-        "IPXPhotosCloudSharingEnabled" = true;
-      };
-
-      "com.apple.reminders" = {
-        "EnableCloudKitSync" = true;
-      };
-
       # Additional security settings
       "com.apple.screensaver.loginscreen" = {
         "askForPassword" = 1; # Always require password
         "askForPasswordDelay" = 0; # No delay before requiring password
-      };
-
-      # System preferences security settings
-      "com.apple.systempreferences" = {
-        "RequirePasswordBoot" = true; # Require password at boot
-        "RequirePasswordUnlock" = true; # Require password to unlock
       };
 
       # Apple Watch unlock settings
