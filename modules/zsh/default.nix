@@ -195,7 +195,9 @@ with lib;
       
         # Start SSH agent
         eval "$(ssh-agent -s)" >/dev/null 2>&1
-      
+        # Preload identities from macOS Keychain (silent after first --apple-use-keychain grant)
+        /usr/bin/ssh-add --apple-load-keychain >/dev/null 2>&1
+
         # Cargo/Rust
         export PATH="$PATH:$HOME/.cargo/bin"
       
