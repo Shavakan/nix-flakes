@@ -33,7 +33,8 @@ with lib;
     plugins = lib.mapAttrsToList
       (name: path: {
         plugin = pkgs.vimUtils.buildVimPlugin {
-          inherit name;
+          pname = name;
+          version = "unstable";
           src = path;
         };
         config = "";
