@@ -169,6 +169,10 @@
             });
           };
         })
+        # direnv 2.37.1 checkPhase deadlocks in the macOS Nix sandbox.
+        (final: prev: {
+          direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
+        })
       ];
 
       # Import nixpkgs
