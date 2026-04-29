@@ -74,9 +74,6 @@
     # Container tools
     podman
     podman-compose
-
-    # Add skhd explicitly to ensure it's available 
-    skhd
   ];
 
   # Enable Homebrew management through nix-darwin

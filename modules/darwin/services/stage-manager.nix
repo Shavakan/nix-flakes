@@ -32,20 +32,6 @@ in
   options.custom.stageManager = {
     enable = mkEnableOption "Stage Manager toggle support";
 
-    keyboard = {
-      enableShortcuts = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Whether to enable keyboard shortcuts for toggling Stage Manager";
-      };
-
-      shortcuts = mkOption {
-        type = types.listOf types.str;
-        default = [ "cmd + alt - s" "alt + shift - d" ];
-        description = "skhd shortcuts for toggling Stage Manager";
-      };
-    };
-
     createDesktopShortcut = mkOption {
       type = types.bool;
       default = true;
@@ -60,11 +46,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    # Add our toggle script to system packages
     environment.systemPackages = [ stageManagerToggle ];
-
-    # Note: skhd configuration is now handled by the centralized skhd module
-    # The stage-manager shortcuts will be automatically included when
-    # cfg.keyboard.enableShortcuts is true
   };
 }
