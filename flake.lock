@@ -23,6 +23,22 @@
         "type": "github"
       }
     },
+    "awsctx": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774408898,
+        "narHash": "sha256-2pbEx9JXKp8lRPIS7KTesDNDR3zAryFJY0KIvj6+gmA=",
+        "ref": "refs/heads/main",
+        "rev": "97133eb95907cd44a93055734c4ab10d4f2ebbcd",
+        "revCount": 37,
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/awsctx.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/awsctx.git"
+      }
+    },
     "claude-code-nix": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -296,6 +312,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "awsctx": "awsctx",
         "claude-code-nix": "claude-code-nix",
         "codex-cli-nix": "codex-cli-nix",
         "darwin": "darwin_2",

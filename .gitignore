@@ -1,2 +1,3 @@
 logs/
 result
+.claude/scheduled_tasks.lock

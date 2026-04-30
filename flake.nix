@@ -115,9 +115,15 @@
       url = "git+ssh://git@github.com/devsisters/kubectl-snack.git";
       flake = false;
     };
+
+    # awsctx - AWS profile context switcher (private repo)
+    awsctx = {
+      url = "git+ssh://git@github.com/devsisters/awsctx.git";
+      flake = false;
+    };
   };
 
-  outputs = { self, nixpkgs, claude-code-nix, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, ... }@ inputs:
+  outputs = { self, nixpkgs, claude-code-nix, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, awsctx, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -159,6 +165,12 @@
               description = "kubectl plugin to display Kubernetes node info with AWS pricing";
               mainProgram = "kubectl-snack";
             };
+          };
+        })
+        # Add awsctx
+        (final: prev: {
+          awsctx = final.callPackage ./modules/awsctx/package.nix {
+            src = awsctx;
           };
         })
         # Fix JetBrains packages on Darwin - nixpkgs bug: musl incorrectly added as dependency
