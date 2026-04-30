@@ -30,6 +30,24 @@
     INSTALLED_PLUGINS="$HOME/.claude/plugins/installed_plugins.json"
     TIMEOUT="${pkgs.coreutils}/bin/timeout"
 
+    # Plugins this module is responsible for. We auto-enable these in
+    # settings.json after install; other installed plugins are left alone so
+    # locally-curated enable/disable choices are preserved.
+    MANAGED_PLUGINS=(
+      "document-skills@anthropic-agent-skills"
+      "example-skills@anthropic-agent-skills"
+      "shavakan-skills@shavakan"
+      "shavakan-hooks@shavakan"
+      "shavakan-commands@shavakan"
+      "shavakan-agents@shavakan"
+      "perplexity@perplexity-mcp-server"
+      "frontend-design@claude-code-plugins"
+      "playwright@claude-plugins-official"
+      "rami@rami-code-review"
+      "gopls-lsp@claude-plugins-official"
+      "llm-wiki-compiler@llm-wiki-compiler"
+    )
+
     # Marketplace add operations require SSH for git clone
     if [ "$SSH_READY" = true ]; then
       if ! $TIMEOUT 5s ${pkgs.claude-code}/bin/claude plugin marketplace list 2>/dev/null | grep -q "anthropics/skills"; then
@@ -91,6 +109,25 @@
     fi
     if ! grep -q "llm-wiki-compiler@llm-wiki-compiler" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install llm-wiki-compiler@llm-wiki-compiler >/dev/null 2>&1 || true
+    fi
+
+    # Ensure each managed plugin is enabled in settings.json. Claude Code
+    # manages settings.json itself, so we merge in-place rather than render
+    # it from Nix. Only managed plugins are touched -- other installed
+    # plugins keep whatever enable/disable state the user set locally.
+    SETTINGS="$HOME/.claude/settings.json"
+    if [ -f "$SETTINGS" ]; then
+      MANAGED_JSON=$(${pkgs.jq}/bin/jq -n --args \
+        '[$ARGS.positional[] | {key: ., value: true}] | from_entries' \
+        "''${MANAGED_PLUGINS[@]}")
+      TMP_SETTINGS="$(${pkgs.coreutils}/bin/mktemp)"
+      if ${pkgs.jq}/bin/jq \
+        --argjson managed "$MANAGED_JSON" \
+        '.enabledPlugins = ((.enabledPlugins // {}) + $managed)' \
+        "$SETTINGS" > "$TMP_SETTINGS" 2>/dev/null; then
+        $DRY_RUN_CMD ${pkgs.coreutils}/bin/cp "$TMP_SETTINGS" "$SETTINGS"
+      fi
+      ${pkgs.coreutils}/bin/rm -f "$TMP_SETTINGS"
     fi
 
     # Remote MCP servers (streamable HTTP)
