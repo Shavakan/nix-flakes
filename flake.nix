@@ -117,9 +117,8 @@
     };
 
     # awsctx - AWS profile context switcher (private repo)
-    # Tracking fix/role-parsing branch until upstream merges the role-parsing fix.
     awsctx = {
-      url = "git+ssh://git@github.com/devsisters/awsctx.git?ref=fix/role-parsing";
+      url = "git+ssh://git@github.com/devsisters/awsctx.git";
       flake = false;
     };
   };

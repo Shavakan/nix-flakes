@@ -26,16 +26,15 @@
     "awsctx": {
       "flake": false,
       "locked": {
-        "lastModified": 1777514277,
+        "lastModified": 1777517953,
         "narHash": "sha256-sr5IbpH6Fwe7x8LF491WzA5VDip5ASfZi9BXZ47AzLY=",
-        "ref": "fix/role-parsing",
-        "rev": "5a759d30ff8fb21b2be3d8dc8cb9c146b5e78931",
+        "ref": "refs/heads/main",
+        "rev": "a30e063f42bc49c1a330f28117b018cbf55b5f15",
         "revCount": 38,
         "type": "git",
         "url": "ssh://git@github.com/devsisters/awsctx.git"
       },
       "original": {
-        "ref": "fix/role-parsing",
         "type": "git",
         "url": "ssh://git@github.com/devsisters/awsctx.git"
       }
