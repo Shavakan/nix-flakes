@@ -31,8 +31,8 @@
         redhat.vscode-yaml
       ])
 
-      # Extensions from VS Code Marketplace (via nix-vscode-extensions)
-      ++ (with nix-vscode-extensions.extensions.${pkgs.stdenv.hostPlatform.system}.vscode-marketplace; [
+      # Extensions from VS Code Marketplace (via nix-vscode-extensions overlay)
+      ++ (with pkgs.vscode-marketplace; [
         # Git tools
         eamodio.gitlens
 
