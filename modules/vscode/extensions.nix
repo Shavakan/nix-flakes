@@ -11,14 +11,12 @@
         # Git integration
         github.vscode-pull-request-github
 
-        # AI coding assistant
-        github.copilot
-
         # Languages
         golang.go
         ms-python.python
         ms-python.vscode-pylance
         ms-python.debugpy
+        rust-lang.rust-analyzer
 
         # Tools
         ms-azuretools.vscode-docker
@@ -42,26 +40,10 @@
         ms-python.flake8
         ms-python.isort
         ms-python.pylint
-      ])
 
-      # Custom extensions (when nixpkgs versions have issues)
-      ++ [
-        (pkgs.vscode-utils.buildVscodeMarketplaceExtension {
-          mktplcRef = {
-            name = "copilot-chat";
-            publisher = "github";
-            version = "0.43.2026040705";
-            sha256 = "sha256-iXfRR96wPTmzkvYXSxMWe9PkW/Er5Mx24k9zRF9U1pg=";
-          };
-        })
-        (pkgs.vscode-utils.buildVscodeMarketplaceExtension {
-          mktplcRef = {
-            name = "claude-code";
-            publisher = "anthropic";
-            version = "2.1.116";
-            sha256 = "sha256-myBC6iy7EsA1at4QKWjgiq3TRuC4VMqeH4jop9zo4BM=";
-          };
-        })
-      ];
+        # AI coding assistants
+        github.copilot-chat
+        anthropic.claude-code
+      ]);
   };
 }
