@@ -41,7 +41,7 @@
       "shavakan-commands@shavakan"
       "shavakan-agents@shavakan"
       "perplexity@perplexity-mcp-server"
-      "frontend-design@claude-code-plugins"
+      "frontend-design@claude-plugins-official"
       "playwright@claude-plugins-official"
       "rami@rami-code-review"
       "gopls-lsp@claude-plugins-official"
@@ -95,8 +95,8 @@
     if ! grep -q "perplexity@perplexity-mcp-server" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install perplexity >/dev/null 2>&1 || true
     fi
-    if ! grep -q "frontend-design@claude-code-plugins" "$INSTALLED_PLUGINS" 2>/dev/null; then
-      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install frontend-design@claude-code-plugins >/dev/null 2>&1 || true
+    if ! grep -q "frontend-design@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
+      $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install frontend-design@claude-plugins-official >/dev/null 2>&1 || true
     fi
     if ! grep -q "playwright@claude-plugins-official" "$INSTALLED_PLUGINS" 2>/dev/null; then
       $DRY_RUN_CMD $TIMEOUT 30s ${pkgs.claude-code}/bin/claude plugin install playwright@claude-plugins-official >/dev/null 2>&1 || true
