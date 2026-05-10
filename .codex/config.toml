@@ -1,0 +1,3 @@
+[mcp_servers.nixos]
+args = ["mcp-nixos"]
+command = "/run/current-system/sw/bin/uvx"
