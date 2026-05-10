@@ -55,6 +55,7 @@
       buf
       golangci-lint
       ruby
+      bun
 
       # Cloud tools
       kubectl
