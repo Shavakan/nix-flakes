@@ -304,9 +304,9 @@
     enable = true;
     enableDefaultConfig = false;
 
-    matchBlocks = {
+    settings = {
       "*" = {
-        identityFile = [
+        IdentityFile = [
           "~/.ssh/id_rsa"
           "~/.ssh/id_ecdsa"
           "~/.ssh/id_ed25519"
@@ -314,9 +314,9 @@
       };
 
       "github.com" = {
-        hostname = "ssh.github.com";
-        port = 443;
-        user = "git";
+        HostName = "ssh.github.com";
+        Port = 443;
+        User = "git";
       };
     };
 
