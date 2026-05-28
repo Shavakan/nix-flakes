@@ -111,7 +111,6 @@
       jetbrains.rust-rover
 
       # Misc
-      direnv
       codex
       teleport
     ];
