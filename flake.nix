@@ -185,6 +185,16 @@
         (final: prev: {
           direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
         })
+        # 1Password 8.12.21: upstream silently re-uploaded the aarch64 zip with
+        # different bytes. Pin the new hash until nixpkgs bumps past 8.12.21.
+        (final: prev: {
+          _1password-gui = prev._1password-gui.overrideAttrs (old: {
+            src = prev.fetchurl {
+              inherit (old.src) url;
+              hash = "sha256-WrWbGzBK65tVNl9Dc3OnJURiPpfbNLOYUJcVT0ETaAs=";
+            };
+          });
+        })
       ];
 
       # Import nixpkgs
