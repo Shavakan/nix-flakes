@@ -50,7 +50,7 @@
     background_jobs         # presence of background jobs
     kubecontext             # current kubernetes context (https://kubernetes.io/)
     aws                     # aws profile (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
-    awsctx                  # AWS context from awsctx
+    awsctx                  # AWS_PROFILE indicator
     # =========================[ Line #2 ]=========================
     newline
     time                    # current time
@@ -224,9 +224,8 @@
 
   # Custom function for awsctx segment
   function prompt_awsctx() {
-    # Only show if AWSCTX is set
-    if [[ -n "$AWSCTX" ]]; then
-      p10k segment -f 214 -i '☁️ ' -t "ctx:$AWSCTX"
+    if [[ -n "$AWS_PROFILE" ]]; then
+      p10k segment -f 214 -i '☁️ ' -t "ctx:$AWS_PROFILE"
     fi
   }
   

@@ -23,22 +23,6 @@
         "type": "github"
       }
     },
-    "awsctx": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1777517953,
-        "narHash": "sha256-sr5IbpH6Fwe7x8LF491WzA5VDip5ASfZi9BXZ47AzLY=",
-        "ref": "refs/heads/main",
-        "rev": "a30e063f42bc49c1a330f28117b018cbf55b5f15",
-        "revCount": 38,
-        "type": "git",
-        "url": "ssh://git@github.com/devsisters/awsctx.git"
-      },
-      "original": {
-        "type": "git",
-        "url": "ssh://git@github.com/devsisters/awsctx.git"
-      }
-    },
     "claude-code-nix": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -47,11 +31,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780109992,
-        "narHash": "sha256-qzmk1JsVr3Umi4k9cx5KCLxPSWQpd6NeKCXXSr4bYoY=",
+        "lastModified": 1780258891,
+        "narHash": "sha256-KURy7kHE9TZG2wrQX0xaKScWp3JqEx7cYxboCJO/KPU=",
         "owner": "sadjow",
         "repo": "claude-code-nix",
-        "rev": "66c8b1714f2d45ce71de002baa89f8652483f245",
+        "rev": "e65e7eca7efe776d0bf5f53e317d33b3ff973623",
         "type": "github"
       },
       "original": {
@@ -132,16 +116,37 @@
         "rust-analyzer-src": "rust-analyzer-src"
       },
       "locked": {
-        "lastModified": 1780049436,
-        "narHash": "sha256-5AOcWjhcUgzZft6iuZCYqCmCx33C2pXWE+ztxuctJRQ=",
+        "lastModified": 1780218205,
+        "narHash": "sha256-c4MSlBQw5MIDRkad9UNUUnBaOHAHnhuCXrDt90FDVrg=",
         "owner": "nix-community",
         "repo": "fenix",
-        "rev": "9bc51687db8dfb1dd77266deb709c44bafb74ed0",
+        "rev": "96e0fc9f1a9b37f6477fa11c3fd48575354773ed",
         "type": "github"
       },
       "original": {
         "owner": "nix-community",
         "repo": "fenix",
+        "type": "github"
+      }
+    },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "kc2aws",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778716662,
+        "narHash": "sha256-m1Yf0wZ8j1OHjTc2UwHwyQRSnNeSgLJOd7q5Y45hzi4=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f7c1a2d347e4c52d5fb8d10cb4d94b5884e546fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
         "type": "github"
       }
     },
@@ -202,11 +207,11 @@
     "fzf-vim": {
       "flake": false,
       "locked": {
-        "lastModified": 1779587464,
-        "narHash": "sha256-6xu9+EC4V9CaqlogvVSCb0U7YJU35UWPMGrrdam4Ug0=",
+        "lastModified": 1780238494,
+        "narHash": "sha256-27Q917Ux+8F5/0CtreptEHd6hfLRfD+13KhPO723oqY=",
         "owner": "junegunn",
         "repo": "fzf.vim",
-        "rev": "e5b53de3d3b402d2ef9f74da91c2bb808d0afb34",
+        "rev": "7fd26e36098091b45c59120bc8d0cfacc15cc6c8",
         "type": "github"
       },
       "original": {
@@ -257,6 +262,27 @@
         "type": "github"
       }
     },
+    "kc2aws": {
+      "inputs": {
+        "flake-parts": "flake-parts",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780299959,
+        "narHash": "sha256-RHIzMRwbAAE1MonIGDi3HQwHlLXf5Qf6Wkg/bMMF5O8=",
+        "ref": "refs/heads/main",
+        "rev": "c278733c51a79477f0d704d39fe6f7ced0988df7",
+        "revCount": 4,
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/keycloak2aws.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/devsisters/keycloak2aws.git"
+      }
+    },
     "kubectl-snack": {
       "flake": false,
       "locked": {
@@ -280,11 +306,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780113392,
-        "narHash": "sha256-8AOlWgOo4r/24Jn30Em15DmY3Jkb4X7l8HSxNK3d1rw=",
+        "lastModified": 1780289349,
+        "narHash": "sha256-WtFLQ7R2bErvItKRgkYXqsm0s/cvDnx9fF4XniD3QxQ=",
         "owner": "nix-community",
         "repo": "nix-vscode-extensions",
-        "rev": "b97fb560e6567d6b54b50d5f7546ba424d749fd0",
+        "rev": "f4e7a3b814e1df64804cc211f657e65a1e618695",
         "type": "github"
       },
       "original": {
@@ -312,13 +338,13 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
-        "awsctx": "awsctx",
         "claude-code-nix": "claude-code-nix",
         "codex-cli-nix": "codex-cli-nix",
         "darwin": "darwin_2",
         "fenix": "fenix",
         "fzf-vim": "fzf-vim",
         "home-manager": "home-manager_2",
+        "kc2aws": "kc2aws",
         "kubectl-snack": "kubectl-snack",
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs",
@@ -338,11 +364,11 @@
     "rust-analyzer-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1780002457,
-        "narHash": "sha256-s2Cmnt3OSjhdaQ68eEhRnIiln+EXNB5Nm8VbsFqM6iE=",
+        "lastModified": 1780179631,
+        "narHash": "sha256-61A3gj4V1DyPP6lVHTdui4+dvG66pkMZSMd1Kke3Rz8=",
         "owner": "rust-lang",
         "repo": "rust-analyzer",
-        "rev": "7bd90313c8a444c42b41e295ab8e324be2fa1cf0",
+        "rev": "cce33f2f1565958787bb763ae751a6a5f56b95e3",
         "type": "github"
       },
       "original": {

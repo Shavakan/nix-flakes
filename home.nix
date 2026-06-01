@@ -5,7 +5,6 @@
     ./modules/themes
     ./modules/ls-colors
     ./modules/rclone
-    ./modules/awsctx
     ./modules/git
     ./modules/neovim
     ./modules/zsh
@@ -66,6 +65,7 @@
       awscli2
       ssm-session-manager-plugin
       google-cloud-sdk
+      kc2aws
 
       # AI CLI tools
       gemini-cli
@@ -291,11 +291,6 @@
       allow-emacs-pinentry
       allow-preset-passphrase
     '';
-  };
-
-  # Enable awsctx service
-  services.awsctx = {
-    enable = true;
   };
 
   # Configure SSH with proper agent setup
