@@ -29,15 +29,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nix-darwin - use master for unstable
+    # nix-darwin - pin to the release that matches nixpkgs 26.05.
     darwin = {
-      url = "github:LnL7/nix-darwin/master";
+      url = "github:LnL7/nix-darwin/nix-darwin-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # home-manager - use master to match nixpkgs-unstable
+    # home-manager - pin to release-26.05 to match nixpkgs.
     home-manager = {
-      url = "github:nix-community/home-manager/master";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
