@@ -59,6 +59,7 @@
       # Cloud tools
       kubectl
       kubectl-snack
+      kubectl-schedule
       kubectx
       k9s
       kubernetes-helm

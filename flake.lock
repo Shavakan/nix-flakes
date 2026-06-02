@@ -150,6 +150,27 @@
         "type": "github"
       }
     },
+    "flake-parts_2": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "kubectl-scheduler",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778716662,
+        "narHash": "sha256-m1Yf0wZ8j1OHjTc2UwHwyQRSnNeSgLJOd7q5Y45hzi4=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f7c1a2d347e4c52d5fb8d10cb4d94b5884e546fb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems_2"
@@ -283,6 +304,27 @@
         "url": "ssh://git@github.com/devsisters/keycloak2aws.git"
       }
     },
+    "kubectl-scheduler": {
+      "inputs": {
+        "flake-parts": "flake-parts_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780365078,
+        "narHash": "sha256-RiV3NmzmV51ACzkoX3W4WqY3tmL1qPOb3EPTWDjhEwY=",
+        "owner": "alicek106",
+        "repo": "kubectl-scheduler",
+        "rev": "f0ab38760364c0399993443a090e979894d2f2d1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alicek106",
+        "repo": "kubectl-scheduler",
+        "type": "github"
+      }
+    },
     "kubectl-snack": {
       "flake": false,
       "locked": {
@@ -345,6 +387,7 @@
         "fzf-vim": "fzf-vim",
         "home-manager": "home-manager_2",
         "kc2aws": "kc2aws",
+        "kubectl-scheduler": "kubectl-scheduler",
         "kubectl-snack": "kubectl-snack",
         "nix-vscode-extensions": "nix-vscode-extensions",
         "nixpkgs": "nixpkgs",

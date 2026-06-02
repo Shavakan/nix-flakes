@@ -121,9 +121,15 @@
       url = "git+ssh://git@github.com/devsisters/keycloak2aws.git";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # kubectl-schedule - kubectl plugin that simulates Pod scheduling
+    kubectl-scheduler = {
+      url = "github:alicek106/kubectl-scheduler";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, claude-code-nix, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, kc2aws, ... }@ inputs:
+  outputs = { self, nixpkgs, claude-code-nix, darwin, home-manager, agenix, zsh-powerlevel10k, zsh-autopair, vim-nord, vim-surround, vim-commentary, vim-easy-align, fzf-vim, vim-fugitive, vim-nix, vim-terraform, vim-go, nix-vscode-extensions, saml2aws, fenix, kubectl-snack, codex-cli-nix, kc2aws, kubectl-scheduler, ... }@ inputs:
     let
       # Current system (assuming ARM macOS, change if needed)
       darwinSystem = "aarch64-darwin";
@@ -148,6 +154,10 @@
         # Add kc2aws (Keycloak->AWS SAML auth)
         (final: prev: {
           kc2aws = kc2aws.packages.${darwinSystem}.default;
+        })
+        # Add kubectl-schedule (Pod scheduling simulator)
+        (final: prev: {
+          kubectl-schedule = final.callPackage "${kubectl-scheduler}/package.nix" { };
         })
         # Override claude-code with claude-code-nix (hourly npm updates)
         (final: prev: {
