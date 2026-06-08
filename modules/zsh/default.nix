@@ -391,6 +391,11 @@ with lib;
           }
         fi
       ''
+      (lib.mkAfter ''
+        if command -v kc2aws >/dev/null 2>&1; then
+          eval "$(kc2aws shell-init zsh)"
+        fi
+      '')
     ];
 
     # Shell aliases
