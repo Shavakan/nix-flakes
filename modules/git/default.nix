@@ -191,6 +191,8 @@ with lib;
     # Claude
     **/.claude/settings.local.json
     **/CLAUDE.local.md
+    **/.claude/scheduled_tasks.lock
+    **/.claude/worktrees/
 
     # Logs
     logs
