@@ -2,8 +2,8 @@
   description = "Nix flake with nix-darwin and standalone home-manager";
 
   inputs = {
-    # Package sources - use nixpkgs-unstable for latest packages
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Package sources - pin to nixos-26.05 to match darwin/home-manager.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     # claude-code-nix - always up-to-date Claude Code (hourly updates)
     claude-code-nix = {
@@ -192,16 +192,6 @@
         # direnv 2.37.1 checkPhase deadlocks in the macOS Nix sandbox.
         (final: prev: {
           direnv = prev.direnv.overrideAttrs (_: { doCheck = false; });
-        })
-        # 1Password 8.12.21: upstream silently re-uploaded the aarch64 zip with
-        # different bytes. Pin the new hash until nixpkgs bumps past 8.12.21.
-        (final: prev: {
-          _1password-gui = prev._1password-gui.overrideAttrs (old: {
-            src = prev.fetchurl {
-              inherit (old.src) url;
-              hash = "sha256-WrWbGzBK65tVNl9Dc3OnJURiPpfbNLOYUJcVT0ETaAs=";
-            };
-          });
         })
       ];
 
