@@ -13,6 +13,7 @@
     ./modules/cargo
     ./modules/iterm2
     ./modules/spotlight
+    ./modules/onepassword
     ./modules/podman
   ];
 

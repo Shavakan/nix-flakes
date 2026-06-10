@@ -14,6 +14,7 @@
       for app_source in "$NIXAPPS"/*; do
         if [ -d "$app_source" ] || [ -L "$app_source" ]; then
             appname=$(basename "$app_source")
+            [ "$appname" = "1Password.app" ] && continue
             target="$HOME/Applications/Nix-Apps/$appname"
               
             # Create the basic structure
