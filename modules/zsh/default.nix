@@ -394,6 +394,26 @@ with lib;
       (lib.mkAfter ''
         if command -v kc2aws >/dev/null 2>&1; then
           eval "$(kc2aws shell-init zsh)"
+
+          _kc2aws_lastctx="''${XDG_CACHE_HOME:-$HOME/.cache}/kc2aws/last-ctx"
+
+          # Persist the chosen context so new shells restore it (sticky awsctx).
+          if (( $+functions[awsctx] )); then
+            functions[_kc2aws_awsctx]=$functions[awsctx]
+            awsctx() {
+              _kc2aws_awsctx "$@"
+              if [ -n "$1" ]; then
+                mkdir -p "''${_kc2aws_lastctx:h}"
+                print -r -- "$1" > "$_kc2aws_lastctx"
+              else
+                rm -f "$_kc2aws_lastctx"
+              fi
+            }
+          fi
+
+          if [ -z "$AWSCTX" ] && [ -r "$_kc2aws_lastctx" ]; then
+            awsctx "$(< "$_kc2aws_lastctx")"
+          fi
         fi
       '')
     ];
